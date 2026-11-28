@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import type uPlot from 'uplot';
@@ -606,6 +606,164 @@ describe('TooltipPlugin2', () => {
 
       docAddSpy.mockRestore();
       docRemoveSpy.mockRestore();
+
+      view.unmount();
+    });
+  });
+
+  // A Document Picture-in-Picture window (the Grafana Assistant pop-out) is another realm, as an iframe is: the chart's
+  // nodes and the events dispatched there belong to that window, not this one.
+  describe('when the chart is in another window', () => {
+    let iframe: HTMLIFrameElement;
+    let otherWindow: Window & typeof globalThis;
+
+    beforeEach(() => {
+      iframe = document.createElement('iframe');
+      document.body.append(iframe);
+      // typed as a realm's global object, so its constructors (MouseEvent, KeyboardEvent) are on it
+      const contentWindow = iframe.contentDocument?.defaultView;
+      if (contentWindow == null) {
+        throw new Error('jsdom gave the iframe no window');
+      }
+      otherWindow = contentWindow;
+    });
+
+    afterEach(() => {
+      iframe.remove();
+    });
+
+    const setUpInOtherWindow = (tooltipOverrides?: Partial<React.ComponentProps<typeof TooltipPlugin2>>) => {
+      const root = otherWindow.document.createElement('div');
+      const over = otherWindow.document.createElement('div');
+      root.append(over);
+      otherWindow.document.body.append(root);
+      return setUp({ root, over }, tooltipOverrides);
+    };
+
+    const pinTooltip = async (mockUPlot: uPlot) => {
+      await act(async () => {
+        mockUPlot.over.dispatchEvent(new otherWindow.MouseEvent('click'));
+      });
+      await waitFor(() => {
+        expect(within(otherWindow.document.body).getByRole('button', { name: 'Close' })).toBeInTheDocument();
+      });
+    };
+
+    it('renders the tooltip in the window the chart is in', async () => {
+      const { view, setSeriesCallback, initCallback, mockUPlot } = setUpInOtherWindow();
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        setSeriesCallback(mockUPlot, 1);
+      });
+
+      expect(within(otherWindow.document.body).getByText('Tooltip content')).toBeInTheDocument();
+      expect(screen.queryByText('Tooltip content')).not.toBeInTheDocument();
+
+      view.unmount();
+    });
+
+    it('flips the tooltip at the edge of the window the chart is in', async () => {
+      Object.defineProperty(otherWindow, 'innerWidth', { value: 300, configurable: true });
+      const { view, setSeriesCallback, initCallback, mockUPlot, setLegendCallback, getHook } = setUpInOtherWindow();
+      const setCursorHook = getHook('setCursor') as (u: uPlot) => void;
+      mockUPlot.cursor.left = 280;
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        setLegendCallback(mockUPlot);
+        setSeriesCallback(mockUPlot, 1);
+      });
+
+      act(() => {
+        setCursorHook(mockUPlot);
+      });
+
+      const wrapper = within(otherWindow.document.body)
+        .getByText('Tooltip content')
+        .closest<HTMLElement>('[aria-live="polite"]');
+      // 280px + the 10px offset passes the 300px window less its 16px scrollbar allowance, so it opens to the left.
+      expect(normalizeCssTransform(wrapper?.style.transform)).toBe(
+        'translateX(270px) translateX(-100%) translateY(60px)'
+      );
+
+      view.unmount();
+    });
+
+    it('dismisses a pinned tooltip when Escape is pressed in that window', async () => {
+      const { view, setSeriesCallback, initCallback, mockUPlot, setLegendCallback } = setUpInOtherWindow();
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        setSeriesCallback(mockUPlot, 1);
+        setLegendCallback(mockUPlot);
+      });
+      await pinTooltip(mockUPlot);
+
+      await act(async () => {
+        otherWindow.document.dispatchEvent(new otherWindow.KeyboardEvent('keydown', { key: 'Escape' }));
+      });
+
+      // dismissing unrenders after a short delay
+      await waitFor(() => {
+        expect(within(otherWindow.document.body).queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+      });
+      expect(mockUPlot.setCursor).toHaveBeenCalledWith({ left: -10, top: -10 });
+
+      view.unmount();
+    });
+
+    it('keeps a pinned tooltip open on a press inside it and dismisses it on a press outside', async () => {
+      const { view, setSeriesCallback, initCallback, mockUPlot, setLegendCallback } = setUpInOtherWindow();
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        setSeriesCallback(mockUPlot, 1);
+        setLegendCallback(mockUPlot);
+      });
+      await pinTooltip(mockUPlot);
+      const closeButton = within(otherWindow.document.body).getByRole('button', { name: 'Close' });
+      jest.mocked(mockUPlot.setCursor).mockClear();
+
+      await act(async () => {
+        closeButton.dispatchEvent(new otherWindow.MouseEvent('mousedown', { bubbles: true }));
+      });
+      // dismissing resets the cursor at once
+      expect(mockUPlot.setCursor).not.toHaveBeenCalledWith({ left: -10, top: -10 });
+
+      await act(async () => {
+        otherWindow.document.body.dispatchEvent(new otherWindow.MouseEvent('mousedown', { bubbles: true }));
+      });
+      await waitFor(() => {
+        expect(within(otherWindow.document.body).queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+      });
+
+      view.unmount();
+    });
+
+    it.each(['scroll', 'resize'])("refreshes uPlot's cached plot position on a %s of that window", (type) => {
+      const { view, initCallback, mockUPlot } = setUpInOtherWindow();
+
+      initCallback(mockUPlot);
+      jest.mocked(mockUPlot.syncRect).mockClear();
+      // uPlot only listens for these in the main window, where it was loaded.
+      otherWindow.dispatchEvent(new otherWindow.Event(type));
+
+      expect(mockUPlot.syncRect).toHaveBeenCalledWith(true);
+
+      view.unmount();
+    });
+
+    it('ends the zoom drag on a mouse release in that window', () => {
+      const { view, initCallback, mockUPlot } = setUpInOtherWindow({ queryZoom: jest.fn() });
+
+      initCallback(mockUPlot);
+      mockUPlot.over.dispatchEvent(new otherWindow.MouseEvent('mousedown', { button: 0 }));
+      expect(mockUPlot.over).toHaveClass('zoom-drag');
+
+      otherWindow.document.dispatchEvent(new otherWindow.MouseEvent('mouseup'));
+
+      expect(mockUPlot.over).not.toHaveClass('zoom-drag');
 
       view.unmount();
     });

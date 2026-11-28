@@ -179,6 +179,11 @@ export const TooltipPlugin2 = ({
 
     let plotVisible = false;
 
+    // The chart can render in another window than this one, such as a Document Picture-in-Picture window. Listen
+    // and measure there once the plot exists and says where it is.
+    let plotDocument = document;
+    let plotWindow = window;
+
     const syncTooltip = syncMode === DashboardCursorSync.Tooltip;
 
     if (syncMode !== DashboardCursorSync.Off && config.scales[0].props.isTime) {
@@ -235,7 +240,7 @@ export const TooltipPlugin2 = ({
 
     // in some ways this is similar to ClickOutsideWrapper.tsx
     const downEventOutside = (e: Event) => {
-      if (e instanceof KeyboardEvent) {
+      if (e instanceof plotWindow.KeyboardEvent) {
         if (e.key === 'Escape') {
           e.preventDefault();
           e.stopPropagation();
@@ -248,7 +253,10 @@ export const TooltipPlugin2 = ({
       const isModalOrPortaled = '[role="dialog"], #grafana-portal-container';
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      if ((e.target as HTMLElement).closest(isModalOrPortaled) == null) {
+      const target = e.target as HTMLElement;
+
+      // in another window, the tooltip is not in the portal container
+      if (target.closest(isModalOrPortaled) == null && !domRef.current?.contains(target)) {
         dismiss();
       }
     };
@@ -263,11 +271,11 @@ export const TooltipPlugin2 = ({
         _plot!.cursor._lock = _isPinned;
 
         if (_isPinned) {
-          document.addEventListener('mousedown', downEventOutside, true);
-          document.addEventListener('keydown', downEventOutside, true);
+          plotDocument.addEventListener('mousedown', downEventOutside, true);
+          plotDocument.addEventListener('keydown', downEventOutside, true);
         } else {
-          document.removeEventListener('mousedown', downEventOutside, true);
-          document.removeEventListener('keydown', downEventOutside, true);
+          plotDocument.removeEventListener('mousedown', downEventOutside, true);
+          plotDocument.removeEventListener('keydown', downEventOutside, true);
         }
 
         pendingPinned = false;
@@ -316,6 +324,16 @@ export const TooltipPlugin2 = ({
     config.addHook('init', (u) => {
       plotRef.current = _plot = u;
 
+      if (u.root.ownerDocument !== plotDocument) {
+        removeWindowListeners();
+        plotDocument = u.root.ownerDocument;
+        plotWindow = plotDocument.defaultView ?? window;
+        addWindowListeners();
+        updateWinSize();
+        // this window's portal container is not visible from another window
+        portalRoot.current = plotDocument.body;
+      }
+
       // uPlot caches the plot's page position and only refreshes it on scroll, resize and mouseenter. A layout
       // shift without any of those (for example the filter bar growing a row after a click adds a filter) leaves
       // it stale, and uPlot then reads the next click as a drag and swallows it. Refresh it before uPlot's own
@@ -340,10 +358,10 @@ export const TooltipPlugin2 = ({
               let onUp = (e: MouseEvent) => {
                 u.cursor.drag!.x = true;
                 u.cursor.drag!.y = false;
-                document.removeEventListener('mouseup', onUp, true);
+                plotDocument.removeEventListener('mouseup', onUp, true);
               };
 
-              document.addEventListener('mouseup', onUp, true);
+              plotDocument.addEventListener('mouseup', onUp, true);
             }
           },
           true
@@ -364,10 +382,10 @@ export const TooltipPlugin2 = ({
 
               let onUp = () => {
                 u.over.classList.remove('zoom-drag');
-                document.removeEventListener('mouseup', onUp, true);
+                plotDocument.removeEventListener('mouseup', onUp, true);
               };
 
-              document.addEventListener('mouseup', onUp, true);
+              plotDocument.addEventListener('mouseup', onUp, true);
             }
           },
           true
@@ -608,9 +626,11 @@ export const TooltipPlugin2 = ({
 
     const updateWinSize = () => {
       _isHovering && !_isPinned && dismiss();
+      // uPlot refreshes its cached plot position on resizes of the window it was loaded in, not of this one
+      plotWindow !== window && _plot?.syncRect(true);
 
-      winWid = window.innerWidth - scrollbarWidth;
-      winHgt = window.innerHeight - scrollbarWidth;
+      winWid = plotWindow.innerWidth - scrollbarWidth;
+      winHgt = plotWindow.innerHeight - scrollbarWidth;
     };
 
     const updatePlotVisible = () => {
@@ -687,22 +707,32 @@ export const TooltipPlugin2 = ({
     });
 
     const onscroll = (e: Event) => {
+      // uPlot refreshes its cached plot position on scrolls in the window it was loaded in, not in this one
+      plotWindow !== window && _plot?.syncRect(true);
       updatePlotVisible();
-      _isHovering && e.target instanceof Node && e.target.contains(_plot!.root) && dismiss();
+      _isHovering && e.target instanceof plotWindow.Node && e.target.contains(_plot!.root) && dismiss();
     };
 
-    window.addEventListener('resize', updateWinSize);
-    window.addEventListener('scroll', onscroll, true);
+    const addWindowListeners = () => {
+      plotWindow.addEventListener('resize', updateWinSize);
+      plotWindow.addEventListener('scroll', onscroll, true);
+    };
+
+    const removeWindowListeners = () => {
+      plotWindow.removeEventListener('resize', updateWinSize);
+      plotWindow.removeEventListener('scroll', onscroll, true);
+    };
+
+    addWindowListeners();
 
     return () => {
       sizeRef.current?.observer.disconnect();
 
-      window.removeEventListener('resize', updateWinSize);
-      window.removeEventListener('scroll', onscroll, true);
+      removeWindowListeners();
 
       // in case this component unmounts while anchored (due to data auto-refresh + re-config)
-      document.removeEventListener('mousedown', downEventOutside, true);
-      document.removeEventListener('keydown', downEventOutside, true);
+      plotDocument.removeEventListener('mousedown', downEventOutside, true);
+      plotDocument.removeEventListener('keydown', downEventOutside, true);
     };
   }, [config]);
 
