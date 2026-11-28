@@ -20,8 +20,8 @@ describe('ParamsEditor', () => {
   it('renders empty state with disabled add button', () => {
     render(<ParamsEditor value={[]} onChange={mockOnChange} suggestions={mockSuggestions} />);
 
-    expect(screen.getByPlaceholderText('Key')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Value')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Key' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Value' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
   });
 
@@ -119,14 +119,14 @@ describe('ParamsEditor', () => {
       <ParamsEditor value={existing} onChange={mockOnChange} suggestions={mockSuggestions} contentTypeHeader={true} />
     );
 
-    expect(screen.getByDisplayValue('Content-Type')).toBeInTheDocument();
-    expect(screen.getByRole('combobox')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('Content-Type')).not.toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Content-Type' })).toBeInTheDocument();
   });
 
   it('updates Content-Type via the dedicated selector', async () => {
     render(<ParamsEditor value={[]} onChange={mockOnChange} suggestions={mockSuggestions} contentTypeHeader={true} />);
 
-    await selectOptionInTest(screen.getByRole('combobox'), 'application/json');
+    await selectOptionInTest(screen.getByRole('combobox', { name: 'Content-Type' }), 'application/json');
 
     expect(mockOnChange).toHaveBeenCalledWith([['Content-Type', 'application/json']]);
   });
@@ -136,10 +136,14 @@ describe('ParamsEditor', () => {
 
     render(<ParamsEditor value={existing} onChange={mockOnChange} suggestions={mockSuggestions} />);
 
-    const nameInput = screen.getByDisplayValue('headerName');
-    const valueInput = screen.getByDisplayValue('headerValue');
-    expect(nameInput).toBeDisabled();
-    expect(valueInput).toBeDisabled();
+    const keyInputs = screen.getAllByRole('textbox', { name: 'Key' });
+    const valueInputs = screen.getAllByRole('textbox', { name: 'Value' });
+    expect(keyInputs).toHaveLength(2);
+    expect(keyInputs[1]).toHaveValue('headerName');
+    expect(keyInputs[1]).toBeDisabled();
+    expect(valueInputs).toHaveLength(2);
+    expect(valueInputs[1]).toHaveValue('headerValue');
+    expect(valueInputs[1]).toBeDisabled();
   });
 
   it('resets the add button to disabled after a param is added', async () => {

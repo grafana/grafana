@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import { contentTypeOptions, type GrafanaTheme2, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, Input, Stack, Select, useStyles2 } from '@grafana/ui';
+import { IconButton, InlineField, Input, Label, Stack, Select, useStyles2 } from '@grafana/ui';
 import { SuggestionsInput } from 'app/core/components/SuggestionsInput/SuggestionsInput';
 
 interface Props {
@@ -17,6 +17,11 @@ const collator = new Intl.Collator();
 
 export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader = false }: Props) => {
   const styles = useStyles2(getStyles);
+  const keyId = useId();
+  const valueId = useId();
+  const keyLabelId = useId();
+  const valueLabelId = useId();
+  const contentTypeId = useId();
 
   const headersContentType = value.find(([key, value]) => key === 'Content-Type');
 
@@ -70,22 +75,34 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
   const isAddParamsDisabled = paramName === '' || paramValue === '';
 
   return (
-    <div>
-      <Stack direction="row" key={entryKey}>
-        <SuggestionsInput
-          value={paramName}
-          onChange={changeParamName}
-          suggestions={suggestions}
-          placeholder={t('actions.params-editor.placeholder-key', 'Key')}
-          style={{ width: 332 }}
-        />
-        <SuggestionsInput
-          value={paramValue}
-          onChange={changeParamValue}
-          suggestions={suggestions}
-          placeholder={t('actions.params-editor.placeholder-value', 'Value')}
-          style={{ width: 332 }}
-        />
+    <Stack direction="column" gap={1}>
+      <Stack direction="row" alignItems="flex-end" key={entryKey}>
+        <div>
+          <Label id={keyLabelId} htmlFor={keyId}>
+            {t('actions.params-editor.label-key', 'Key')}
+          </Label>
+          <SuggestionsInput
+            id={keyId}
+            value={paramName}
+            onChange={changeParamName}
+            suggestions={suggestions}
+            placeholder={t('actions.params-editor.placeholder-key', 'Key')}
+            style={{ width: 332 }}
+          />
+        </div>
+        <div>
+          <Label id={valueLabelId} htmlFor={valueId}>
+            {t('actions.params-editor.label-value', 'Value')}
+          </Label>
+          <SuggestionsInput
+            id={valueId}
+            value={paramValue}
+            onChange={changeParamValue}
+            suggestions={suggestions}
+            placeholder={t('actions.params-editor.placeholder-value', 'Value')}
+            style={{ width: 332 }}
+          />
+        </div>
         <IconButton
           aria-label={t('actions.params-editor.aria-label-add', 'Add')}
           name="plus-circle"
@@ -94,11 +111,11 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
         />
       </Stack>
 
-      <Stack direction="column">
+      <Stack direction="column" gap={1}>
         {Array.from(value.filter((param) => param[0] !== 'Content-Type') || []).map((entry) => (
           <Stack key={entry[0]} direction="row">
-            <Input disabled value={entry[0]} />
-            <Input disabled value={entry[1]} />
+            <Input disabled value={entry[0]} aria-labelledby={keyLabelId} />
+            <Input disabled value={entry[1]} aria-labelledby={valueLabelId} />
             <IconButton
               aria-label={t('actions.params-editor.aria-label-delete', 'Delete')}
               onClick={removeParam(entry[0])}
@@ -110,17 +127,17 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
 
       {contentTypeHeader && (
         <div className={styles.extraHeader}>
-          <Stack direction="row">
-            <Input value={'Content-Type'} disabled />
+          <InlineField label={t('actions.params-editor.label-content-type', 'Content-Type')} grow>
             <Select
+              inputId={contentTypeId}
               onChange={(select) => changeContentTypeParamValue(select.value as string)}
               options={contentTypeOptions}
               value={contentTypeParamValue}
             />
-          </Stack>
+          </InlineField>
         </div>
       )}
-    </div>
+    </Stack>
   );
 };
 

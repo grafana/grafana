@@ -52,9 +52,9 @@ describe('ActionEditor', () => {
     expect(screen.getByDisplayValue('Test Action')).toBeInTheDocument();
     expect(screen.getByDisplayValue('https://api.example.com')).toBeInTheDocument();
     expect(screen.getByText('Connection')).toBeInTheDocument();
-    expect(screen.getByText('Variables')).toBeInTheDocument();
-    expect(screen.getByText('Query parameters')).toBeInTheDocument();
-    expect(screen.getByText('Headers')).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Variables' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Query parameters' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Headers' })).toBeInTheDocument();
   });
 
   it('toggles one click setting', async () => {
