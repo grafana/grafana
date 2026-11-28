@@ -156,6 +156,7 @@ export const StateTimelinePanel = ({
                         timeRange={timeRange}
                         annotate={enableAnnotationCreation ? annotate : undefined}
                         withDuration={true}
+                        mergeValues={options.mergeValues ?? true}
                         maxHeight={options.tooltip.maxHeight}
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}

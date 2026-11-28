@@ -20,6 +20,7 @@ import { type TimeSeriesTooltipProps } from '../timeseries/TimeSeriesTooltip';
 interface StateTimelineTooltipProps extends TimeSeriesTooltipProps {
   timeRange: TimeRange;
   withDuration: boolean;
+  mergeValues?: boolean;
 }
 
 export const StateTimelineTooltip = ({
@@ -32,6 +33,7 @@ export const StateTimelineTooltip = ({
   annotate,
   timeRange,
   withDuration,
+  mergeValues = true,
   maxHeight,
   replaceVariables,
   dataLinks,
@@ -52,7 +54,7 @@ export const StateTimelineTooltip = ({
   // append duration in single mode
   if (withDuration && mode === TooltipDisplayMode.Single) {
     const field = series.fields[seriesIdx!];
-    const nextStateIdx = findNextStateIndex(field, dataIdx!);
+    const nextStateIdx = findNextStateIndex(field, dataIdx!, mergeValues);
     let nextStateTs;
     if (nextStateIdx != null) {
       nextStateTs = xField.values[nextStateIdx];
