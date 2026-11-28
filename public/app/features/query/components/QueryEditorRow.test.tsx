@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { createRef, type PropsWithChildren } from 'react';
+import userEvent from '@testing-library/user-event';
+import { type PropsWithChildren, type ReactNode } from 'react';
 
 import {
   CoreApp,
@@ -35,7 +36,7 @@ const mockDS = mockDataSource({
 const mockQueryLibraryContext = {
   queryLibraryEnabled: true,
   renderQueryLibraryEditingHeader: jest.fn(),
-  renderSaveQueryButton: jest.fn(() => null),
+  renderSavedQueryButtons: jest.fn(() => null),
   openDrawer: jest.fn(),
   closeDrawer: jest.fn(),
   isDrawerOpen: false,
@@ -83,7 +84,16 @@ jest.mock('@grafana/runtime', () => ({
 }));
 // Draggable fails to render in tests, so we mock it out
 jest.mock('app/core/components/QueryOperationRow/QueryOperationRow', () => ({
-  QueryOperationRow: (props: PropsWithChildren) => <div>{props.children}</div>,
+  QueryOperationRow: (
+    props: PropsWithChildren<{
+      actions?: (props: { isOpen: boolean; onOpen: () => void; onClose: () => void }) => ReactNode;
+    }>
+  ) => (
+    <div>
+      {props.actions?.({ isOpen: true, onOpen: jest.fn(), onClose: jest.fn() })}
+      {props.children}
+    </div>
+  ),
 }));
 
 function makePretendRequest(requestId: string, subRequests?: DataQueryRequest[]): DataQueryRequest {
@@ -326,79 +336,51 @@ describe('frame results with warnings', () => {
     timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
   };
 
-  it('should show both badges and de-duplicate messages', () => {
-    // @ts-ignore: there are _way_ too many props to inject here :(
-    const editorRow = new QueryEditorRow({
-      data: dataWithWarningsAndInfo,
-      query: {
-        refId: 'B',
-      },
-    });
+  const renderRow = async (data: PanelData) => {
+    render(
+      <QueryEditorRow
+        dataSource={mockDS}
+        query={{ refId: 'B' }}
+        queries={[{ refId: 'B' }]}
+        data={data}
+        id="test"
+        index={0}
+        onAddQuery={jest.fn()}
+        onRunQuery={jest.fn()}
+        onChange={jest.fn()}
+        onRemoveQuery={jest.fn()}
+        range={data.timeRange}
+      />
+    );
+    await screen.findByTestId(selectors.components.QueryEditorRows.rows);
+  };
 
-    const warningsComponent = editorRow.renderWarnings('warning');
-    expect(warningsComponent).not.toBe(null);
+  it('should show both badges and de-duplicate messages', async () => {
+    await renderRow(dataWithWarningsAndInfo);
 
-    const infosComponent = editorRow.renderWarnings('info');
-    expect(infosComponent).not.toBe(null);
-
-    render(warningsComponent!);
-    render(infosComponent!);
     expect(screen.getByText('1 warning')).toBeInTheDocument();
     expect(screen.getByText('1 info')).toBeInTheDocument();
   });
 
-  it('should show a warning badge and de-duplicate warning messages', () => {
-    // @ts-ignore: there are _way_ too many props to inject here :(
-    const editorRow = new QueryEditorRow({
-      data: dataWithWarningsOnly,
-      query: {
-        refId: 'B',
-      },
-    });
+  it('should show a warning badge and de-duplicate warning messages', async () => {
+    await renderRow(dataWithWarningsOnly);
 
-    const warningsComponent = editorRow.renderWarnings('warning');
-    expect(warningsComponent).not.toBe(null);
-
-    const infosComponent = editorRow.renderWarnings('info');
-    expect(infosComponent).toBe(null);
-
-    render(warningsComponent!);
     expect(screen.getByText('1 warning')).toBeInTheDocument();
+    expect(screen.queryByText(/info/)).not.toBeInTheDocument();
   });
 
-  it('should show an info badge and de-duplicate info messages', () => {
-    // @ts-ignore: there are _way_ too many props to inject here :(
-    const editorRow = new QueryEditorRow({
-      data: dataWithInfosOnly,
-      query: {
-        refId: 'B',
-      },
-    });
+  it('should show an info badge and de-duplicate info messages', async () => {
+    await renderRow(dataWithInfosOnly);
 
-    const warningsComponent = editorRow.renderWarnings('warning');
-    expect(warningsComponent).toBe(null);
-
-    const infosComponent = editorRow.renderWarnings('info');
-    expect(infosComponent).not.toBe(null);
-
-    render(infosComponent!);
     expect(screen.getByText('1 info')).toBeInTheDocument();
+    expect(screen.queryByText(/warning/)).not.toBeInTheDocument();
   });
 
-  it('should not show any badge when there are no warnings or info', () => {
-    // @ts-ignore: there are _way_ too many props to inject here :(
-    const editorRow = new QueryEditorRow({
-      data: dataWithoutWarningsOrInfo,
-      query: {
-        refId: 'B',
-      },
-    });
+  it('should not show any badge when there are no warnings or info', async () => {
+    await renderRow(dataWithoutWarningsOrInfo);
 
-    const warningsComponent = editorRow.renderWarnings('warning');
-    expect(warningsComponent).toBe(null);
-
-    const infosComponent = editorRow.renderWarnings('info');
-    expect(infosComponent).toBe(null);
+    expect(screen.queryByText(/warning/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/info/)).not.toBeInTheDocument();
   });
 });
 describe('QueryEditorRow', () => {
@@ -955,12 +937,10 @@ describe('QueryEditorRow analytics', () => {
   }
 
   function renderRow(overrides: Partial<Props<DataQuery>> = {}) {
-    const ref = createRef<QueryEditorRow<DataQuery>>();
     const onQueryEdited = jest.fn();
     const onChange = jest.fn();
     render(
       <QueryEditorRow
-        ref={ref}
         dataSource={mockDS}
         query={{ refId: 'B' }}
         queries={[{ refId: 'B' }]}
@@ -977,7 +957,7 @@ describe('QueryEditorRow analytics', () => {
         {...overrides}
       />
     );
-    return { ref, onQueryEdited, onChange };
+    return { onQueryEdited, onChange };
   }
 
   beforeEach(() => {
@@ -1010,20 +990,20 @@ describe('QueryEditorRow analytics', () => {
   });
 
   it('does not report hiding a query as an edit', async () => {
-    const { ref, onQueryEdited, onChange } = renderRow();
+    const { onQueryEdited, onChange } = renderRow();
     await screen.findByRole('button', { name: 'Edit query' });
 
-    act(() => ref.current!.onHideQuery());
+    await userEvent.click(screen.getByTestId(selectors.components.QueryEditorRow.actionButton('Hide response')));
 
     expect(onChange).toHaveBeenCalledWith({ refId: 'B', hide: true });
     expect(onQueryEdited).not.toHaveBeenCalled();
   });
 
   it('reports a query hidden in the panel editor as a classic editor action', async () => {
-    const { ref } = renderRow();
+    renderRow();
     await screen.findByRole('button', { name: 'Edit query' });
 
-    act(() => ref.current!.onHideQuery());
+    await userEvent.click(screen.getByTestId(selectors.components.QueryEditorRow.actionButton('Hide response')));
 
     expect(mockReportInteraction).toHaveBeenCalledWith(
       'grafana_panel_edit_next_interaction',
@@ -1033,10 +1013,10 @@ describe('QueryEditorRow analytics', () => {
   });
 
   it('keeps the action silent outside the panel editor', async () => {
-    const { ref } = renderRow({ app: CoreApp.Explore });
+    renderRow({ app: CoreApp.Explore });
     await screen.findByRole('button', { name: 'Edit query' });
 
-    act(() => ref.current!.onHideQuery());
+    await userEvent.click(screen.getByTestId(selectors.components.QueryEditorRow.actionButton('Hide response')));
 
     expect(mockReportInteraction).toHaveBeenCalledWith(
       'grafana_panel_edit_next_interaction',
