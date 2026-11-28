@@ -439,21 +439,7 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 			}
 		}
 
-		if len(jsonData.Extensions.ExposedComponents) > 0 {
-			extensions.ExposedComponents = make([]pluginsv0alpha1.MetaV0alpha1ExtensionsExposedComponents, 0, len(jsonData.Extensions.ExposedComponents))
-			for _, comp := range jsonData.Extensions.ExposedComponents {
-				v0Comp := pluginsv0alpha1.MetaV0alpha1ExtensionsExposedComponents{
-					Id: comp.Id,
-				}
-				if comp.Title != "" {
-					v0Comp.Title = &comp.Title
-				}
-				if comp.Description != "" {
-					v0Comp.Description = &comp.Description
-				}
-				extensions.ExposedComponents = append(extensions.ExposedComponents, v0Comp)
-			}
-		}
+		extensions.ExposedComponents = exposedComponentsToMeta(jsonData.Extensions.ExposedComponents)
 
 		if len(jsonData.Extensions.ExtensionPoints) > 0 {
 			extensions.ExtensionPoints = make([]pluginsv0alpha1.MetaV0alpha1ExtensionsExtensionPoints, 0, len(jsonData.Extensions.ExtensionPoints))
@@ -532,6 +518,54 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 	}
 
 	return meta
+}
+
+func exposedComponentsToMeta(components []plugins.ExposedComponent) []pluginsv0alpha1.MetaV0alpha1ExtensionsExposedComponents {
+	if len(components) == 0 {
+		return nil
+	}
+	result := make([]pluginsv0alpha1.MetaV0alpha1ExtensionsExposedComponents, 0, len(components))
+	for _, comp := range components {
+		converted := pluginsv0alpha1.MetaV0alpha1ExtensionsExposedComponents{
+			Id:        comp.Id,
+			Discovery: discoveryToMeta(comp.Discovery),
+		}
+		if comp.Title != "" {
+			converted.Title = &comp.Title
+		}
+		if comp.Description != "" {
+			converted.Description = &comp.Description
+		}
+		result = append(result, converted)
+	}
+	return result
+}
+
+func discoveryToMeta(discovery *plugins.ExposedComponentDiscovery) *pluginsv0alpha1.MetaExposedComponentDiscovery {
+	if !discovery.HasSupportedVersion() {
+		return nil
+	}
+	converted := &pluginsv0alpha1.MetaExposedComponentDiscovery{
+		Version:    discovery.Version,
+		Datasource: discovery.Datasource,
+		Prompt:     discovery.Prompt,
+		Props:      discoverySchemaToMeta(discovery.Props),
+	}
+	for _, event := range discovery.Events {
+		converted.Events = append(converted.Events, pluginsv0alpha1.MetaExposedComponentDiscoveryEvent{
+			Name:    event.Name,
+			Payload: discoverySchemaToMeta(event.Payload),
+		})
+	}
+	return converted
+}
+
+func discoverySchemaToMeta(schema plugins.ComponentDiscoverySchema) *pluginsv0alpha1.MetaComponentDiscoverySchema {
+	if schema == nil {
+		return nil
+	}
+	converted := pluginsv0alpha1.MetaComponentDiscoverySchema(schema)
+	return &converted
 }
 
 // pluginStorePluginToMeta converts a pluginstore.Plugin to a pluginsv0alpha1.MetaSpec.
@@ -727,6 +761,27 @@ func pluginToMetaSpec(plugin *plugins.Plugin) pluginsv0alpha1.MetaSpec {
 type grafanaComPluginVersionMetaJSON struct {
 	pluginsv0alpha1.MetaJSONData
 	AliasIDs []string `json:"aliasIDs,omitempty"`
+}
+
+func (m *grafanaComPluginVersionMetaJSON) UnmarshalJSON(data []byte) error {
+	type plain grafanaComPluginVersionMetaJSON
+	// Use the same lenient discovery parser as local plugin.json files.
+	decoded := struct {
+		*plain
+		Extensions *struct {
+			pluginsv0alpha1.MetaExtensions
+			ExposedComponents []plugins.ExposedComponent `json:"exposedComponents"`
+		} `json:"extensions"`
+	}{plain: (*plain)(m)}
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+	m.Extensions = nil
+	if extensions := decoded.Extensions; extensions != nil {
+		m.Extensions = &extensions.MetaExtensions
+		m.Extensions.ExposedComponents = exposedComponentsToMeta(extensions.ExposedComponents)
+	}
+	return nil
 }
 
 // grafanaComPluginVersionMeta represents the response from grafana.com API

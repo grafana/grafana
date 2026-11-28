@@ -6,10 +6,18 @@ import { type ScopedVars } from './ScopedVars';
 import { type DataSourcePluginMeta, type DataSourceSettings } from './datasource';
 import { type IconName } from './icon';
 import { type PanelData } from './panel';
+import { type ExposedComponentDiscovery } from './plugin';
 import { type AbsoluteTimeRange, type RawTimeRange, type TimeZone } from './time';
 
 // Plugin Extensions types
 // ---------------------------------------
+
+export interface ComponentDescriptor extends ExposedComponentDiscovery {
+  id: string;
+  pluginId: string;
+  title: string;
+  description?: string;
+}
 
 export enum PluginExtensionTypes {
   link = 'link',

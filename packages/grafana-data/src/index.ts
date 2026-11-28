@@ -661,8 +661,9 @@ export {
   type PluginExtensionAddedFunctionConfig,
   type PluginExtensionResourceAttributesContext,
   type CentralAlertHistorySceneV1Props,
+  type ComponentDescriptor,
 } from './types/pluginExtensions';
-export { type PrometheusQueryResultsV1Props } from './types/exposedComponentProps';
+export { type DiscoverableComponentProps, type PrometheusQueryResultsV1Props } from './types/exposedComponentProps';
 export {
   type ScopeDashboardBindingSpec,
   type ScopeDashboardBindingStatus,
@@ -693,6 +694,7 @@ export {
   type PluginMeta,
   type PluginDependencies,
   type PluginExtensions,
+  type ExposedComponentDiscovery,
   type PluginInclude,
   type PluginBuildInfo,
   type ScreenshotInfo,

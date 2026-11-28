@@ -132,9 +132,74 @@ type AddedFunction struct {
 }
 
 type ExposedComponent struct {
-	Id          string `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
+	Id          string                     `json:"id"`
+	Title       string                     `json:"title"`
+	Description string                     `json:"description"`
+	Discovery   *ExposedComponentDiscovery `json:"discovery,omitempty"`
+}
+
+func (c *ExposedComponent) UnmarshalJSON(data []byte) error {
+	type plain ExposedComponent
+	decoded := struct {
+		*plain
+		Discovery json.RawMessage `json:"discovery"`
+	}{plain: (*plain)(c)}
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+
+	// An invalid opt-in must not prevent the plugin or its component from loading.
+	if decoded.Discovery != nil {
+		c.Discovery = decodeExposedComponentDiscovery(decoded.Discovery)
+	}
+	return nil
+}
+
+type ExposedComponentDiscovery struct {
+	Version    string                           `json:"version"`
+	Datasource string                           `json:"datasource"`
+	Prompt     string                           `json:"prompt"`
+	Props      ComponentDiscoverySchema         `json:"props,omitzero"`
+	Events     []ExposedComponentDiscoveryEvent `json:"events,omitempty"`
+}
+
+func (d *ExposedComponentDiscovery) HasSupportedVersion() bool {
+	return d != nil && d.Version == "v1"
+}
+
+type ExposedComponentDiscoveryEvent struct {
+	Name    string                   `json:"name"`
+	Payload ComponentDiscoverySchema `json:"payload,omitzero"`
+}
+
+type ComponentDiscoverySchema map[string]any
+
+func (s *ComponentDiscoverySchema) UnmarshalJSON(data []byte) error {
+	type schema ComponentDiscoverySchema
+	if err := json.Unmarshal(data, (*schema)(s)); err != nil {
+		return err
+	}
+	if *s == nil {
+		return errors.New("component discovery schema must be an object")
+	}
+	return nil
+}
+
+func decodeExposedComponentDiscovery(data []byte) *ExposedComponentDiscovery {
+	var discovery ExposedComponentDiscovery
+	decoded := struct {
+		*ExposedComponentDiscovery
+		Events json.RawMessage `json:"events"`
+	}{ExposedComponentDiscovery: &discovery}
+	if err := json.Unmarshal(data, &decoded); err != nil || !discovery.HasSupportedVersion() {
+		return nil
+	}
+	if decoded.Events != nil {
+		if err := json.Unmarshal(decoded.Events, &discovery.Events); err != nil || discovery.Events == nil {
+			return nil
+		}
+	}
+	return &discovery
 }
 
 type ExtensionPoint struct {

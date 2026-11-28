@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { usePluginContext } from '@grafana/data';
+import { type ComponentDescriptor, type DiscoverableComponentProps, usePluginContext } from '@grafana/data';
 import { type UsePluginComponentResult } from '@grafana/runtime';
 
 import { ExposedComponentOriginContext, useExposedComponentOriginPluginId } from './ExposedComponentOriginContext';
@@ -15,6 +15,20 @@ import { isExposedComponentDependencyMissing } from './validators';
 // Returns a component exposed by a plugin.
 // (Exposed components can be defined in plugins by calling .exposeComponent() on the AppPlugin instance.)
 export function usePluginComponent<Props extends object = {}>(id: string): UsePluginComponentResult<Props> {
+  return useResolvedComponent<Props>(id);
+}
+
+// Core-only: Pass a descriptor from the validated registry, never a caller-supplied owner.
+export function useCatalogComponent<Props extends DiscoverableComponentProps = DiscoverableComponentProps>(
+  entry: ComponentDescriptor
+) {
+  return useResolvedComponent<Props>(entry.id, entry.pluginId);
+}
+
+function useResolvedComponent<Props extends object>(
+  id: string,
+  catalogOwner?: string
+): UsePluginComponentResult<Props> {
   const registryItem = useExposedComponentRegistrySlice<Props>(id);
   const pluginContext = usePluginContext();
   const inheritedOrigin = useExposedComponentOriginPluginId();
@@ -23,7 +37,7 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
 
   // Depend on the caller ID, not its context object, so metadata refreshes preserve local edits.
   const extension = useMemo(() => {
-    if (!registryItem) {
+    if (!registryItem || (catalogOwner !== undefined && registryItem.pluginId !== catalogOwner)) {
       return null;
     }
     const componentLog = log.child({
@@ -45,7 +59,7 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
         </ExposedComponentOriginContext.Provider>
       ),
     };
-  }, [registryItem, originPluginId]);
+  }, [registryItem, originPluginId, catalogOwner]);
 
   return useMemo(() => {
     // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
@@ -65,7 +79,7 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
       };
     }
 
-    if (enableRestrictions && isExposedComponentDependencyMissing(id, pluginContext)) {
+    if (catalogOwner === undefined && enableRestrictions && isExposedComponentDependencyMissing(id, pluginContext)) {
       extension.log.error(errors.EXPOSED_COMPONENT_DEPENDENCY_MISSING);
       return {
         isLoading: false,
@@ -77,5 +91,5 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
       isLoading: false,
       component: extension.component,
     };
-  }, [id, pluginContext, extension, isLoadingAppPlugins]);
+  }, [id, pluginContext, extension, isLoadingAppPlugins, catalogOwner]);
 }

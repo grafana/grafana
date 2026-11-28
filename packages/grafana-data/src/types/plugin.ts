@@ -131,6 +131,14 @@ export type ExtensionInfo = {
   description?: string;
 };
 
+export interface ExposedComponentDiscovery {
+  version: string;
+  datasource: string;
+  prompt: string;
+  props?: Record<string, unknown>;
+  events?: Array<{ name: string; payload?: Record<string, unknown> }>;
+}
+
 export interface PluginExtensions {
   /** Bundled skill files keyed by a stable, plugin-local slug. Content and metadata live in the Markdown file. */
   skills?: Record<string, { path: string }>;
@@ -148,6 +156,7 @@ export interface PluginExtensions {
     id: string;
     title: string;
     description?: string;
+    discovery?: ExposedComponentDiscovery;
   }>;
 
   // The extension points that the plugin provides

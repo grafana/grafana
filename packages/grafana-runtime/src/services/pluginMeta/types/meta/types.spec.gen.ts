@@ -276,6 +276,7 @@ export interface Extensions {
 		id: string;
 		title?: string;
 		description?: string;
+		discovery?: ExposedComponentDiscovery;
 	}[];
 	// +listType=set
 	// +listMapKey=id
@@ -287,6 +288,34 @@ export interface Extensions {
 }
 
 export const defaultExtensions = (): Extensions => ({
+});
+
+export interface ExposedComponentDiscovery {
+	version: string;
+	datasource: string;
+	prompt: string;
+	props?: ComponentDiscoverySchema;
+	// +listType=atomic
+	events?: ExposedComponentDiscoveryEvent[];
+}
+
+export const defaultExposedComponentDiscovery = (): ExposedComponentDiscovery => ({
+	version: "",
+	datasource: "",
+	prompt: "",
+});
+
+export type ComponentDiscoverySchema = Record<string, any>;
+
+export const defaultComponentDiscoverySchema = (): ComponentDiscoverySchema => ({});
+
+export interface ExposedComponentDiscoveryEvent {
+	name: string;
+	payload?: ComponentDiscoverySchema;
+}
+
+export const defaultExposedComponentDiscoveryEvent = (): ExposedComponentDiscoveryEvent => ({
+	name: "",
 });
 
 export interface Spec {
