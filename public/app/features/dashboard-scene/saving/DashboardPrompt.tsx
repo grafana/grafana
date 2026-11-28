@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import type * as H from 'history';
-import { memo, useContext, useEffect, useMemo } from 'react';
+import { memo, useContext, useEffect, useMemo, useRef } from 'react';
 
+import { locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
@@ -16,9 +17,10 @@ import { type DashboardMeta } from 'app/types/dashboard';
 
 import { getPendingChangesHistory } from '../lifecycle/pendingChangePreview';
 import { hasUnrecordedPendingChange, recordPendingChange } from '../lifecycle/pendingChangesHistory';
+import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { SaveLibraryVizPanelModal } from '../panel-edit/SaveLibraryVizPanelModal';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { getLibraryPanelBehavior, hasActualSaveChanges, isLibraryPanel } from '../utils/utils';
+import { hasActualSaveChanges } from '../utils/utils';
 
 interface DashboardPromptProps {
   dashboard: DashboardScene;
@@ -29,6 +31,7 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
   const originalLocation = useMemo(() => locationService.getLocation(), [dashboard]);
   const originalPath = useMemo(() => originalLocation.pathname, [originalLocation]);
   const { showModal, hideModal } = useContext(ModalsContext);
+  const publishingForNavigation = useRef<PanelEditor>(undefined);
 
   useEffect(() => {
     const handleUnload = (event: BeforeUnloadEvent) => {
@@ -45,31 +48,48 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
     };
 
     window.addEventListener('beforeunload', handleUnload);
-    return () => window.removeEventListener('beforeunload', handleUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload);
+      publishingForNavigation.current = undefined;
+    };
   }, [dashboard]);
 
   const onHistoryBlock = (location: H.Location) => {
     const panelEditor = dashboard.state.editPanel;
-    const vizPanel = panelEditor?.getPanel();
+    const libraryPanel = panelEditor?.getLibraryPanelBehavior();
     const search = new URLSearchParams(location.search);
+    const keepsEditorOpen =
+      search.get('editPanel') === panelEditor?.getUrlKey() &&
+      (location.pathname === locationService.getLocation().pathname ||
+        location.pathname === locationUtil.stripBaseFromUrl(dashboard.state.meta.url ?? ''));
 
-    // Are we leaving panel edit & library panel?
-    if (panelEditor && vizPanel && isLibraryPanel(vizPanel) && panelEditor.state.isDirty && !search.has('editPanel')) {
-      const libPanelBehavior = getLibraryPanelBehavior(vizPanel);
+    if (panelEditor && publishingForNavigation.current === panelEditor && !keepsEditorOpen) {
+      return false;
+    }
 
+    if (panelEditor && libraryPanel && !keepsEditorOpen && panelEditor.hasUnsavedLibraryPanelChanges()) {
       showModal(SaveLibraryVizPanelModal, {
-        dashboard,
         isUnsavedPrompt: true,
-        libraryPanel: libPanelBehavior!,
-        onConfirm: () => {
-          panelEditor.onConfirmSaveLibraryPanel();
+        libraryPanel,
+        onConfirm: async () => {
+          publishingForNavigation.current = panelEditor;
+          try {
+            await panelEditor.saveLibraryPanel();
+            if (publishingForNavigation.current !== panelEditor || dashboard.state.editPanel !== panelEditor) {
+              return;
+            }
+          } finally {
+            if (publishingForNavigation.current === panelEditor) {
+              publishingForNavigation.current = undefined;
+            }
+          }
           hideModal();
-          moveToBlockedLocationAfterReactStateUpdate(location);
+          locationService.push(location);
         },
         onDiscard: () => {
-          panelEditor.onDiscard();
+          panelEditor.discardChanges();
           hideModal();
-          moveToBlockedLocationAfterReactStateUpdate(location);
+          locationService.push(location);
         },
         onDismiss: hideModal,
       });

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useAsync, useDebounce } from 'react-use';
+import { useAsync, useAsyncFn, useDebounce } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
@@ -11,12 +11,13 @@ import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 interface Props {
   libraryPanel: LibraryPanelBehavior;
   isUnsavedPrompt?: boolean;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>;
   onDismiss: () => void;
   onDiscard: () => void;
 }
 
 export const SaveLibraryVizPanelModal = ({ libraryPanel, isUnsavedPrompt, onDismiss, onConfirm, onDiscard }: Props) => {
+  const [{ loading: isSaving }, confirm] = useAsyncFn(onConfirm, [onConfirm]);
   const [searchString, setSearchString] = useState('');
   const dashState = useAsync(async () => {
     const searchHits = await getConnectedDashboards(libraryPanel.state.uid);
@@ -50,7 +51,7 @@ export const SaveLibraryVizPanelModal = ({ libraryPanel, isUnsavedPrompt, onDism
   const title = isUnsavedPrompt ? 'Unsaved library panel changes' : 'Save library panel';
 
   return (
-    <Modal title={title} onDismiss={onDismiss} isOpen={true}>
+    <Modal title={title} onDismiss={isSaving ? undefined : onDismiss} isOpen={true}>
       <div>
         <p className={styles.textInfo}>
           <Trans
@@ -102,19 +103,15 @@ export const SaveLibraryVizPanelModal = ({ libraryPanel, isUnsavedPrompt, onDism
           </table>
         )}
         <Modal.ButtonRow>
-          <Button variant="secondary" onClick={onDismiss} fill="outline">
+          <Button variant="secondary" onClick={onDismiss} fill="outline" disabled={isSaving}>
             <Trans i18nKey="dashboard-scene.save-library-viz-panel-modal.cancel">Cancel</Trans>
           </Button>
           {isUnsavedPrompt && (
-            <Button variant="destructive" onClick={discardAndClose}>
+            <Button variant="destructive" onClick={discardAndClose} disabled={isSaving}>
               <Trans i18nKey="dashboard-scene.save-library-viz-panel-modal.discard">Discard</Trans>
             </Button>
           )}
-          <Button
-            onClick={() => {
-              onConfirm();
-            }}
-          >
+          <Button onClick={confirm} disabled={isSaving}>
             <Trans i18nKey="dashboard-scene.save-library-viz-panel-modal.update-all">Update all</Trans>
           </Button>
         </Modal.ButtonRow>
