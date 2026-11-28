@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useMemo } from 'react';
 
 import { useScopesServices } from '../ScopesContextProvider';
+import { useScopesServiceState } from '../useScopesServiceState';
 
 import { type ScopesSelectorServiceState } from './ScopesSelectorService';
 import { type NodesMap, type ScopesMap, type SelectedScope, type TreeNode } from './types';
@@ -25,24 +26,11 @@ const DEFAULT_SELECTOR_STATE: ScopesSelectorServiceState = {
 /**
  * Reads one field of the selector state. Every hook below passes the service state through unchanged, so what a
  * consumer receives is the same value it would get from the service. The signatures are fixed here so the source
- * can change later without touching the consumers.
- *
- * `select` must return a value that is referentially stable while the underlying field is unchanged, because
- * useSyncExternalStore compares snapshots by identity. Derive anything new with useMemo outside of `select`.
+ * can change later without touching the consumers. See `useScopesServiceState` for what `select` must return.
  */
 function useSelectorState<T>(select: (state: ScopesSelectorServiceState) => T): T {
   const service = useScopesServices()?.scopesSelectorService;
-
-  const subscribe = useCallback(
-    (onStoreChange: () => void) => {
-      const subscription = service?.stateObservable?.subscribe(onStoreChange);
-      return () => subscription?.unsubscribe();
-    },
-    [service]
-  );
-
-  // The state can be missing when the service is absent or only partly provided, so fall back to the defaults.
-  return useSyncExternalStore(subscribe, () => select(service?.state ?? DEFAULT_SELECTOR_STATE));
+  return useScopesServiceState(service, DEFAULT_SELECTOR_STATE, select);
 }
 
 /**

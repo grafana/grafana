@@ -7,10 +7,10 @@ import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-import { useScopesServices } from '../ScopesContextProvider';
 import { useScopeActions } from '../selector/useScopeActions';
 
 import { isCurrentPath, normalizePath, serializeFolderPath } from './scopeNavgiationUtils';
+import { useGetNavigationScope, useScopesDashboardsActions } from './useScopesDashboardsState';
 
 export interface ScopesNavigationTreeLinkProps {
   subScope?: string;
@@ -39,7 +39,8 @@ export function ScopesNavigationTreeLink({
   const styles = useStyles2(getStyles, megaMenuStyle, visualRefreshEnabled);
   const linkIcon = useMemo(() => getLinkIcon(to), [to]);
   const locPathname = useLocation().pathname;
-  const services = useScopesServices();
+  const { setNavigationScope } = useScopesDashboardsActions();
+  const getNavigationScope = useGetNavigationScope();
   const { getAppliedScopes, changeScopes } = useScopeActions();
   // Ignore query params
   const isCurrent = isCurrentPath(locPathname, to);
@@ -50,7 +51,7 @@ export function ScopesNavigationTreeLink({
 
       // Set current scope to navigation scope and subScope to scope
       const currentScope = getAppliedScopes()[0]?.scopeId;
-      const currentNavigationScope = services?.scopesDashboardsService?.state.navigationScope;
+      const currentNavigationScope = getNavigationScope().navigationScope;
 
       // Parse the URL to extract path and existing query params
       const url = new URL(to, window.location.origin);
@@ -58,11 +59,7 @@ export function ScopesNavigationTreeLink({
       const searchParams = new URLSearchParams(url.search);
       if (!currentNavigationScope && currentScope) {
         searchParams.set('navigation_scope', currentScope);
-        await services?.scopesDashboardsService?.setNavigationScope(
-          currentScope,
-          undefined,
-          subScopePath && subScopePath.length > 0 ? subScopePath : undefined
-        );
+        await setNavigationScope(currentScope, subScopePath && subScopePath.length > 0 ? subScopePath : undefined);
       }
 
       // Update query params with the new subScope

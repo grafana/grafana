@@ -1,9 +1,7 @@
 import { css } from '@emotion/css';
 import { useId } from 'react';
-import { Observable } from 'rxjs';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { useObservable } from '@grafana/data/unstable';
 import { Trans, t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
@@ -14,6 +12,14 @@ import { useDebouncedScopesEnabled } from '../useDebouncedScopesEnabled';
 
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
 import { ScopesDashboardsTreeSearch } from './ScopesDashboardsTreeSearch';
+import {
+  useDashboardsLoading,
+  useDashboardsSearchQuery,
+  useFilteredFolders,
+  useForScopeNames,
+  useScopeNavigations,
+  useScopesDashboardsActions,
+} from './useScopesDashboardsState';
 
 interface Props {
   /** Called after a suggested-dashboard link is clicked, e.g. so an overlay nav menu can close itself. */
@@ -34,20 +40,18 @@ export function ScopesDashboardsMegaMenuSection({ onNavigate }: Props) {
   const scopeServices = useScopesServices();
   const headingId = useId();
 
-  useObservable(
-    scopeServices?.scopesDashboardsService.stateObservable ?? new Observable(),
-    scopeServices?.scopesDashboardsService.state
-  );
+  const loading = useDashboardsLoading();
+  const forScopeNames = useForScopeNames();
+  const scopeNavigations = useScopeNavigations();
+  const searchQuery = useDashboardsSearchQuery();
+  const filteredFolders = useFilteredFolders();
+  const { changeSearchQuery, updateFolder, clearSearchQuery } = useScopesDashboardsActions();
 
   const showAsEnabled = useDebouncedScopesEnabled(scopes?.state.enabled ?? false);
 
   if (!scopeServices || !scopes || !showAsEnabled) {
     return null;
   }
-
-  const { scopesDashboardsService } = scopeServices;
-  const { loading, forScopeNames, scopeNavigations, searchQuery, filteredFolders } = scopesDashboardsService.state;
-  const { changeSearchQuery, updateFolder, clearSearchQuery } = scopesDashboardsService;
 
   if (!loading && (forScopeNames.length === 0 || scopeNavigations.length === 0)) {
     return null;
