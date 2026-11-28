@@ -39,7 +39,57 @@ You can also create custom dashboard templates, giving users in your organizatio
 
 ### Create dashboards from templates
 
-To create a dashboard from a template, follow these steps:
+You can start a dashboard from a template in the following ways:
+
+- **Empty dashboard**: In Grafana Cloud, attach a template to the Grafana Assistant prompt, and Assistant adapts the template to your data sources. Refer to [Start from an empty dashboard page](#start-from-an-empty-dashboard).
+- **Template dialog box**: Open a template with sample data, and then update the panels yourself. Refer to [Start from the template dialog box](#start-from-the-template-dialog-box).
+
+#### Start from an empty dashboard
+
+In Grafana Cloud, the new dashboard page opens with a Grafana Assistant prompt, and you can attach a template to it.
+When you send the prompt, the template opens as a new dashboard and Assistant adapts it to your data sources, the same way clicking [Customize with Assistant](#customize-templates-and-suggested-dashboards-with-grafana-assistant) does.
+
+The template list shows your organization's custom templates first, followed by the Grafana-provisioned templates.
+
+To start a dashboard from a template on an empty dashboard, follow these steps:
+
+1. Click **Dashboards** in the primary menu.
+1. Click **New** and select **New dashboard**.
+1. In the prompt, click **Start from a template** to open the template list, if it isn't already open.
+1. To find a template, do one or both of the following:
+   - Enter a template name in the search bar.
+   - Click the **Sort** drop-down list and select **Alphabetically (A–Z)** or **Alphabetically (Z–A)**.
+
+1. (Optional) To check a template before you use it, hover the cursor over the template and click the **Preview** icon in the top-right corner of the thumbnail.
+
+   The preview opens in a new browser tab. Note that not all templates have a preview available.
+
+1. Click the template you want to use.
+
+   Grafana attaches the template to the prompt.
+   To detach it, click the template again.
+
+1. In the prompt field, describe any changes you want, for example, a data source to use or panels to add.
+
+   If you leave the prompt empty, Assistant adapts the template to your data sources and adjusts its queries as needed.
+
+1. Send the prompt.
+
+   The template opens as a new dashboard, and Assistant starts adapting it in the Assistant sidebar.
+
+1. When Assistant has finished, review the dashboard and make any other edits you need.
+1. If you used a Grafana-provisioned template, when you've made all of your changes, hover the cursor over the top-right corner of the banner panel to open the panel edit menu; then click **Remove** to remove the panel.
+
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-remove-banner-v13.3.png" max-width="750px" alt="Removing the sample data banner panel" >}}
+
+1. Click **Save** in the top-right corner.
+1. (Optional) Enter a new title for the dashboard.
+1. (Optional) Select a folder for the dashboard.
+1. Click **Save**.
+
+#### Start from the template dialog box
+
+To create a dashboard from a template using the template dialog box, follow these steps:
 
 1. Click **Dashboards** in the primary menu.
 1. Click **New** and select **Use template** in the drop-down menu.
@@ -52,25 +102,19 @@ To create a dashboard from a template, follow these steps:
 
 1. Hover the cursor over the template you want to use and click **View template**.
 
-   The dashboard created includes a banner panel indicating the dashboard is using sample data:
-
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-sample-data-dashboard-v13.3.png" max-width="750px" alt="Dashboard with sample data" >}}
-
-1. Click **Save** in the top-right corner.
-1. (Optional) Enter a new title for the dashboard.
-1. (Optional) Select a folder for the dashboard.
-1. Click **Save**.
 1. Update the data source for each panel to add your own data and configure the queries you need.
 
    In Grafana Cloud, you also have the option to [customize the template using Grafana Assistant](#customize-templates-and-suggested-dashboards-with-grafana-assistant).
 
 1. Make any other edits to the dashboard to most effectively display your data.
-1. When you've made all of your changes, hover the cursor over the top-right corner of the banner panel to open the panel edit menu, and then click **Remove** to remove the panel.
+1. If you used a Grafana-provisioned template, when you've made all of your changes, hover the cursor over the top-right corner of the banner panel to open the panel edit menu; then click **Remove** to remove the panel.
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-remove-banner-v13.3.png" max-width="750px" alt="Removing the sample data banner panel" >}}
 
 1. Click **Save**.
-1. Enter an optional description of your updates, and click **Save**.
+1. (Optional) Enter a new title for the dashboard.
+1. (Optional) Select a folder for the dashboard.
+1. Click **Save**.
 
 ### Create custom dashboard templates
 
@@ -101,6 +145,7 @@ To create a custom dashboard template, follow these steps:
 
 Now the template is available in the **Custom** tab of the **Start a dashboard from a template** dialog box.
 This is the dialog box that opens when someone selects the **Use template** option to create a dashboard.
+In Grafana Cloud, the template also appears at the start of the template list on the [empty dashboard page](#start-from-an-empty-dashboard).
 
 Refer to the following sections for directions on [editing](#edit-custom-dashboard-templates) or [deleting](#delete-custom-dashboard-templates) custom dashboard templates.
 
@@ -245,6 +290,9 @@ When you choose this option, a preconfigured prompt is entered into the Assistan
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dash-template-w-asst-v13.3.png" max-width="750px" alt="Grafana Assistant helping create a dashboard from a template" caption="A dashboard template being customized by Grafana Assistant" >}}
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-suggested-dash-w-asst-v13.3.png" max-width="750px" alt="Grafana Assistant helping create a dashboard from a suggestion" caption="A suggested dashboard being customized by Grafana Assistant" >}}
+
+You can also attach a template to the Assistant prompt on the new dashboard page, and optionally describe the changes you want.
+For more information, refer to [Start from an empty dashboard](#start-from-an-empty-dashboard).
 
 Grafana Assistant analyses the template or suggested dashboard, checks your available data sources, and guides the creation of a dashboard tailored to your environment.
 This lets you create a working, relevant dashboard from a template or suggestion without the need to manually map metrics and panels.
