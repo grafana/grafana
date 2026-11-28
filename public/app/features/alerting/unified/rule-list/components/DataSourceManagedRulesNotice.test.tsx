@@ -3,6 +3,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 import { config, setReturnToPreviousHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import * as dataSourcesForRulesModule from '../../hooks/useDataSourcesForRules';
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
 import { addPlugin } from '../../mocks/server/configure';
@@ -11,7 +12,13 @@ import { pluginMeta } from '../../testSetup/plugins';
 import { setupPrometheusAlertingPlugin } from '../../testSetup/prometheusAlertingPlugin';
 import { SupportedPlugin } from '../../types/pluginBridges';
 
-import { DataSourceManagedRulesBanner, DataSourceManagedRulesInlineNotice } from './DataSourceManagedRulesNotice';
+import {
+  DataSourceManagedRulesBanner,
+  DataSourceManagedRulesInlineNotice,
+  SearchDataSourceManagedRulesButton,
+} from './DataSourceManagedRulesNotice';
+
+jest.mock('../../hooks/useDataSourcesForRules', () => makeSpyable('../../hooks/useDataSourcesForRules'));
 
 setupMswServer();
 
@@ -71,6 +78,26 @@ describe('DataSourceManagedRulesBanner with the Prometheus Alerting plugin', () 
 
     const link = await screen.findByRole('link', { name: /view rules in prometheus alerting/i });
     expect(link).toHaveAttribute('href', `/a/${SupportedPlugin.PrometheusAlerting}/rules`);
+  });
+
+  it('still points to the plugin when the data source list fails, without a count', async () => {
+    const listSpy = jest
+      .spyOn(dataSourcesForRulesModule, 'useDataSourcesForRules')
+      .mockReturnValue({ items: [], isLoading: false, error: new Error('list failed') });
+
+    render(
+      <>
+        <DataSourceManagedRulesBanner />
+        <DataSourceManagedRulesInlineNotice />
+        <SearchDataSourceManagedRulesButton />
+      </>
+    );
+
+    expect(await screen.findAllByText('Data sources are managed by the Prometheus Alerting plugin')).toHaveLength(2);
+    expect(screen.getByRole('link', { name: /view rules in prometheus alerting/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /search data source managed rules/i })).toBeInTheDocument();
+    listSpy.mockRestore();
   });
 
   it('says nothing when there are no data source managed rules sources to talk about', async () => {

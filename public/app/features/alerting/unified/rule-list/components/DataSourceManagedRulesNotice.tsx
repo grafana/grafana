@@ -1,14 +1,12 @@
-import { useMemo } from 'react';
-
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Icon, LinkButton, Stack, Text } from '@grafana/ui';
 
 import { createBridgeURL } from '../../components/PluginBridge';
 import { WithReturnButton } from '../../components/WithReturnButton';
+import { useDataSourcesForRules } from '../../hooks/useDataSourcesForRules';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { useRouteProxyActive } from '../../plugin-proxy/withRouteProxy';
 import { SupportedPlugin } from '../../types/pluginBridges';
-import { getExternalRulesSources } from '../../utils/datasource';
 
 /**
  * All of these explain the same thing: some data sources' rules aren't in this list any more
@@ -28,36 +26,47 @@ import { getExternalRulesSources } from '../../utils/datasource';
  * search grammar, and a round trip through the parser reorders and requotes terms, so what lands in
  * the plugin would no longer look like what they typed.
  */
-function useHandedOverRules(): { count: number; pluginRulesLink: string } {
+function useHandedOverRules(): { visible: boolean; count?: number; pluginRulesLink: string } {
   const routeProxyActive = useRouteProxyActive();
   const { searchQuery } = useRulesFilter();
 
-  const count = useMemo(() => (routeProxyActive ? getExternalRulesSources().length : 0), [routeProxyActive]);
+  const { items: rulesDataSources, error } = useDataSourcesForRules();
+  // A failed list has no items, but the plugin still has the data source managed rules. So the notices stay, and
+  // only the count is unknown.
+  const count = error ? undefined : rulesDataSources.length;
+  const visible = routeProxyActive && count !== 0;
   const pluginRulesLink = createBridgeURL(
     SupportedPlugin.PrometheusAlerting,
     '/rules',
     searchQuery ? { search: searchQuery } : {}
   );
 
-  return { count, pluginRulesLink };
+  return { visible, count, pluginRulesLink };
 }
 
 /** Sits above the flat rule list. */
 export function DataSourceManagedRulesBanner() {
-  const { count, pluginRulesLink } = useHandedOverRules();
+  const { visible, count, pluginRulesLink } = useHandedOverRules();
 
-  if (count === 0) {
+  if (!visible) {
     return null;
   }
 
   return (
     <Alert
       severity="info"
-      title={t('alerting.rule-list.datasource-managed-notice.title', '', {
-        count,
-        defaultValue_one: '{{count}} data source is managed by the Prometheus Alerting plugin',
-        defaultValue_other: '{{count}} data sources are managed by the Prometheus Alerting plugin',
-      })}
+      title={
+        count === undefined
+          ? t(
+              'alerting.rule-list.datasource-managed-notice.title-unknown-count',
+              'Data sources are managed by the Prometheus Alerting plugin'
+            )
+          : t('alerting.rule-list.datasource-managed-notice.title', '', {
+              count,
+              defaultValue_one: '{{count}} data source is managed by the Prometheus Alerting plugin',
+              defaultValue_other: '{{count}} data sources are managed by the Prometheus Alerting plugin',
+            })
+      }
     >
       <Stack direction="column" alignItems="flex-start" gap={1}>
         <Trans i18nKey="alerting.rule-list.datasource-managed-notice.body">
@@ -73,9 +82,9 @@ export function DataSourceManagedRulesBanner() {
 
 /** The same message squeezed onto a single line, for a section header row. */
 export function DataSourceManagedRulesInlineNotice() {
-  const { count, pluginRulesLink } = useHandedOverRules();
+  const { visible, count, pluginRulesLink } = useHandedOverRules();
 
-  if (count === 0) {
+  if (!visible) {
     return null;
   }
 
@@ -83,11 +92,16 @@ export function DataSourceManagedRulesInlineNotice() {
     <Stack direction="row" alignItems="center" gap={0.5}>
       <Icon name="info-circle" size="sm" />
       <Text variant="bodySmall" color="secondary">
-        {t('alerting.rule-list.datasource-managed-notice.inline', '', {
-          count,
-          defaultValue_one: '{{count}} data source is managed by the Prometheus Alerting plugin',
-          defaultValue_other: '{{count}} data sources are managed by the Prometheus Alerting plugin',
-        })}
+        {count === undefined
+          ? t(
+              'alerting.rule-list.datasource-managed-notice.inline-unknown-count',
+              'Data sources are managed by the Prometheus Alerting plugin'
+            )
+          : t('alerting.rule-list.datasource-managed-notice.inline', '', {
+              count,
+              defaultValue_one: '{{count}} data source is managed by the Prometheus Alerting plugin',
+              defaultValue_other: '{{count}} data sources are managed by the Prometheus Alerting plugin',
+            })}
       </Text>
       <WithReturnButton
         title={t('alerting.rule-list.return-button.title', 'Alert rules')}
@@ -106,9 +120,9 @@ export function DataSourceManagedRulesInlineNotice() {
  * has the data source managed rules this list no longer shows.
  */
 export function SearchDataSourceManagedRulesButton() {
-  const { count, pluginRulesLink } = useHandedOverRules();
+  const { visible, pluginRulesLink } = useHandedOverRules();
 
-  if (count === 0) {
+  if (!visible) {
     return null;
   }
 

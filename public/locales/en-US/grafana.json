@@ -3297,8 +3297,10 @@
         "inline_one": "{{count}} data source is managed by the Prometheus Alerting plugin",
         "inline_other": "{{count}} data sources are managed by the Prometheus Alerting plugin",
         "inline-action": "View",
+        "inline-unknown-count": "Data sources are managed by the Prometheus Alerting plugin",
         "title_one": "{{count}} data source is managed by the Prometheus Alerting plugin",
-        "title_other": "{{count}} data sources are managed by the Prometheus Alerting plugin"
+        "title_other": "{{count}} data sources are managed by the Prometheus Alerting plugin",
+        "title-unknown-count": "Data sources are managed by the Prometheus Alerting plugin"
       },
       "ds-error": {
         "title": "Cannot load rules for this datasource"
@@ -3345,6 +3347,10 @@
       "recording-rules": "Recording rules",
       "return-button": {
         "title": "Alert rules"
+      },
+      "rules-sources-error": {
+        "body": "Data source-managed rules are missing from the results.",
+        "title": "Could not load the data source list"
       },
       "toggle": {
         "use-new-experience": "Use new experience",

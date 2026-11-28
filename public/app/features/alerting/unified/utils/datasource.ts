@@ -212,12 +212,16 @@ export function getAllRulesSourceNames(): string[] {
   return availableRulesSources;
 }
 
+export function toDataSourceRulesSourceIdentifier(ds: { name: string; uid: string }): DataSourceRulesSourceIdentifier {
+  return { name: ds.name, uid: ds.uid, ruleSourceType: 'datasource' };
+}
+
+/**
+ * @deprecated Reads `config.datasources` synchronously. In React code, use `useDataSourcesForRules` with
+ * `toDataSourceRulesSourceIdentifier`.
+ */
 export function getExternalRulesSources(): DataSourceRulesSourceIdentifier[] {
-  return getRulesDataSources().map((ds) => ({
-    name: ds.name,
-    uid: ds.uid,
-    ruleSourceType: 'datasource',
-  }));
+  return getRulesDataSources().map(toDataSourceRulesSourceIdentifier);
 }
 
 export function getAllRulesSources(): RulesSource[] {

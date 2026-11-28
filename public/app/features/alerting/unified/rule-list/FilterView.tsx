@@ -7,7 +7,8 @@ import { EmptyState, Stack } from '@grafana/ui';
 
 import { withPerformanceLogging } from '../Analytics';
 import { isLoading, useAsync } from '../hooks/useAsync';
-import { type RulesFilter } from '../search/rulesSearchParser';
+import { useRouteProxyActive } from '../plugin-proxy/withRouteProxy';
+import { RuleSource, type RulesFilter } from '../search/rulesSearchParser';
 import { hashRule } from '../utils/rule-id';
 
 import { DataSourceRuleLoader } from './DataSourceRuleLoader';
@@ -20,6 +21,7 @@ import {
   DataSourceManagedRulesBanner,
   SearchDataSourceManagedRulesButton,
 } from './components/DataSourceManagedRulesNotice';
+import { RulesSourcesErrorNotice } from './components/RulesSourcesErrorNotice';
 import {
   type GrafanaRuleWithOrigin,
   type PromRuleWithOrigin,
@@ -58,7 +60,12 @@ function FilterViewResults({ filterState }: FilterViewProps) {
   const [transitionPending, startTransition] = useTransition();
 
   /* this hook returns a function that creates an AsyncIterable<RuleWithOrigin> which we will use to populate the front-end */
-  const getFilteredRulesIterator = useFilteredRulesIteratorProvider();
+  const {
+    getFilteredRulesIterator,
+    isLoading: isLoadingRulesSources,
+    error: rulesSourcesError,
+  } = useFilteredRulesIteratorProvider();
+  const routeProxyActive = useRouteProxyActive();
 
   const iteration = useRef<{
     rulesBatchIterator: AsyncIterator<RuleWithOrigin[]>;
@@ -138,23 +145,41 @@ function FilterViewResults({ filterState }: FilterViewProps) {
     return 'searching';
   }, [doneSearching, loadingAborted]);
 
+  // The first page load builds the iterator, and the iterator keeps its rules sources. So a search that uses the
+  // data source-managed rules sources waits for their list before the first page load.
+  const usesExternalRulesSources = !routeProxyActive && filterState.ruleSource !== RuleSource.Grafana;
+  if (usesExternalRulesSources && isLoadingRulesSources && state.status === 'not-executed') {
+    return (
+      <ul aria-label={t('alerting.filter-view-results.aria-label-filteredrulelist', 'filtered-rule-list')}>
+        <AlertRuleListItemSkeleton />
+        <AlertRuleListItemSkeleton />
+      </ul>
+    );
+  }
+
+  const rulesSourcesErrorNotice = !routeProxyActive && <RulesSourcesErrorNotice error={rulesSourcesError} />;
+
   /* If we don't have any rules and have exhausted all sources, show a EmptyState */
   if (noRulesFound && doneSearching) {
     return (
-      <EmptyState variant="not-found" message="No matching rules found">
-        <Stack direction="column" alignItems="center" gap={2}>
-          <Trans i18nKey="alerting.rule-list.filter-view.no-rules-found">
-            No alert or recording rules matched your current set of filters.
-          </Trans>
-          <SearchDataSourceManagedRulesButton />
-        </Stack>
-      </EmptyState>
+      <>
+        {rulesSourcesErrorNotice}
+        <EmptyState variant="not-found" message="No matching rules found">
+          <Stack direction="column" alignItems="center" gap={2}>
+            <Trans i18nKey="alerting.rule-list.filter-view.no-rules-found">
+              No alert or recording rules matched your current set of filters.
+            </Trans>
+            <SearchDataSourceManagedRulesButton />
+          </Stack>
+        </EmptyState>
+      </>
     );
   }
 
   return (
     <Stack direction="column" gap={0}>
       <DataSourceManagedRulesBanner />
+      {rulesSourcesErrorNotice}
       <ul aria-label={t('alerting.filter-view-results.aria-label-filteredrulelist', 'filtered-rule-list')}>
         {rules.map((ruleWithOrigin) => {
           const { key, rule, groupIdentifier, origin } = ruleWithOrigin;
