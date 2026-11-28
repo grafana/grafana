@@ -52,6 +52,9 @@ export const validateTitle = (newTitle: string, folderUid: string) => {
 };
 
 export const validateUid = (value: string) => {
+  if (!value) {
+    return Promise.resolve(true);
+  }
   return getDashboardAPI()
     .then(async (api) => {
       const existingDashboard = await api.getDashboardDTO(value);
