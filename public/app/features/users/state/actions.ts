@@ -54,7 +54,7 @@ export function loadUsers(): ThunkResult<void> {
 
 const fetchUsersWithDebounce = debounce((dispatch) => dispatch(loadUsers()), 300);
 
-export function updateUser(user: OrgUser): ThunkResult<void> {
+export function updateUser(user: OrgUser): ThunkResult<Promise<void>> {
   return async (dispatch) => {
     await getBackendSrv().patch(`/api/org/users/${user.userId}`, { role: user.role });
     dispatch(loadUsers());

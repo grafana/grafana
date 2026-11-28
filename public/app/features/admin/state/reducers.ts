@@ -2,11 +2,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 import { type LdapState, type LdapConnectionInfo, type LdapError, type SyncInfo, type LdapUser } from 'app/types/ldap';
 import {
-  type UserAdminState,
   type UserDTO,
-  type UserOrg,
-  type UserSession,
-  type UserAdminError,
   type UserListAdminState,
   type UserFilter,
   type UserListAnonymousDevicesState,
@@ -71,54 +67,6 @@ export const {
 } = ldapSlice.actions;
 
 export const ldapReducer = ldapSlice.reducer;
-
-// UserAdminPage
-
-const initialUserAdminState: UserAdminState = {
-  user: undefined,
-  sessions: [],
-  orgs: [],
-  isLoading: true,
-  error: undefined,
-};
-
-const userAdminSlice = createSlice({
-  name: 'userAdmin',
-  initialState: initialUserAdminState,
-  reducers: {
-    userProfileLoadedAction: (state, action: PayloadAction<UserDTO>): UserAdminState => ({
-      ...state,
-      user: action.payload,
-    }),
-    userOrgsLoadedAction: (state, action: PayloadAction<UserOrg[]>): UserAdminState => ({
-      ...state,
-      orgs: action.payload,
-    }),
-    userSessionsLoadedAction: (state, action: PayloadAction<UserSession[]>): UserAdminState => ({
-      ...state,
-      sessions: action.payload,
-    }),
-    userAdminPageLoadedAction: (state, action: PayloadAction<boolean>): UserAdminState => ({
-      ...state,
-      isLoading: !action.payload,
-    }),
-    userAdminPageFailedAction: (state, action: PayloadAction<UserAdminError>): UserAdminState => ({
-      ...state,
-      error: action.payload,
-      isLoading: false,
-    }),
-  },
-});
-
-export const {
-  userProfileLoadedAction,
-  userOrgsLoadedAction,
-  userSessionsLoadedAction,
-  userAdminPageLoadedAction,
-  userAdminPageFailedAction,
-} = userAdminSlice.actions;
-
-export const userAdminReducer = userAdminSlice.reducer;
 
 // UserListAdminPage
 
@@ -274,7 +222,6 @@ const userListAnonymousDevicesReducer = userListAnonymousDevicesSlice.reducer;
 
 export default {
   ldap: ldapReducer,
-  userAdmin: userAdminReducer,
   userListAdmin: userListAdminReducer,
   userListAnonymousDevices: userListAnonymousDevicesReducer,
 };

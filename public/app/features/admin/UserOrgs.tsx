@@ -20,8 +20,8 @@ interface Props {
   isExternalUser?: boolean;
 
   onOrgRemove: (orgId: number) => void;
-  onOrgRoleChange: (orgId: number, newRole: OrgRole) => void;
-  onOrgAdd: (orgId: number, role: OrgRole) => void;
+  onOrgRoleChange: (orgId: number, newRole: OrgRole) => void | Promise<unknown>;
+  onOrgAdd: (orgId: number, role: OrgRole) => void | Promise<unknown>;
 }
 
 export const UserOrgs = memo(({ user, orgs, isExternalUser, onOrgRoleChange, onOrgRemove, onOrgAdd }: Props) => {
@@ -41,9 +41,6 @@ export const UserOrgs = memo(({ user, orgs, isExternalUser, onOrgRoleChange, onO
 
   return (
     <div>
-      <h3 className="page-heading">
-        <Trans i18nKey="admin.user-orgs.title">Organizations</Trans>
-      </h3>
       <Stack gap={1.5} direction="column">
         <table className="filter-table form-inline">
           <tbody>
@@ -114,7 +111,7 @@ interface OrgRowProps {
   org: UserOrg;
   isExternalUser?: boolean;
   onOrgRemove: (orgId: number) => void;
-  onOrgRoleChange: (orgId: number, newRole: OrgRole) => void;
+  onOrgRoleChange: (orgId: number, newRole: OrgRole) => void | Promise<unknown>;
 }
 
 const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }: OrgRowProps) => {
@@ -146,8 +143,13 @@ const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }
     setCurrentRole(newRole);
   };
 
-  const handleOrgRoleSave = () => {
-    onOrgRoleChange(org.orgId, currentRole);
+  const handleOrgRoleSave = async () => {
+    try {
+      await onOrgRoleChange(org.orgId, currentRole);
+      setIsChangingRole(false);
+    } catch {
+      setCurrentRole(org.role);
+    }
   };
 
   const handleCancelClick = () => {
@@ -155,7 +157,7 @@ const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }
   };
 
   const handleBasicRoleChange = (newRole: OrgRole) => {
-    onOrgRoleChange(org.orgId, newRole);
+    return onOrgRoleChange(org.orgId, newRole);
   };
 
   const authSource = user?.authLabels?.length && user?.authLabels[0];
@@ -244,7 +246,7 @@ interface AddToOrgModalProps {
   isOpen: boolean;
   user?: UserDTO;
   userOrgs: UserOrg[];
-  onOrgAdd(orgId: number, role: string): void;
+  onOrgAdd(orgId: number, role: string): void | Promise<unknown>;
 
   onDismiss?(): void;
 }
@@ -253,9 +255,8 @@ const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: Add
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
   const [role, setRole] = useState<OrgRole>(OrgRole.Viewer);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const [pendingOrgId, setPendingOrgId] = useState<number | null>(null);
-  const [pendingUserId, setPendingUserId] = useState<number | null>(null);
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
   const styles = useStyles2(getAddToOrgModalStyles);
 
   const onOrgSelect = (org: OrgSelectItem) => {
@@ -276,18 +277,22 @@ const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: Add
   };
 
   const onAddUserToOrg = async () => {
-    onOrgAdd(selectedOrg!.id, role);
-    // add the stored userRoles also
-    if (contextSrv.licensedAccessControlEnabled()) {
-      if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd)) {
-        if (pendingUserId) {
-          await updateUserRoles(pendingRoles, pendingUserId, pendingOrgId!);
-          // clear pending state
-          setPendingOrgId(null);
-          setPendingRoles([]);
-          setPendingUserId(null);
+    setIsAdding(true);
+    try {
+      await onOrgAdd(selectedOrg!.id, role);
+      if (contextSrv.licensedAccessControlEnabled()) {
+        if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd)) {
+          if (user && pendingRoles.length) {
+            // The roles go to the organization selected now, which can differ from the one they were picked in.
+            await updateUserRoles(pendingRoles, user.id, selectedOrg!.id);
+          }
         }
       }
+      onCancel();
+    } catch {
+      // The mutation handler reports the error; keep the dialog open for correction.
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -295,18 +300,9 @@ const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: Add
     // clear selectedOrg when modal is canceled
     setSelectedOrg(null);
     setPendingRoles([]);
-    setPendingOrgId(null);
-    setPendingUserId(null);
     if (onDismiss) {
       onDismiss();
     }
-  };
-
-  const onRoleUpdate = async (roles: Role[], userId: number, orgId: number | undefined) => {
-    // keep the new role assignments for user
-    setPendingRoles(roles);
-    setPendingOrgId(orgId!);
-    setPendingUserId(userId);
   };
 
   return (
@@ -330,7 +326,7 @@ const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: Add
             basicRoleDisabled={false}
             roleOptions={roleOptions}
             apply={true}
-            onApplyRoles={onRoleUpdate}
+            onApplyRoles={setPendingRoles}
             pendingRoles={pendingRoles}
           />
         </Field>
@@ -339,7 +335,7 @@ const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: Add
             <Button variant="secondary" fill="outline" onClick={onCancel}>
               <Trans i18nKey="admin.user-orgs-modal.cancel-button">Cancel</Trans>
             </Button>
-            <Button variant="primary" disabled={selectedOrg === null} onClick={onAddUserToOrg}>
+            <Button variant="primary" disabled={selectedOrg === null || isAdding} onClick={onAddUserToOrg}>
               <Trans i18nKey="admin.user-orgs-modal.add-button">Add to organization</Trans>
             </Button>
           </Stack>
@@ -427,7 +423,7 @@ interface ExternalUserTooltipProps {
   lockMessage?: string;
 }
 
-export const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) => {
+const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) => {
   const styles = useStyles2(getTooltipStyles);
 
   return (

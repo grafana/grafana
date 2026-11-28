@@ -36,6 +36,7 @@ export interface UserDTO extends WithAccessControlMetadata {
   isAdmin?: boolean;
   isExternal?: boolean;
   updatedAt?: string;
+  createdAt?: string;
   authLabels?: string[];
   theme?: string;
   avatarUrl?: string;
@@ -98,19 +99,6 @@ export interface UserOrg {
   name: string;
   orgId: number;
   role: OrgRole;
-}
-
-export interface UserAdminState {
-  user?: UserDTO;
-  sessions: UserSession[];
-  orgs: UserOrg[];
-  isLoading: boolean;
-  error?: UserAdminError;
-}
-
-export interface UserAdminError {
-  title: string;
-  body: string;
 }
 
 export type UserFilter = Record<string, string | boolean | SelectableValue[]>;

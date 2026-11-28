@@ -23,8 +23,8 @@ export interface Props {
   basicRoleDisabled?: boolean;
   basicRoleDisabledMessage?: string;
   showBasicRole?: boolean;
-  onRolesChange: (newRoles: Role[]) => void;
-  onBasicRoleChange?: (newRole: OrgRole) => void;
+  onRolesChange: (newRoles: Role[]) => void | Promise<unknown>;
+  onBasicRoleChange?: (newRole: OrgRole) => void | Promise<unknown>;
   canUpdateRoles?: boolean;
   /**
    * Set {@link RolePickerMenu}'s button to display either `Apply` (apply=true) or `Update` (apply=false)
@@ -179,15 +179,31 @@ export const RolePicker = ({
     setSelectedBuiltInRole(role);
   };
 
-  const onUpdate = (newRoles: Role[], newBuiltInRole?: OrgRole) => {
-    if (onBasicRoleChange && newBuiltInRole && newBuiltInRole !== basicRole) {
-      onBasicRoleChange(newBuiltInRole);
-    }
-    if (canUpdateRoles) {
-      onRolesChange(newRoles);
-    }
+  // The callers report a failed write. Here a rejection only drops the selection the server refused.
+  const onUpdate = async (newRoles: Role[], newBuiltInRole?: OrgRole) => {
     setQuery('');
     setOpen(false);
+    if (onBasicRoleChange && newBuiltInRole && newBuiltInRole !== basicRole) {
+      try {
+        await onBasicRoleChange(newBuiltInRole);
+      } catch {
+        // The roles are not sent either, so that a refused update is not applied in part.
+        setSelectedBuiltInRole(basicRole);
+        setSelectedRoles(appliedRoles);
+        return;
+      }
+    }
+    // A roles update replaces the whole set, so it is only sent when the selection changed.
+    const rolesChanged =
+      newRoles.length !== appliedRoles.length ||
+      newRoles.some(({ uid }) => !appliedRoles.some((role) => role.uid === uid));
+    if (canUpdateRoles && rolesChanged) {
+      try {
+        await onRolesChange(newRoles);
+      } catch {
+        setSelectedRoles(appliedRoles);
+      }
+    }
   };
 
   const getOptions = () => {
