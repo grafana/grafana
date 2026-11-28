@@ -239,7 +239,9 @@ func TimeIntervals(
 			renames[curName] = newName
 			usedNames[newName] = idx
 			// Rebuild rather than assigning the title so UID and Version are recomputed from the new name.
-			interval = v1.NewTimeInterval(v1.TimeIntervalUID(newName), newName, interval.TimeIntervals, interval.Provenance)
+			renamed := v1.NewTimeInterval(v1.TimeIntervalUID(newName), newName, interval.TimeIntervals, interval.Provenance())
+			renamed.Manager = interval.Manager
+			interval = renamed
 		}
 		if _, occupied := result[interval.UID]; occupied {
 			// The name-derived UID collides with something already in the merged result - most
@@ -318,7 +320,9 @@ func Receivers(existing map[v1.ResourceUID]v1.PostableApiReceiver, incoming []*v
 			newName := getUniqueName(cpy.Name, dedupSuffix, usedNames)
 			renames[cpy.Name] = newName
 			// Rebuild rather than assigning the name so UID and Version are recomputed from the new name.
-			cpy = v1.NewReceiver(v1.ReceiverUID(newName), newName, cpy.GrafanaManagedReceivers, cpy.Provenance)
+			renamed := v1.NewReceiver(v1.ReceiverUID(newName), newName, cpy.GrafanaManagedReceivers, cpy.Provenance())
+			renamed.Manager = cpy.Manager
+			cpy = renamed
 			usedNames[cpy.Name] = i
 		}
 		if _, occupied := result[cpy.UID]; occupied {

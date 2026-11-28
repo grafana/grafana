@@ -70,8 +70,8 @@ func (c *AMConfigV1) SortedTimeIntervals() []TimeInterval {
 func NewTimeInterval(uid ResourceUID, name string, intervals []timeinterval.TimeInterval, provenance models.Provenance) TimeInterval {
 	ti := TimeInterval{
 		ResourceMetadata: ResourceMetadata{
-			UID:        uid,
-			Provenance: provenance,
+			UID:     uid,
+			Manager: models.ProvenanceToManagerProperties(provenance),
 		},
 		Title:         name,
 		TimeIntervals: slices.Clone(intervals),
