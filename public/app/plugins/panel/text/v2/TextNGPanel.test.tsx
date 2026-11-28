@@ -16,8 +16,10 @@ import {
   ThresholdsMode,
   toDataFrame,
 } from '@grafana/data';
+import { PanelStatusStore } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
+import { type SceneObject } from '@grafana/scenes';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
@@ -32,6 +34,7 @@ import { FOOTER_TEST_ID } from './TextNGFooter';
 import { type Props, TextNGPanel } from './TextNGPanel';
 import { TRUNCATION_NOTICE_TEST_ID } from './TextNGTruncationNotice';
 import { PREVIEW_TEST_ID } from './editor/TextNGEditor';
+import * as fmtMigration from './fmtMigration';
 import { MAX_RENDERED_CHARS } from './renderContent';
 import { createData, createProps, renderPanel } from './test-utils';
 
@@ -730,6 +733,21 @@ describe('TextNGPanel', () => {
       expect(within(footers[0]).getByRole('combobox')).toHaveValue('Frame A');
     });
 
+    it('checks fmt reads against every frame while editing, including the ones the picker hides', async () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      const hidden = toDataFrame({ name: 'Frame B', fields: [{ name: 'fmt', values: ['json'] }] });
+      const props = createProps(replaceVariablesMock, {
+        data: createData([frameA, hidden]),
+        options: { content: '{{#each data}}{{fmt.host}}{{/each}}', mode: TextMode.Markdown },
+      });
+
+      setup(props, CoreApp.PanelEditor);
+
+      expect(await screen.findByRole('status', { name: 'fmt is deprecated' })).toHaveTextContent(
+        '0 of 1 expression can be converted to the display helper.'
+      );
+    });
+
     it('does not make the rendered content a row flex item', () => {
       replaceVariablesMock.mockImplementation((str: string) => str);
       const props = createProps(replaceVariablesMock, {
@@ -1151,6 +1169,129 @@ describe('TextNGPanel', () => {
 
       expect(screen.getByText('kept')).toBeInTheDocument();
       expect(screen.queryByTestId(TRUNCATION_NOTICE_TEST_ID)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('fmt deprecation notice', () => {
+    const NOTICE = 'This panel reads fmt, which is deprecated. Edit the panel to convert it to the display helper.';
+    let previousScene: SceneObject;
+
+    beforeEach(() => {
+      previousScene = window.__grafanaSceneContext;
+    });
+
+    afterEach(() => {
+      window.__grafanaSceneContext = previousScene;
+      delete window.__grafanaImageRendererMessageChannel;
+      jest.restoreAllMocks();
+    });
+
+    const SAVEABLE = { isDashboardScene: true, state: { meta: { canSave: true } } };
+
+    const renderWithNotices = (
+      app: CoreApp,
+      scene: unknown,
+      content = 'Services: {{#each data}}{{fmt.cpu}}{{/each}}'
+    ) => {
+      window.__grafanaSceneContext = scene as SceneObject;
+      replaceVariablesMock.mockImplementation((value: string) => value);
+      const notices = new PanelStatusStore();
+      const props = createProps(replaceVariablesMock, { options: { content, mode: TextMode.Markdown } });
+
+      render(
+        <PanelContextProvider value={{ app, notices } as unknown as PanelContext}>
+          <TextNGPanel {...props} />
+        </PanelContextProvider>
+      );
+
+      return notices;
+    };
+
+    it('warns on a dashboard the viewer can save that the template reads fmt', async () => {
+      const notices = renderWithNotices(CoreApp.Dashboard, SAVEABLE);
+
+      await waitFor(() => expect(notices.getSnapshot().items.map((item) => item.text)).toEqual([NOTICE]));
+    });
+
+    it.each([
+      {
+        desc: 'a dashboard the viewer cannot save',
+        scene: { isDashboardScene: true, state: { meta: { canSave: false } } },
+      },
+      { desc: 'a panel outside a dashboard', scene: undefined },
+      { desc: 'a notebook, which has no dashboard to save', scene: { state: { title: 'Notebook' } } },
+    ])('publishes nothing on $desc', async ({ scene }) => {
+      const notices = renderWithNotices(CoreApp.Dashboard, scene);
+      await act(() => import('./TextFmtDeprecationNotice'));
+
+      expect(screen.getByTestId('TextNGPanel-converted-content')).toHaveTextContent('Services:');
+      expect(notices.getSnapshot().items).toEqual([]);
+    });
+
+    it('does not analyze a template that never mentions fmt', async () => {
+      const find = jest.spyOn(fmtMigration, 'findFmtReads');
+      const notices = renderWithNotices(
+        CoreApp.Dashboard,
+        SAVEABLE,
+        'Services: {{#each data}}{{display "cpu"}}{{/each}}'
+      );
+      await act(() => import('./TextFmtDeprecationNotice'));
+
+      expect(screen.getByTestId('TextNGPanel-converted-content')).toHaveTextContent('Services:');
+      expect(find).not.toHaveBeenCalled();
+      expect(notices.getSnapshot().items).toEqual([]);
+      find.mockRestore();
+    });
+
+    it('publishes nothing in an image render, such as a PDF report, made for someone who can save', async () => {
+      window.__grafanaImageRendererMessageChannel = jest.fn();
+      const notices = renderWithNotices(CoreApp.Dashboard, SAVEABLE);
+      await act(() => import('./TextFmtDeprecationNotice'));
+
+      expect(screen.getByTestId('TextNGPanel-converted-content')).toHaveTextContent('Services:');
+      expect(notices.getSnapshot().items).toEqual([]);
+    });
+
+    it('takes the warning down once the template stops reading fmt', async () => {
+      window.__grafanaSceneContext = SAVEABLE as unknown as SceneObject;
+      replaceVariablesMock.mockImplementation((value: string) => value);
+      const notices = new PanelStatusStore();
+      const panel = (content: string) => (
+        <PanelContextProvider value={{ app: CoreApp.Dashboard, notices } as unknown as PanelContext}>
+          <TextNGPanel {...createProps(replaceVariablesMock, { options: { content, mode: TextMode.Markdown } })} />
+        </PanelContextProvider>
+      );
+      const { rerender } = render(panel('Services: {{#each data}}{{fmt.cpu}}{{/each}}'));
+      await waitFor(() => expect(notices.getSnapshot().items).toHaveLength(1));
+
+      rerender(panel('Services: {{#each data}}{{display "cpu"}}{{/each}}<!-- was fmt -->'));
+      await waitFor(() => expect(notices.getSnapshot().items).toEqual([]));
+
+      rerender(panel('Services: {{#each data}}{{fmt.cpu}}{{/each}}'));
+      await waitFor(() => expect(notices.getSnapshot().items).toHaveLength(1));
+
+      rerender(panel('Services: {{#each data}}{{display "cpu"}}{{/each}}'));
+      await waitFor(() => expect(notices.getSnapshot().items).toEqual([]));
+    });
+
+    it('keeps the panel when the fmt check fails, since the warning is optional', async () => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      const find = jest.spyOn(fmtMigration, 'findFmtReads').mockImplementation(() => {
+        throw new Error('analysis failed');
+      });
+      const notices = renderWithNotices(CoreApp.Dashboard, SAVEABLE);
+      await act(() => import('./TextFmtDeprecationNotice'));
+
+      await waitFor(() => expect(find).toHaveBeenCalled());
+      expect(screen.getByTestId('TextNGPanel-converted-content')).toHaveTextContent('Services:');
+      expect(notices.getSnapshot().items).toEqual([]);
+    });
+
+    it('leaves the warning to the editor in panel edit, which offers the conversion itself', async () => {
+      const notices = renderWithNotices(CoreApp.PanelEditor, SAVEABLE);
+
+      expect(await screen.findByRole('status', { name: 'fmt is deprecated' })).toBeVisible();
+      expect(notices.getSnapshot().items).toEqual([]);
     });
   });
 });

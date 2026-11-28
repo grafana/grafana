@@ -46,6 +46,8 @@ export const DashboardInteractions = {
     handlebars_count: number;
     data_macro_count: number;
     per_row_count: number;
+    fmt_count?: number;
+    fmt_manual_count?: number;
     dashboard_uid?: string;
   }) => {
     reportDashboardInteraction('text_panel_usage', properties);
