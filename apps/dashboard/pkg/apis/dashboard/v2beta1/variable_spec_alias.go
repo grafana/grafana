@@ -8,7 +8,10 @@
 // it in an extra object.
 package v2beta1
 
-import "encoding/json"
+import (
+	"bytes"
+	"encoding/json"
+)
 
 // +k8s:openapi-gen=true
 type VariableSpec struct {
@@ -37,7 +40,61 @@ func (s *VariableSpec) UnmarshalJSON(raw []byte) error {
 	if raw == nil {
 		return nil
 	}
-	return s.DashboardVariableKind.UnmarshalJSON(raw)
+
+	normalized, err := normalizeVariableOptionValues(raw)
+	if err != nil {
+		return err
+	}
+	return s.DashboardVariableKind.UnmarshalJSON(normalized)
+}
+
+func normalizeVariableOptionValues(raw []byte) ([]byte, error) {
+	// Global variable options are generated as string-only unions, but query results can contain numbers.
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.UseNumber()
+	var variableKind map[string]any
+	if err := decoder.Decode(&variableKind); err != nil {
+		return nil, err
+	}
+
+	spec, ok := variableKind["spec"].(map[string]any)
+	if !ok {
+		return raw, nil
+	}
+
+	for _, key := range []string{"current", "defaultValue"} {
+		normalizeVariableOption(spec[key])
+	}
+
+	for _, key := range []string{"options", "staticOptions"} {
+		options, ok := spec[key].([]any)
+		if !ok {
+			continue
+		}
+		for _, option := range options {
+			normalizeVariableOption(option)
+		}
+	}
+
+	return json.Marshal(variableKind)
+}
+
+func normalizeVariableOption(value any) {
+	option, ok := value.(map[string]any)
+	if !ok {
+		return
+	}
+	switch v := option["value"].(type) {
+	case json.Number:
+		option["value"] = v.String()
+	case []any:
+		// Option values may also be an array of strings.
+		for i, elem := range v {
+			if number, ok := elem.(json.Number); ok {
+				v[i] = number.String()
+			}
+		}
+	}
 }
 
 var _ json.Marshaler = VariableSpec{}
