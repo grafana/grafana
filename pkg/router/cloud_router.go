@@ -41,15 +41,16 @@ func SetDefaultCoreURL(cfg *setting.Cfg, url string) bool {
 	return true
 }
 
-// readManifestsTargets builds the targets for plugins_url, core_url and
-// bridge_url, in priority order, skipping each whose URL is unset. core_url
-// serves core APIs (like playlists) in the plugin manifests format, and all
-// share the [router.backend_grpc] connection settings, which are only read
-// when one of the URLs is set. Each has its own TLS settings for its poll, from
+// readManifestsTargets builds the targets for plugins_url, core_url,
+// core_alerting_url and bridge_url, in priority order, skipping each whose URL
+// is unset. core_url and core_alerting_url serve core APIs (like playlists) in
+// the plugin manifests format, from separate core apps servers, and all share
+// the [router.backend_grpc] connection settings, which are only read when one
+// of the URLs is set. Each has its own TLS settings for its poll, from
 // <name>_ca_file and <name>_insecure.
 func readManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection, deps PluginDependencies) (targets []*pluginManifestsTarget, err error) {
-	// Each source's name is also its config key prefix, its metric label and its backend key prefix. core is not filtered by group patterns.
-	sources := []string{sourcePlugins, sourceCore, sourceBridge}
+	// Each source's name is also its config key prefix, its metric label and its backend key prefix. The core sources are not filtered by group patterns.
+	sources := []string{sourcePlugins, sourceCore, sourceCoreAlerting, sourceBridge}
 	urls := make([]string, len(sources))
 	configured := false
 	for i, s := range sources {
@@ -114,7 +115,7 @@ func newPluginManifestsClient(section *setting.DynamicSection, prefix string) (*
 
 // NewCloudRoutesLoader builds the cloud RoutesLoader from the
 // [cloud_router], [router.aggregate.<name>] and [router.backend_grpc] sections. It returns (nil, nil) when no source is configured
-// (an aggregate target url, plugins_url, core_url, bridge_url or st_discovery_url), and
+// (an aggregate target url, plugins_url, core_url, core_alerting_url, bridge_url or st_discovery_url), and
 // the caller falls back to another loader.
 //
 // Aggregate targets are polled with a CAP token exchanged for a signed access
@@ -133,7 +134,7 @@ func NewCloudRoutesLoader(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoad
 		return nil, err
 	}
 
-	// plugins_url and core_url need no CAP token (they are unauthenticated
+	// plugins_url, core_url and core_alerting_url need no CAP token (they are unauthenticated
 	// in-cluster endpoints), so they stay out of the cap_token gate below.
 	targets, err := readManifestsTargets(cfg, section, deps)
 	if err != nil {
@@ -147,7 +148,7 @@ func NewCloudRoutesLoader(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoad
 		// dummy loader and serve no routes.
 		for _, key := range []string{"appmanifest_apiserver_url", "apiserver_url"} {
 			if section.Key(key).MustString("") != "" {
-				return nil, fmt.Errorf("%s: %s is no longer supported -- configure an aggregate target, plugins_url, core_url or st_discovery_url instead", cloudRouterSection, key)
+				return nil, fmt.Errorf("%s: %s is no longer supported -- configure an aggregate target, plugins_url, core_url, core_alerting_url or st_discovery_url instead", cloudRouterSection, key)
 			}
 		}
 		return nil, nil
