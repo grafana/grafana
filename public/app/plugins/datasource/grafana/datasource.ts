@@ -93,7 +93,8 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
               annotation: target as unknown as AnnotationQuery<GrafanaAnnotationQuery>,
               dashboard: getDashboardSrv().getCurrent(),
             },
-            request.scopes
+            request.scopes,
+            request.requestId
           )
         );
       }
@@ -204,7 +205,8 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
   async getAnnotations(
     options: AnnotationQueryRequest<GrafanaQuery>,
-    requestScopes?: Scope[]
+    requestScopes?: Scope[],
+    requestId?: string
   ): Promise<DataQueryResponse> {
     const query = options.annotation.target as GrafanaQuery;
     if (query?.queryType === GrafanaQueryType.TimeRegions) {
@@ -262,7 +264,8 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
     const df = await annotationServer().query(
       params,
-      `grafana-data-source-annotations-${annotation.name}-${options.dashboard?.uid}`
+      // Panel time overrides query the same annotation concurrently; their requests must not cancel each other.
+      requestId ?? `grafana-data-source-annotations-${annotation.name}-${options.dashboard?.uid}`
     );
     return { data: [df] };
   }

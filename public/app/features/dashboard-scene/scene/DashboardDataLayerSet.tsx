@@ -1,4 +1,6 @@
-import { type AnnotationQuery, getDataSourceRef } from '@grafana/data';
+import { Subscription } from 'rxjs';
+
+import { type AnnotationQuery, getDataSourceRef, type TimeRange } from '@grafana/data';
 import { getDataSourceInstanceSettings } from '@grafana/runtime';
 import {
   type SceneDataLayerProviderState,
@@ -6,6 +8,13 @@ import {
   SceneDataLayerSetBase,
   type SceneComponentProps,
   type SceneObject,
+  type SceneObjectRef,
+  SceneObjectBase,
+  SceneQueryRunner,
+  type SceneTimeRangeLike,
+  type SceneTimeRangeState,
+  sceneGraph,
+  VizPanel,
 } from '@grafana/scenes';
 
 import { type AlertStatesDataLayer } from './AlertStatesDataLayer';
@@ -19,6 +28,7 @@ const NEW_ANNOTATION_COLOR = 'red';
 export interface DashboardDataLayerSetState extends SceneDataLayerProviderState {
   alertStatesLayer?: AlertStatesDataLayer;
   annotationLayers: SceneDataLayerProvider[];
+  panelLayers: DashboardAnnotationsDataLayer[];
 }
 
 export class DashboardDataLayerSet
@@ -32,6 +42,7 @@ export class DashboardDataLayerSet
       ...state,
       name: state.name ?? 'Data layers',
       annotationLayers: state.annotationLayers ?? [],
+      panelLayers: [],
     });
 
     this.addActivationHandler(() => this._onActivate());
@@ -116,6 +127,11 @@ export class DashboardDataLayerSet
    * their own copy of this set, so the source set must not reach panels inside those clones.
    */
   public isVisibleTo(sceneObject: SceneObject): boolean {
+    // The panel's layer set supplies either these shared results or annotations queried with its time override.
+    if (sceneObject instanceof SceneQueryRunner && sceneObject.state.$data instanceof PanelDataLayerSet) {
+      return false;
+    }
+
     const owner = this.parent;
     if (!owner) {
       return true;
@@ -135,6 +151,16 @@ export class DashboardDataLayerSet
 
   public addAnnotationLayer(layer: SceneDataLayerProvider) {
     this.setState({ annotationLayers: [...this.state.annotationLayers, layer] });
+  }
+
+  public addPanelLayer(layer: DashboardAnnotationsDataLayer): () => void {
+    this.setState({ panelLayers: [...this.state.panelLayers, layer] });
+    return () => this.setState({ panelLayers: this.state.panelLayers.filter((item) => item !== layer) });
+  }
+
+  public clone(withState?: Partial<DashboardDataLayerSetState>): this {
+    // Runtime copies refer to live panel time ranges and must not be cloned with the annotation definitions.
+    return super.clone({ ...withState, panelLayers: [] });
   }
 
   public async createDefaultAnnotationLayer(): Promise<DashboardAnnotationsDataLayer> {
@@ -224,4 +250,149 @@ function tabIsCurrent(tab: SceneObject): boolean {
     return Boolean(tab.isCurrentTab());
   }
   return true;
+}
+
+interface PanelDataLayerSetState extends SceneDataLayerProviderState {
+  layers: Array<SceneObjectRef<DashboardAnnotationsDataLayer>>;
+}
+
+/** Shared dashboard queries cannot supply annotations outside the dashboard's time range. */
+export class PanelDataLayerSet extends SceneDataLayerSetBase<PanelDataLayerSetState> {
+  public constructor(state: Partial<PanelDataLayerSetState> = {}) {
+    super({ ...state, name: 'Panel data layers', layers: [] });
+    this.addActivationHandler(() => this._onActivate());
+  }
+
+  private _onActivate() {
+    let panel = this.parent;
+    while (panel && !(panel instanceof VizPanel)) {
+      panel = panel.parent;
+    }
+    if (!panel) {
+      return;
+    }
+
+    const sources = sceneGraph.getDataLayers(panel).filter((layer) => layer instanceof DashboardDataLayerSet);
+    let layerSubscriptions = new Subscription();
+
+    const subscribeToLayers = () => {
+      const previousQuerySub = this.querySub;
+      const previousLayerSubscriptions = layerSubscriptions;
+      layerSubscriptions = new Subscription();
+      const layers: SceneDataLayerProvider[] = [];
+      const panelLayers: DashboardAnnotationsDataLayer[] = [];
+      const timeRange = sceneGraph.getTimeRange(this);
+
+      for (const source of sources) {
+        if (timeRange === sceneGraph.getTimeRange(source)) {
+          layers.push(source);
+          continue;
+        }
+
+        for (const annotation of source.state.annotationLayers) {
+          if (!(annotation instanceof DashboardAnnotationsDataLayer)) {
+            layers.push(annotation);
+            continue;
+          }
+
+          const panelTimeRange = new PanelAnnotationTimeRange({ source: timeRange.getRef() });
+          // Keep variable lookup and dependency notifications in the definition's scope; only the time is panel-local.
+          const layer = annotation.clone({ key: undefined, data: undefined, $timeRange: panelTimeRange });
+          const removeLayer = source.addPanelLayer(layer);
+          panelLayers.push(layer);
+          layers.push(layer);
+          layerSubscriptions.add(
+            annotation.subscribeToState((next, prev) => {
+              if (next.query !== prev.query || next.isEnabled !== prev.isEnabled) {
+                layer.setState({ query: next.query, isEnabled: next.isEnabled });
+                if (next.isEnabled && next.isEnabled === prev.isEnabled) {
+                  layer.runLayer();
+                }
+              }
+            })
+          );
+          layerSubscriptions.add(removeLayer);
+        }
+
+        if (source.state.alertStatesLayer) {
+          layers.push(source.state.alertStatesLayer);
+        }
+      }
+
+      this.setState({ layers: panelLayers.map((layer) => layer.getRef()) });
+      this.subscribeToAllLayers(layers);
+      previousQuerySub?.unsubscribe();
+      previousLayerSubscriptions.unsubscribe();
+    };
+
+    for (const source of sources) {
+      this._subs.add(source.activate());
+      this._subs.add(
+        source.subscribeToState((next, prev) => {
+          if (next.annotationLayers !== prev.annotationLayers || next.alertStatesLayer !== prev.alertStatesLayer) {
+            subscribeToLayers();
+          }
+        })
+      );
+    }
+    this._subs.add(
+      panel.subscribeToState((next, prev) => {
+        if (next.$timeRange !== prev.$timeRange) {
+          subscribeToLayers();
+        }
+      })
+    );
+    subscribeToLayers();
+
+    return () => {
+      layerSubscriptions.unsubscribe();
+      this.querySub?.unsubscribe();
+      this.querySub = undefined;
+      this.setState({ layers: [] });
+    };
+  }
+}
+
+interface PanelAnnotationTimeRangeState extends SceneTimeRangeState {
+  source: SceneObjectRef<SceneTimeRangeLike>;
+}
+
+class PanelAnnotationTimeRange extends SceneObjectBase<PanelAnnotationTimeRangeState> implements SceneTimeRangeLike {
+  public constructor(state: { source: SceneObjectRef<SceneTimeRangeLike> }) {
+    const source = state.source.resolve();
+    super({
+      from: source.state.from,
+      to: source.state.to,
+      value: source.state.value,
+      timeZone: source.getTimeZone(),
+      source: state.source,
+    });
+    this.addActivationHandler(() => {
+      const source = this.state.source.resolve();
+      const update = (state: SceneTimeRangeState) => {
+        this.setState({ from: state.from, to: state.to, value: state.value, timeZone: source.getTimeZone() });
+      };
+      if (this.state.value !== source.state.value) {
+        update(source.state);
+      }
+      const subscription = source.subscribeToState(update);
+      return () => subscription.unsubscribe();
+    });
+  }
+
+  public getTimeZone() {
+    return this.state.source.resolve().getTimeZone();
+  }
+
+  public onTimeRangeChange(timeRange: TimeRange) {
+    this.state.source.resolve().onTimeRangeChange(timeRange);
+  }
+
+  public onTimeZoneChange(timeZone: string) {
+    this.state.source.resolve().onTimeZoneChange(timeZone);
+  }
+
+  public onRefresh() {
+    this.state.source.resolve().onRefresh();
+  }
 }

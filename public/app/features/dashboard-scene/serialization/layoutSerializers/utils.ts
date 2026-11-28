@@ -30,6 +30,7 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constan
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
+import { PanelDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
@@ -272,6 +273,7 @@ function createPanelDataProvider(
   const datasource = getPanelDataSource(panelKind);
 
   dataProvider = new SceneQueryRunner({
+    $data: new PanelDataLayerSet(),
     datasource,
     ...(targets.length
       ? { queries: queriesWithUniqueRefIds.map(panelQueryKindToSceneQuery) }

@@ -28,6 +28,7 @@ import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePick
 import { createDefaultQuery } from 'app/features/query/state/queryDefaults';
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
+import { PanelDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
@@ -455,6 +456,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         panel.setState({
           $data: new SceneDataTransformer({
             $data: new SceneQueryRunner({
+              $data: new PanelDataLayerSet(),
               datasource: {
                 uid: ds,
               },
