@@ -97,7 +97,7 @@ To change the target log data source, for example from Elasticsearch to Loki, se
    For more information, refer to [Cardinality](https://grafana.com/docs/loki/latest/get-started/labels/cardinality/).
 
    {{< admonition type="note" >}}
-   When using Loki, the **Logs for this span** link only appears on a span if at least one of the configured tags exists on that span.
+   With the automatically generated Loki query, the **Logs for this span** link only appears on a span if at least one of the configured or default tags exists on that span.
    If none of the tags match, the link doesn't appear and no error is shown.
    {{< /admonition >}}
 
@@ -130,6 +130,28 @@ To change the target log data source, for example from Elasticsearch to Loki, se
    Refer to [Custom query variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#custom-query-variables) for the full list of available variables.
 
 1. Click **Save & test**.
+
+## Link to more than one logs destination
+
+You can link spans to more than one logs data source, for example when your services write logs to several Loki instances, or to Loki and Elasticsearch.
+Each destination has its own data source, time shifts, tags, filters, and custom query.
+
+{{< admonition type="note" >}}
+The **Add logs destination** button and the **Link label** field are part of the Tempo data source plugin, which is released separately from Grafana.
+If your Tempo plugin version doesn't show them yet, add destinations with the `tracesToLogsAdditional` block described in [Provision trace to logs settings](#provision-trace-to-logs-settings).
+Grafana versions without support for multiple logs destinations only show the first destination in the trace view.
+{{< /admonition >}}
+
+1. In the **Trace to logs** section of your Tempo data source, click **Add logs destination**.
+1. Configure the new destination with the same steps as the first one.
+1. Optional: Enter a **Link label** for each destination.
+1. Click **Save & test**.
+
+The span details in the trace view show a logs link for each destination that can query logs for the span.
+A destination has no link when its data source no longer exists or when Grafana can't build a query for the span, for example because none of its tags match. A custom query that doesn't use tags can still get a link when no tags match, as long as its other variables resolve.
+Each link is labeled with the destination's **Link label**, or with the logs data source name when no label is set.
+When a span has more than three links, they're grouped in the **Links** menu.
+The logs button in the trace header uses the first destination.
 
 ## Configure the Loki data source
 
@@ -176,6 +198,36 @@ For more details about derived field options, refer to [Derived fields](https://
 ## Provision trace to logs settings
 
 You can provision the trace to logs configuration using the `tracesToLogsV2` block in your data source YAML file.
+`tracesToLogsV2` holds the first logs destination.
+To add more destinations, list them in the `tracesToLogsAdditional` block.
+Grafana versions without support for multiple logs destinations only use `tracesToLogsV2`.
+
+The following example links spans to application logs in one Loki data source and to audit logs in another:
+
+```yaml
+jsonData:
+  tracesToLogsV2:
+    name: 'Application logs'
+    datasourceUid: '<APPLICATION_LOKI_UID>'
+    spanStartTimeShift: '-2s'
+    spanEndTimeShift: '2s'
+    tags:
+      - key: 'service.name'
+        value: 'service_name'
+    filterByTraceID: true
+    filterBySpanID: false
+    customQuery: false
+  tracesToLogsAdditional:
+    - name: 'Audit logs'
+      datasourceUid: '<AUDIT_LOKI_UID>'
+      spanStartTimeShift: '-5m'
+      spanEndTimeShift: '5m'
+      customQuery: true
+      query: '{job="audit"} |= "$${__span.traceId}"'
+```
+
+Replace `<APPLICATION_LOKI_UID>` and `<AUDIT_LOKI_UID>` with the UIDs of your Loki data sources.
+
 For the full provisioning YAML example including all Tempo settings, refer to [Provision the Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/provision/).
 For general provisioning instructions, refer to [Provisioning data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
 

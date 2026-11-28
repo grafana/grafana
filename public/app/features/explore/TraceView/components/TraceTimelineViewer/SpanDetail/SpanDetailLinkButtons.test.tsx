@@ -1,11 +1,20 @@
 import { of } from 'rxjs';
-import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
-import { CoreApp, type LinkModel, toDataFrame, type TimeRange } from '@grafana/data';
+import {
+  CoreApp,
+  type DataSourceApi,
+  type DataSourceInstanceListItem,
+  type DataSourceInstanceSettings,
+  type LinkModel,
+  toDataFrame,
+  type TimeRange,
+} from '@grafana/data';
 import {
   locationService,
   usePluginLinks,
   getDataSourceInstance,
+  useDataSourceInstanceList,
   useDataSourceInstanceSettings,
 } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
@@ -140,6 +149,220 @@ describe('SpanDetailLinkButtons', () => {
       // Log link + the always-present share button.
       expect(screen.getAllByRole('button')).toHaveLength(2);
       expect(screen.getByText(expectedCTA)).toBeInTheDocument();
+    });
+  });
+
+  describe('multiple logs destinations', () => {
+    const renderButtons = () =>
+      render(
+        <SpanDetailLinkButtons
+          span={span}
+          createSpanLink={createSpanLink}
+          datasourceType="test"
+          datasourceUid="test-datasource-uid"
+          traceToProfilesOptions={undefined}
+          timeRange={timeRange}
+          app={CoreApp.Explore}
+          focusSpanLink={focusSpanLink}
+        />
+      );
+
+    const otherLinks = ['Dashboard', 'Runbook', 'Source', 'Wiki'].map((title) => ({
+      type: SpanLinkType.Unknown,
+      href: `/${title.toLowerCase()}`,
+      title,
+    }));
+
+    beforeEach(() => {
+      jest.mocked(useDataSourceInstanceSettings).mockReturnValue({
+        isLoading: false,
+        settings: {
+          jsonData: { tracesToLogsV2: { customQuery: false, filterBySpanID: true } },
+        } as unknown as DataSourceInstanceSettings,
+      });
+    });
+
+    it('labels each destination and moves its links into the overflow menu like the other links', async () => {
+      createSpanLink.mockReturnValue([
+        {
+          type: SpanLinkType.Logs,
+          href: '/app-logs',
+          title: 'Application logs',
+          logsDestination: { index: 0, options: { customQuery: false }, isOneOfMany: true },
+        },
+        {
+          type: SpanLinkType.Logs,
+          href: '/audit-logs',
+          title: 'loki-audit',
+          logsDestination: { index: 1, options: { customQuery: false }, isOneOfMany: true },
+        },
+        ...otherLinks.slice(0, 2),
+      ]);
+
+      renderButtons();
+
+      expect(screen.queryByText('Application logs')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Links' }));
+
+      const menu = await screen.findByRole('menu');
+      expect(within(menu).getByRole('menuitem', { name: /^Application logs:/ })).toBeInTheDocument();
+      expect(within(menu).getByRole('menuitem', { name: /^loki-audit:/ })).toBeInTheDocument();
+      expect(within(menu).getByText('Dashboard')).toBeInTheDocument();
+      expect(within(menu).queryByText('Logs for this span')).not.toBeInTheDocument();
+    });
+
+    it("labels a single named destination with its name instead of the filter's call to action", () => {
+      createSpanLink.mockReturnValue([
+        {
+          type: SpanLinkType.Logs,
+          href: '/app-logs',
+          title: 'Application logs',
+          logsDestination: { index: 0, options: { name: 'Application logs', customQuery: false }, isOneOfMany: false },
+        },
+      ]);
+
+      renderButtons();
+
+      expect(screen.getByText('Application logs')).toBeInTheDocument();
+      expect(screen.queryByText('Logs for this span')).not.toBeInTheDocument();
+    });
+
+    it('keeps a single destination in the overflow menu when there are more than three links', async () => {
+      createSpanLink.mockReturnValue([
+        {
+          type: SpanLinkType.Logs,
+          href: '/app-logs',
+          title: 'Related logs',
+          logsDestination: { index: 0, options: { customQuery: false, filterBySpanID: true }, isOneOfMany: false },
+        },
+        ...otherLinks.slice(0, 3),
+      ]);
+
+      renderButtons();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Links' }));
+
+      const menu = await screen.findByRole('menu');
+      expect(within(menu).getByText('Logs for this span')).toBeInTheDocument();
+      expect(within(menu).getByText('Runbook')).toBeInTheDocument();
+    });
+
+    describe('with dynamic trace to logs', () => {
+      beforeEach(async () => {
+        await act(async () => {
+          setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
+        });
+      });
+
+      afterEach(async () => {
+        await act(async () => {
+          setTestFlags({});
+        });
+        jest.mocked(useDataSourceInstanceList).mockReturnValue({ isLoading: false, items: [] });
+        jest.mocked(getDataSourceInstance).mockResolvedValue({ query: jest.fn() } as unknown as DataSourceApi);
+      });
+
+      const logsFrame = toDataFrame({
+        meta: { preferredVisualisationType: 'logs' },
+        fields: [
+          { name: 'time', values: [1] },
+          { name: 'message', values: ['hello'] },
+        ],
+      });
+      const emptyFrame = toDataFrame({ fields: [{ name: 'time', values: [] }] });
+
+      const mockLokiDataSources = (queriesByUid: Record<string, jest.Mock>) => {
+        jest.mocked(useDataSourceInstanceList).mockReturnValue({
+          isLoading: false,
+          items: Object.keys(queriesByUid).map(
+            (uid) => ({ uid, type: 'loki', name: uid }) as DataSourceInstanceListItem
+          ),
+        });
+        jest.mocked(getDataSourceInstance).mockImplementation(async (ref) => {
+          const uid = typeof ref === 'object' && ref ? ref.uid : ref;
+          return { query: queriesByUid[uid ?? ''], type: 'loki' } as unknown as DataSourceApi;
+        });
+      };
+
+      const logsLink = (title: string, uid: string, index: number) => {
+        const queries = ['t2l:default:trace_id', 't2l:line-contains'].map((refId) => ({
+          refId,
+          datasource: { uid, type: 'loki' },
+        }));
+        return {
+          type: SpanLinkType.Logs,
+          href: `/${uid}`,
+          title,
+          logsDestination: { index, options: { customQuery: false }, isOneOfMany: true },
+          linkModel: {
+            href: `/${uid}`,
+            title,
+            target: '_blank',
+            origin: {},
+            interpolatedParams: { query: queries[0], alternativeQueries: queries },
+          },
+        };
+      };
+
+      it('checks each destination only against its own data source', async () => {
+        const queriesByUid: Record<string, jest.Mock> = {
+          'app-uid': jest.fn().mockReturnValue(of({ data: [emptyFrame] })),
+          'audit-uid': jest.fn().mockReturnValue(of({ data: [logsFrame] })),
+        };
+        mockLokiDataSources(queriesByUid);
+        createSpanLink.mockReturnValue([
+          logsLink('Application logs', 'app-uid', 0),
+          logsLink('Audit logs', 'audit-uid', 1),
+        ]);
+
+        renderButtons();
+
+        await userEvent.hover(await screen.findByRole('button', { name: /Application logs/ }));
+        // Shown once the check has finished. Falling back would have found the audit logs for this button too.
+        expect(await screen.findByText('No matching logs found for this span')).toBeInTheDocument();
+        expect(queriesByUid['app-uid']).toHaveBeenCalledTimes(2);
+        await waitFor(() => expect(queriesByUid['audit-uid']).toHaveBeenCalledTimes(1));
+      });
+
+      it('keeps a destination on its own data source when the link before it goes away', async () => {
+        mockLokiDataSources({
+          'app-uid': jest.fn().mockReturnValue(of({ data: [logsFrame] })),
+          'audit-uid': jest.fn().mockReturnValue(of({ data: [logsFrame] })),
+        });
+        // A single query, as non-Loki destinations build: the lookup result is written back into this query.
+        const singleQueryLink = (title: string, uid: string, index: number) => {
+          const link = logsLink(title, uid, index);
+          const query = { refId: 'A', datasource: { uid, type: 'elasticsearch' } };
+          return { ...link, linkModel: { ...link.linkModel, interpolatedParams: { query } } };
+        };
+        const buttons = (links: Array<ReturnType<typeof singleQueryLink>>) => (
+          <SpanDetailLinkButtons
+            span={span}
+            createSpanLink={jest.fn().mockReturnValue(links)}
+            datasourceType="test"
+            datasourceUid="test-datasource-uid"
+            traceToProfilesOptions={undefined}
+            timeRange={timeRange}
+            app={CoreApp.Explore}
+            focusSpanLink={focusSpanLink}
+          />
+        );
+        const { rerender } = render(
+          buttons([singleQueryLink('Application logs', 'app-uid', 0), singleQueryLink('Audit logs', 'audit-uid', 1)])
+        );
+        for (const name of [/Application logs/, /Audit logs/]) {
+          await waitFor(() => expect(screen.getByRole('button', { name })).toHaveAttribute('aria-disabled', 'false'));
+        }
+
+        const auditLink = singleQueryLink('Audit logs', 'audit-uid', 1);
+        rerender(buttons([auditLink]));
+
+        await waitFor(() =>
+          expect(screen.getByRole('button', { name: /Audit logs/ })).toHaveAttribute('aria-disabled', 'false')
+        );
+        expect(auditLink.linkModel.interpolatedParams.query.datasource.uid).toBe('audit-uid');
+      });
     });
   });
 

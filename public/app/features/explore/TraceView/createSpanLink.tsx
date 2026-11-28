@@ -13,19 +13,20 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import {
-  type TraceToProfilesOptions,
-  type TraceToMetricsOptions,
-  type TraceToLogsOptionsV2,
-} from '@grafana/o11y-ds-frontend';
+import { type TraceToProfilesOptions, type TraceToMetricsOptions } from '@grafana/o11y-ds-frontend';
 import { type PromQuery } from '@grafana/prometheus';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, logError } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
 
 import { type ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
 
 import { getTraceToLogsSpanQuery, interpolateQueries } from './components/logsLink';
-import { type SpanLinkDef, type SpanLinkFunc, SpanLinkType } from './components/types/links';
+import {
+  type SpanLinkDef,
+  type SpanLinkFunc,
+  SpanLinkType,
+  type TraceToLogsDestination,
+} from './components/types/links';
 import { type Trace, type TraceSpan, type TraceSpanReference } from './components/types/trace';
 import { getTimeRangeFromTimestamps, scopedVarsFromTrace, timeShiftToMs } from './createTraceLink';
 import { getDefaultMetricTags, getDefaultProfilingTags, getFormattedTags, getSpanTags } from './crossSignalConfig';
@@ -40,26 +41,24 @@ import { getDefaultMetricTags, getDefaultProfilingTags, getFormattedTags, getSpa
  */
 export function createSpanLinkFactory({
   splitOpenFn,
-  traceToLogsOptions,
+  logsDestinations,
   traceToMetricsOptions,
   traceToProfilesOptions,
   dataFrame,
   createFocusSpanLink,
   trace,
   dataLinkPostProcessor,
-  logsDataSourceSettings,
   metricsDataSourceSettings,
   profilesDataSourceSettings,
 }: {
   splitOpenFn: SplitOpen;
-  traceToLogsOptions?: TraceToLogsOptionsV2;
+  logsDestinations?: TraceToLogsDestination[];
   traceToMetricsOptions?: TraceToMetricsOptions;
   traceToProfilesOptions?: TraceToProfilesOptions;
   dataFrame?: DataFrame;
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
   trace: Trace;
   dataLinkPostProcessor?: DataLinkPostProcessor;
-  logsDataSourceSettings?: DataSourceInstanceSettings<DataSourceJsonData>;
   metricsDataSourceSettings?: DataSourceInstanceSettings<DataSourceJsonData>;
   profilesDataSourceSettings?: DataSourceInstanceSettings<DataSourceJsonData>;
 }): SpanLinkFunc | undefined {
@@ -74,13 +73,12 @@ export function createSpanLinkFactory({
     splitOpenFn,
     // We need this to make the types happy but for this branch of code it does not matter which field we supply.
     dataFrame.fields[0],
-    traceToLogsOptions,
+    logsDestinations ?? [],
     traceToMetricsOptions,
     createFocusSpanLink,
     scopedVars,
     dataFrame,
     dataLinkPostProcessor,
-    logsDataSourceSettings,
     metricsDataSourceSettings
   );
 
@@ -145,18 +143,67 @@ export const defaultProfilingKeys = getDefaultProfilingTags();
 export const pyroscopeProfileIdTagKey = 'pyroscope.profile.id';
 const feO11yTagKey = 'gf.feo11y.app.id';
 
+/**
+ * Labels each logs destination's link with its configured name. Without a name, a single destination keeps the
+ * generic label and multiple destinations use their logs data source name. Duplicate labels get the destination's
+ * position so the links stay distinguishable.
+ */
+function getLogsLinkTitles(destinations: TraceToLogsDestination[]): string[] {
+  if (destinations.length === 1 && !destinations[0].isOneOfMany) {
+    return [
+      destinations[0].options.name?.trim() ||
+        t('explore.legacy-create-span-link-factory.title.related-logs', 'Related logs'),
+    ];
+  }
+
+  const titles = destinations.map(({ options, settings }) => options.name?.trim() || settings.name);
+  const isUnique = (title: string) => titles.indexOf(title) === titles.lastIndexOf(title);
+  const taken = new Set(titles.filter(isUnique));
+  return titles.map((title, index) => {
+    if (isUnique(title)) {
+      return title;
+    }
+    // A configured label can already look like a generated one, such as "Audit (1)", so skip suffixes that are taken.
+    let position = destinations[index].index + 1;
+    while (taken.has(`${title} (${position})`)) {
+      position++;
+    }
+    const generated = `${title} (${position})`;
+    taken.add(generated);
+    return generated;
+  });
+}
+
+/**
+ * Runs the callback for each logs destination. A destination whose configuration still makes building its link throw
+ * only loses its own link, instead of stopping the links of every span.
+ */
+function forEachLogsDestination(
+  destinations: TraceToLogsDestination[],
+  callback: (destination: TraceToLogsDestination, index: number) => void
+) {
+  destinations.forEach((destination, index) => {
+    try {
+      callback(destination, index);
+    } catch (error) {
+      logError(error instanceof Error ? error : new Error(String(error)), { datasourceUid: destination.settings.uid });
+    }
+  });
+}
+
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
   field: Field,
-  traceToLogsOptions?: TraceToLogsOptionsV2,
+  logsDestinations: TraceToLogsDestination[],
   traceToMetricsOptions?: TraceToMetricsOptions,
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>,
   scopedVars?: ScopedVars,
   dataFrame?: DataFrame,
   dataLinkPostProcessor?: DataLinkPostProcessor,
-  logsDataSourceSettings?: DataSourceInstanceSettings<DataSourceJsonData>,
   metricsDataSourceSettings?: DataSourceInstanceSettings<DataSourceJsonData>
 ) {
+  const logsLinkTitles = getLogsLinkTitles(logsDestinations);
+
   return function SpanLink(span: TraceSpan): SpanLinkDef[] {
     scopedVars = {
       ...scopedVars,
@@ -166,7 +213,8 @@ function legacyCreateSpanLinkFactory(
 
     // TODO: This should eventually move into specific data sources and added to the data frame as we no longer use the
     //  deprecated blob format and we can map the link easily in data frame.
-    if (logsDataSourceSettings && traceToLogsOptions) {
+    forEachLogsDestination(logsDestinations, (destination, destinationIndex) => {
+      const { options: traceToLogsOptions, settings: logsDataSourceSettings } = destination;
       const { query, tags } = getTraceToLogsSpanQuery(span, logsDataSourceSettings, traceToLogsOptions);
 
       // query can be false in case the simple UI tag mapping is used but none of them are present in the span.
@@ -250,7 +298,7 @@ function legacyCreateSpanLinkFactory(
           links.push({
             href: link.href,
             linkModel: link,
-            title: t('explore.legacy-create-span-link-factory.title.related-logs', 'Related logs'),
+            title: logsLinkTitles[destinationIndex],
             onClick: link.onClick,
             content: (
               <Icon
@@ -263,10 +311,15 @@ function legacyCreateSpanLinkFactory(
             ),
             field,
             type: SpanLinkType.Logs,
+            logsDestination: {
+              index: destination.index,
+              options: traceToLogsOptions,
+              isOneOfMany: destination.isOneOfMany || logsDestinations.length > 1,
+            },
           });
         }
       }
-    }
+    });
 
     // Get metrics links
     if (metricsDataSourceSettings && traceToMetricsOptions?.queries) {
