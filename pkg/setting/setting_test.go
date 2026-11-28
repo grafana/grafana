@@ -817,6 +817,38 @@ func TestNewCfgFromINIFile(t *testing.T) {
 	require.Equal(t, "test.com", cfg.Domain)
 }
 
+func TestFrontendMaxParallelRequests(t *testing.T) {
+	loadBudget := func(t *testing.T, value string) int {
+		t.Helper()
+		cfg, err := NewCfgFromBytes([]byte("[datasources]\nfrontend_max_parallel_requests = " + value))
+		require.NoError(t, err)
+		return cfg.FrontendMaxParallelRequests
+	}
+
+	t.Run("uses the default when the setting is empty", func(t *testing.T) {
+		assert.Zero(t, loadBudget(t, ""))
+	})
+
+	t.Run("reads the configured budget", func(t *testing.T) {
+		assert.Equal(t, 15, loadBudget(t, "15"))
+	})
+
+	t.Run("uses the default for a malformed budget", func(t *testing.T) {
+		assert.Zero(t, loadBudget(t, "many"))
+	})
+
+	t.Run("uses the default above the maximum budget", func(t *testing.T) {
+		assert.Zero(t, loadBudget(t, "1001"))
+	})
+
+	t.Run("environment override", func(t *testing.T) {
+		t.Setenv("GF_DATASOURCES_FRONTEND_MAX_PARALLEL_REQUESTS", "10")
+		cfg := NewCfg()
+		require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../"}))
+		assert.Equal(t, 10, cfg.FrontendMaxParallelRequests)
+	})
+}
+
 func TestDashboardDefaultPreload(t *testing.T) {
 	t.Run("defaults to false when unset", func(t *testing.T) {
 		cfg, err := NewCfgFromBytes([]byte(``))

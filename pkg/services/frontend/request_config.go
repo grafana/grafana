@@ -56,6 +56,7 @@ func NewFSRequestConfig(ctx context.Context, cfg *setting.Cfg, license licensing
 		GoogleAnalyticsId:                    cfg.GoogleAnalyticsID,
 		GrafanaJavascriptAgent:               cfg.GrafanaJavascriptAgent,
 		Http2Enabled:                         cfg.Protocol == setting.HTTP2Scheme || cfg.Protocol == setting.SocketHTTP2Scheme,
+		FrontendMaxParallelRequests:          cfg.FrontendMaxParallelRequests,
 		JwtHeaderName:                        cfg.JWTAuth.HeaderName,
 		JwtUrlLogin:                          cfg.JWTAuth.URLLogin,
 		LdapEnabled:                          cfg.LDAPAuthEnabled,
