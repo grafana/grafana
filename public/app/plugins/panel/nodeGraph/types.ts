@@ -15,6 +15,7 @@ export type NodeDatum = SimulationNodeDatum & {
   icon?: IconName;
   nodeRadius?: Field;
   highlighted: boolean;
+  highlightColor?: Field;
   isInstrumented?: boolean;
 };
 
