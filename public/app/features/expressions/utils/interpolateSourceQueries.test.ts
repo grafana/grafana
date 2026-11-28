@@ -1,3 +1,5 @@
+import { type DataSourceInstanceSettings, type ScopedVars } from '@grafana/data';
+import { DataSourceWithBackend } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
 import { interpolateSourceQueries } from './interpolateSourceQueries';
@@ -50,6 +52,33 @@ describe('interpolateSourceQueries', () => {
       { ...hiddenSource, targetFull: 'metric.a' },
       { ...nested, targetFull: 'sumSeries(metric.a)' },
     ]);
+  });
+
+  it('uses `applyTemplateVariables` when the data source overrides it, as the query path does', async () => {
+    // Mirrors Prometheus and Loki: `applyTemplateVariables` keeps `$__interval` for the backend,
+    // while `interpolateVariablesInQueries` exists for Explore and expands it.
+    type PromLikeQuery = DataQuery & { expr: string };
+    class PromLikeDatasource extends DataSourceWithBackend<PromLikeQuery> {
+      applyTemplateVariables(query: PromLikeQuery, scopedVars: ScopedVars) {
+        return { ...query, expr: query.expr.replace('$env', String(scopedVars.env?.value)) };
+      }
+
+      interpolateVariablesInQueries(queries: PromLikeQuery[], scopedVars: ScopedVars) {
+        return queries.map((query) => ({
+          ...query,
+          expr: query.expr.replace('$__interval', String(scopedVars.__interval?.value)),
+        }));
+      }
+    }
+    const datasource = { uid: 'prom', type: 'prom' };
+    const prom = new PromLikeDatasource({ uid: 'prom', type: 'prom', jsonData: {} } as DataSourceInstanceSettings);
+    mockDataSources({ prom });
+    const query: PromLikeQuery = { refId: 'A', hide: true, expr: 'rate(x{env="$env"}[$__interval])', datasource };
+    const scopedVars = { __interval: { text: '2s', value: '2s' }, env: { text: 'prod', value: 'prod' } };
+
+    const result = await interpolateSourceQueries([query], scopedVars);
+
+    expect(result).toEqual([{ ...query, expr: 'rate(x{env="prod"}[$__interval])' }]);
   });
 
   it('keeps request order and matches results to queries by refId when data sources are interleaved', async () => {
