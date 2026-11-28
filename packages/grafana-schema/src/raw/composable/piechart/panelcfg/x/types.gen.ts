@@ -56,11 +56,17 @@ export interface Options extends common.OptionsWithTooltip, common.SingleStatBas
   displayLabels: Array<PieChartLabels>;
   legend: PieChartLegendOptions;
   pieType: PieChartType;
+  /**
+   * Render slices with the exact field color instead of the
+   * per-slice radial gradient.
+   */
+  solidColors?: boolean;
   sort: common.SortOrder;
 }
 
 export const defaultOptions: Partial<Options> = {
   displayLabels: [],
+  solidColors: false,
 };
 
 export interface FieldConfig extends common.HideableFieldConfig {}

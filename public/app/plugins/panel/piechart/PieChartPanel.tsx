@@ -118,6 +118,7 @@ export function PieChartPanel(props: Props) {
             pieType={options.pieType}
             sort={options.sort}
             displayLabels={options.displayLabels}
+            solidColors={options.solidColors}
             gradientFills={gradientFills}
           />
         );
