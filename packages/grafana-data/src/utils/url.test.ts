@@ -129,4 +129,34 @@ describe('getUrlSearchParams', () => {
     const params = urlUtil.getUrlSearchParams();
     expect(params).toStrictEqual(expectedParams);
   });
+
+  describe('repeated keys mixing boolean and valued params', () => {
+    const originalSearch = win.location.search;
+
+    afterEach(() => {
+      win.location.search = originalSearch;
+    });
+
+    it('should not throw when a boolean param is followed by the same param with a value', () => {
+      win.location.search = '?production&dh_stamp&dh_stamp=%22payments%22';
+
+      expect(() => urlUtil.getUrlSearchParams()).not.toThrow();
+      expect(urlUtil.getUrlSearchParams()).toStrictEqual({
+        production: true,
+        dh_stamp: ['"payments"'],
+      });
+    });
+
+    it('should keep collecting values after a boolean param was replaced by a valued one', () => {
+      win.location.search = '?a&a=1&a=2';
+
+      expect(urlUtil.getUrlSearchParams()).toStrictEqual({ a: ['1', '2'] });
+    });
+
+    it('should not throw when a valued param is followed by the same param as boolean', () => {
+      win.location.search = '?a=1&a';
+
+      expect(() => urlUtil.getUrlSearchParams()).not.toThrow();
+    });
+  });
 });
