@@ -1,3 +1,5 @@
+import { type PointerEvent as ReactPointerEvent } from 'react';
+
 import { VizPanel } from '@grafana/scenes';
 
 import { moveGridItem } from '../actions/layout/moveGridItem';
@@ -14,6 +16,7 @@ import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
+import { DASHBOARD_DROP_TARGET_KEY_ATTR, type LayoutSnapshot } from './types/DashboardDropTarget';
 
 jest.mock('../actions/layout/moveGridItem', () => ({
   moveGridItem: jest.fn(),
@@ -158,6 +161,158 @@ describe('DashboardLayoutOrchestrator', () => {
       });
       expect(moveGridItemMock).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('grid item drags and the optional drop target hooks', () => {
+  const originalElementsFromPoint = document.elementsFromPoint;
+  let elementsUnderPointer: Element[] = [];
+
+  beforeEach(() => {
+    moveGridItemMock.mockClear();
+    reorderAutoGridItemsMock.mockClear();
+    elementsUnderPointer = [];
+    document.elementsFromPoint = () => elementsUnderPointer;
+  });
+
+  afterEach(() => {
+    // Ends any drag a test left running, so its listeners don't leak into the next test
+    document.body.dispatchEvent(new MouseEvent('pointerup'));
+    document.elementsFromPoint = originalElementsFromPoint;
+  });
+
+  function pointerOver(dropTargetKey: string | null) {
+    const element = document.createElement('div');
+    if (dropTargetKey) {
+      element.setAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR, dropTargetKey);
+    }
+    elementsUnderPointer = [element];
+  }
+
+  function movePointer(clientX: number, clientY: number) {
+    document.body.dispatchEvent(new MouseEvent('pointermove', { clientX, clientY }));
+  }
+
+  function drop() {
+    document.body.dispatchEvent(new MouseEvent('pointerup'));
+  }
+
+  function setupGridItemDrag() {
+    const scene = setupWithTwoTabs();
+    const element = document.createElement('div');
+    element.getBoundingClientRect = () => ({ left: 100, top: 50, width: 300, height: 200 }) as DOMRect;
+    (scene.gridItem.containerRef as { current: HTMLDivElement | null }).current = element;
+    // The dashboard replaces the orchestrator it is given with its own
+    const orchestrator = scene.dashboard.state.layoutOrchestrator!;
+
+    orchestrator.startDraggingSync({ clientX: 130, clientY: 70 } as ReactPointerEvent, scene.gridItem);
+
+    return { ...scene, orchestrator };
+  }
+
+  it('captures the pointer offset inside the dragged item and its rendered size on drag start, and clears it on drop', () => {
+    const { orchestrator } = setupGridItemDrag();
+
+    expect(orchestrator.getGridItemDragInfo()).toEqual({ offsetX: 30, offsetY: 20, width: 300, height: 200 });
+
+    drop();
+
+    expect(orchestrator.getGridItemDragInfo()).toBeNull();
+  });
+
+  it('passes every pointer move over another layout to its onExternalDragOver', () => {
+    const { tab2Manager } = setupGridItemDrag();
+    const onExternalDragOver = jest.fn();
+    const onExternalDragLeave = jest.fn();
+    Object.assign(tab2Manager, { onExternalDragOver, onExternalDragLeave });
+
+    pointerOver('tab2-manager');
+    movePointer(140, 80);
+    movePointer(150, 90);
+
+    expect(
+      onExternalDragOver.mock.calls.map(([item, evt, info]) => [item.state.key, evt.clientX, evt.clientY, info])
+    ).toEqual([
+      ['grid-item-tab1', 140, 80, { offsetX: 30, offsetY: 20, width: 300, height: 200 }],
+      ['grid-item-tab1', 150, 90, { offsetX: 30, offsetY: 20, width: 300, height: 200 }],
+    ]);
+    expect(onExternalDragLeave).not.toHaveBeenCalled();
+  });
+
+  it('calls onExternalDragLeave once when the pointer moves back to the source layout', () => {
+    const { tab2Manager } = setupGridItemDrag();
+    const onExternalDragOver = jest.fn();
+    const onExternalDragLeave = jest.fn();
+    Object.assign(tab2Manager, { onExternalDragOver, onExternalDragLeave });
+
+    pointerOver('tab2-manager');
+    movePointer(140, 80);
+    pointerOver('tab1-manager');
+    movePointer(120, 60);
+    movePointer(110, 60);
+
+    expect(onExternalDragOver).toHaveBeenCalledTimes(1);
+    expect(onExternalDragLeave).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onExternalDragLeave and moves the item with the layout snapshots when dropped on a target with the hooks', () => {
+    jest.useFakeTimers();
+    try {
+      const { tab1Manager, tab2Manager } = setupGridItemDrag();
+      const snapshot: LayoutSnapshot = {
+        target: { applyLayout: jest.fn() },
+        before: [],
+        after: [{ i: 'panel-tab1', x: 0, y: 0, w: 12, h: 8 }],
+      };
+      const sourceGetLayoutSnapshot = jest.fn().mockReturnValue(null);
+      const destinationGetLayoutSnapshot = jest.fn().mockReturnValue(snapshot);
+      const onExternalDragLeave = jest.fn();
+      Object.assign(tab1Manager, { getLayoutSnapshot: sourceGetLayoutSnapshot });
+      Object.assign(tab2Manager, {
+        onExternalDragOver: jest.fn(),
+        onExternalDragLeave,
+        getLayoutSnapshot: destinationGetLayoutSnapshot,
+      });
+
+      pointerOver('tab2-manager');
+      movePointer(140, 80);
+      drop();
+      jest.runAllTimers();
+
+      expect(onExternalDragLeave).toHaveBeenCalledTimes(1);
+      expect(sourceGetLayoutSnapshot.mock.calls).toEqual([['source']]);
+      expect(destinationGetLayoutSnapshot.mock.calls).toEqual([['destination']]);
+      expect(moveGridItemMock).toHaveBeenCalledTimes(1);
+      const { source, destination, layoutSnapshots } = moveGridItemMock.mock.calls[0][0];
+      expect([source.state.key, destination.state.key]).toEqual(['tab1-manager', 'tab2-manager']);
+      expect(layoutSnapshots).toEqual([snapshot]);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('still shows the drop placeholder in a target without the hooks', () => {
+    const { tab2Manager } = setupGridItemDrag();
+
+    pointerOver('tab2-manager');
+    movePointer(140, 80);
+
+    expect(tab2Manager.state.isDropTarget).toBe(true);
+    expect(tab2Manager.state.dropPosition).toBe(0);
+  });
+
+  it('commits a drop within the source layout through its commitDragWithin instead of the auto grid reorder', () => {
+    const { tab1Manager } = setupGridItemDrag();
+    const commitDragWithin = jest.fn();
+    Object.assign(tab1Manager, { commitDragWithin });
+
+    pointerOver('tab1-manager');
+    movePointer(120, 60);
+    drop();
+
+    expect(commitDragWithin.mock.calls.map(([item]) => item.state.key)).toEqual(['grid-item-tab1']);
+    expect(reorderAutoGridItemsMock).not.toHaveBeenCalled();
+    expect(moveGridItemMock).not.toHaveBeenCalled();
   });
 });
 
