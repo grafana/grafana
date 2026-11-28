@@ -6936,6 +6936,7 @@
         "question-title": "Title",
         "question-title-description": "Viewers see it on the dashboard instead of the question. Leave it empty to show the question.",
         "question-title-placeholder": "What changed?",
+        "show-in-controls-menu": "Show in controls menu",
         "sources": {
           "collapse": "Collapse {{name}}",
           "description-dashboard": "With none picked, the question is answered from every panel on this dashboard.",
@@ -6953,7 +6954,9 @@
           "untitled-row": "Untitled row",
           "untitled-tab": "Untitled tab"
         },
-        "title": "Questions"
+        "title": "Questions",
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu"
       },
       "row": {
         "header": {

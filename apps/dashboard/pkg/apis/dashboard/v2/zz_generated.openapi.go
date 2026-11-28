@@ -3487,6 +3487,13 @@ func schema_pkg_apis_dashboard_v2_DashboardPrompt(ref common.ReferenceCallback) 
 							},
 						},
 					},
+					"placement": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Placement can be used to display the prompt somewhere else on the dashboard other than above the visualisations. Only prompts saved on the dashboard have a controls menu to be placed in. Rows and tabs ignore it.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"text"},
 			},

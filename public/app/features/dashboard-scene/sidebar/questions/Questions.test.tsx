@@ -1,4 +1,5 @@
-import { act, fireEvent, render, renderHook, screen } from '@testing-library/react';
+import { type DropResult } from '@hello-pangea/dnd';
+import { act, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type JSX } from 'react';
 import { of } from 'rxjs';
@@ -32,6 +33,7 @@ import {
   openEditQuestionPane,
   QuestionTitleInput,
   QuestionEdit,
+  QuestionPlacementSwitch,
   QuestionSourcesField,
   QuestionTextInput,
 } from './QuestionEdit';
@@ -49,6 +51,20 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   usePluginComponents: jest.fn(),
 }));
+
+// jsdom has no layout to drag between lists with, so this keeps what the lists do on a drop, to be handed one.
+let mockOnDragEnd: ((result: DropResult) => void) | undefined;
+jest.mock('@hello-pangea/dnd', () => {
+  const actual = jest.requireActual('@hello-pangea/dnd');
+  const { createElement } = jest.requireActual('react');
+  return {
+    ...actual,
+    DragDropContext: (props: { onDragEnd: (result: DropResult) => void }) => {
+      mockOnDragEnd = props.onDragEnd;
+      return createElement(actual.DragDropContext, props);
+    },
+  };
+});
 
 jest.mock('app/core/hooks/useQueryParams', () => ({
   useQueryParams: () => [{}, () => {}],
@@ -287,6 +303,244 @@ describe('editing questions', () => {
 
     expect(dashboard.state.questions).toEqual([original, { ...original, title: 'Errors - Copy' }]);
     expect(screen.getAllByTestId('question-text').map((item) => item.textContent)).toEqual(['Errors', 'Errors - Copy']);
+  });
+});
+
+describe('placing questions in the controls menu', () => {
+  afterEach(() => {
+    act(() => {
+      setTestFlags({});
+    });
+  });
+
+  const DASHBOARD_LIST = 'dashboard-questions-list';
+  const MENU_LIST = 'dashboard-questions-list-controls-menu';
+  const labelsIn = (listTestId: string) =>
+    within(screen.getByTestId(listTestId))
+      .queryAllByTestId('question-text')
+      .map((item) => item.textContent);
+
+  it('lists the questions in the menu apart from the ones above the dashboard', () => {
+    const dashboard = setup([
+      { text: 'What stands out?' },
+      { text: 'Why did errors rise?', placement: 'inControlsMenu' },
+      { text: 'What changed since yesterday?' },
+    ]);
+    renderList(dashboard);
+
+    expect(labelsIn(DASHBOARD_LIST)).toEqual(['What stands out?', 'What changed since yesterday?']);
+    expect(labelsIn(MENU_LIST)).toEqual(['Why did errors rise?']);
+  });
+
+  it('edits a question in the menu by its place in the saved list', async () => {
+    const dashboard = setup([
+      { text: 'What stands out?' },
+      { text: 'Why did errors rise?', placement: 'inControlsMenu' },
+    ]);
+    renderList(dashboard);
+
+    await userEvent.click(
+      screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.editButton('1'))
+    );
+
+    const selected = dashboard.state.sidebar.getSelectedObject();
+    expect(selected instanceof QuestionEdit && selected.state.questionIndex).toBe(1);
+  });
+
+  // A row or tab has no controls menu, so there is nothing to place a question in.
+  it('keeps the questions of a row in one list, whatever their placement', () => {
+    const row = new RowItem({
+      title: 'Errors',
+      layout: DefaultGridLayoutManager.createEmpty(),
+      questions: [{ text: 'What stands out?' }, { text: 'Why did errors rise?', placement: 'inControlsMenu' }],
+    });
+    render(
+      <TestProvider>
+        <QuestionsList owner={row} ownerKind="row" />
+      </TestProvider>
+    );
+
+    expect(labelsIn('dash-row-questions-list')).toEqual(['What stands out?', 'Why did errors rise?']);
+    expect(screen.queryByTestId(MENU_LIST)).not.toBeInTheDocument();
+  });
+
+  it('shows a question in the menu from its switch, and undo puts it back above the dashboard', async () => {
+    const dashboard = setup([{ text: 'What stands out?' }]);
+    render(
+      <TestProvider>
+        <QuestionPlacementSwitch questionEdit={editFor(dashboard, 0)} />
+      </TestProvider>
+    );
+    const toggle = screen.getByRole('switch');
+    expect(toggle).not.toBeChecked();
+
+    await userEvent.click(toggle);
+
+    expect(dashboard.state.questions).toEqual([{ text: 'What stands out?', placement: 'inControlsMenu' }]);
+    expect(toggle).toBeChecked();
+
+    act(() => dashboard.state.sidebar.undoAction());
+
+    expect(dashboard.state.questions).toEqual([{ text: 'What stands out?' }]);
+    expect(toggle).not.toBeChecked();
+  });
+
+  it('leaves the placement out of a question that is moved back above the dashboard', async () => {
+    const dashboard = setup([{ text: 'What stands out?', placement: 'inControlsMenu' }]);
+    render(
+      <TestProvider>
+        <QuestionPlacementSwitch questionEdit={editFor(dashboard, 0)} />
+      </TestProvider>
+    );
+
+    await userEvent.click(screen.getByRole('switch'));
+
+    expect(dashboard.state.questions).toEqual([{ text: 'What stands out?' }]);
+    expect(dashboard.state.questions?.[0]).not.toHaveProperty('placement');
+  });
+
+  it.each<['dashboard' | 'row' | 'tab', boolean]>([
+    ['dashboard', true],
+    ['row', false],
+    ['tab', false],
+  ])('offers the switch for a question on a %s: %s', (ownerKind, offered) => {
+    const dashboard = setup([{ text: 'What stands out?' }]);
+    const edit = new QuestionEdit({ ownerRef: dashboard.getRef(), ownerKind, questionIndex: 0 });
+
+    const { result } = renderHook(() => edit.useSidebarOptions(false), { wrapper: TestProvider });
+
+    const titles = result.current.flatMap((category) => category.items.map((item) => item.props.title));
+    expect(titles.includes('Show in controls menu')).toBe(offered);
+  });
+
+  describe('dragging', () => {
+    // @hello-pangea/dnd announces each phase through an aria-live region, which tells when it has processed a key.
+    async function dragWithKeyboard(key: string, keyCodes: number[]) {
+      const selector = `[data-rfd-drag-handle-draggable-id="${key}"]`;
+      // The library loads once the list has rendered.
+      await waitFor(() => expect(document.querySelector(selector)).toBeInTheDocument());
+      const handle = document.querySelector<HTMLElement>(selector)!;
+      handle.focus();
+      fireEvent.keyDown(handle, { keyCode: 32 });
+      await screen.findByText(/you have lifted an item/i);
+      for (const keyCode of keyCodes) {
+        fireEvent.keyDown(handle, { keyCode });
+        await screen.findByText(/you have moved the item/i);
+      }
+      fireEvent.keyDown(handle, { keyCode: 32 });
+      await screen.findByText(/you have dropped the item/i);
+    }
+
+    function drop(from: { droppableId: string; index: number }, to: { droppableId: string; index: number }) {
+      act(() =>
+        mockOnDragEnd?.({
+          draggableId: 'question',
+          type: 'DEFAULT',
+          source: from,
+          destination: to,
+          reason: 'DROP',
+          mode: 'FLUID',
+          combine: null,
+        })
+      );
+    }
+
+    it('reorders the questions above the dashboard as one undoable step', async () => {
+      const dashboard = setup([
+        { text: 'What stands out?' },
+        { text: 'Why did errors rise?', placement: 'inControlsMenu' },
+        { text: 'What changed since yesterday?' },
+      ]);
+      renderList(dashboard);
+
+      await dragWithKeyboard('0', [40]);
+
+      await waitFor(() =>
+        expect(labelsIn(DASHBOARD_LIST)).toEqual(['What changed since yesterday?', 'What stands out?'])
+      );
+      expect(dashboard.state.questions).toEqual([
+        { text: 'What changed since yesterday?' },
+        { text: 'What stands out?' },
+        { text: 'Why did errors rise?', placement: 'inControlsMenu' },
+      ]);
+      expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
+
+      act(() => dashboard.state.sidebar.undoAction());
+
+      expect(labelsIn(DASHBOARD_LIST)).toEqual(['What stands out?', 'What changed since yesterday?']);
+    });
+
+    it('places a question in the menu where it is dropped there, as one undoable step', async () => {
+      const saved: SceneQuestion[] = [
+        { text: 'What stands out?' },
+        { text: 'Why did errors rise?' },
+        { text: 'What changed since yesterday?', placement: 'inControlsMenu' },
+      ];
+      const dashboard = setup(saved);
+      renderList(dashboard);
+
+      // The first question, dropped ahead of the one already in the menu.
+      drop({ droppableId: DASHBOARD_LIST, index: 0 }, { droppableId: MENU_LIST, index: 0 });
+
+      expect(dashboard.state.questions).toEqual([
+        { text: 'Why did errors rise?' },
+        { text: 'What stands out?', placement: 'inControlsMenu' },
+        { text: 'What changed since yesterday?', placement: 'inControlsMenu' },
+      ]);
+      expect(labelsIn(MENU_LIST)).toEqual(['What stands out?', 'What changed since yesterday?']);
+      expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
+
+      act(() => dashboard.state.sidebar.undoAction());
+
+      expect(dashboard.state.questions).toEqual(saved);
+    });
+
+    it('clears the placement of a question dropped back above the dashboard', () => {
+      const dashboard = setup([
+        { text: 'What stands out?' },
+        { text: 'Why did errors rise?', placement: 'inControlsMenu' },
+      ]);
+      renderList(dashboard);
+
+      drop({ droppableId: MENU_LIST, index: 0 }, { droppableId: DASHBOARD_LIST, index: 0 });
+
+      expect(dashboard.state.questions).toEqual([{ text: 'Why did errors rise?' }, { text: 'What stands out?' }]);
+      expect(dashboard.state.questions?.[0]).not.toHaveProperty('placement');
+    });
+
+    it('changes nothing when a question is dropped where it was', () => {
+      const dashboard = setup([{ text: 'What stands out?' }]);
+      renderList(dashboard);
+
+      drop({ droppableId: DASHBOARD_LIST, index: 0 }, { droppableId: DASHBOARD_LIST, index: 0 });
+
+      expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
+    });
+
+    it('reorders the questions of a row without placing any in a menu', () => {
+      const row = new RowItem({
+        title: 'Errors',
+        layout: DefaultGridLayoutManager.createEmpty(),
+        questions: [{ text: 'What stands out?' }, { text: 'Why did errors rise?', placement: 'inControlsMenu' }],
+      });
+      // The dashboard's sidebar performs the edit once it is active.
+      activateFullSceneTree(
+        new DashboardScene({ isEditing: true, body: new RowsLayoutManager({ rows: [row] }) }, 'v2')
+      );
+      render(
+        <TestProvider>
+          <QuestionsList owner={row} ownerKind="row" />
+        </TestProvider>
+      );
+
+      drop({ droppableId: 'dash-row-questions-list', index: 1 }, { droppableId: 'dash-row-questions-list', index: 0 });
+
+      // Neither the one moved nor the other gets a placement it didn't have, or loses the one it saved.
+      expect(row.state.questions).toEqual([
+        { text: 'Why did errors rise?', placement: 'inControlsMenu' },
+        { text: 'What stands out?' },
+      ]);
+    });
   });
 });
 

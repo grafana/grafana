@@ -59,17 +59,15 @@ export const questionActions = {
     });
   },
 
-  move({ owner, from, to }: { owner: QuestionsOwner; from: number; to: number }) {
-    const before = owner.state.questions ?? [];
-    const after = [...before];
-    const [moved] = after.splice(from, 1);
-    after.splice(to, 0, moved);
+  /** Saves `next`, the same questions in a new order, one of which can have a new placement. */
+  reorder({ owner, next }: { owner: QuestionsOwner; next: SceneQuestion[] }) {
+    const before = owner.state.questions;
 
     edit({
       meta: { actionId: 'question.reorder' },
       description: t('dashboard-scene.question-actions.reorder', 'Reorder questions'),
       source: owner,
-      perform: () => owner.setState({ questions: after }),
+      perform: () => owner.setState({ questions: next }),
       undo: () => owner.setState({ questions: before }),
     });
   },

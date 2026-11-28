@@ -1657,6 +1657,8 @@ export type DashboardPromptSource = {
   element: DashboardElementReference;
 };
 export type DashboardPrompt = {
+  /** Placement can be used to display the prompt somewhere else on the dashboard other than above the visualisations. Only prompts saved on the dashboard have a controls menu to be placed in. Rows and tabs ignore it. */
+  placement?: string;
   /** The panels to answer it from. Unset for every panel in the dashboard, row, or tab the prompt is saved on. */
   sources?: DashboardPromptSource[];
   /** The prompt that is run. Viewers see it on the dashboard unless it has a title. */

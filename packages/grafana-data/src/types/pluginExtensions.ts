@@ -311,14 +311,14 @@ export type PluginExtensionDashboardControlsPanel = {
 };
 
 /**
- * Props for components added to the dashboard controls bar and to the controls of a row or tab.
+ * Props for components added to the dashboard controls bar and controls menu, and to the controls of a row or tab.
  *
  * @alpha
  */
 export type PluginExtensionDashboardControlsContext = {
   /** The dashboard the controls are on. The uid is empty for a dashboard that hasn't been saved. */
   dashboard: { uid: string; title: string };
-  /** Where the control renders: the dashboard controls bar, or a row or tab. */
+  /** Where the control renders: the dashboard controls bar or controls menu, or a row or tab. */
   scope: 'dashboard' | 'row' | 'tab';
   /** The row or tab title as the viewer sees it. Undefined for the dashboard scope. */
   sectionLabel?: string;
@@ -327,7 +327,7 @@ export type PluginExtensionDashboardControlsContext = {
   /**
    * The questions the author saved on the dashboard, row, or tab. Never empty: the control isn't rendered without.
    * While the dashboard is edited, the control renders once per question, with only that question, so editors can
-   * select each one and ask it.
+   * select each one and ask it. It does the same in the controls menu, for the questions the author placed there.
    */
   questions: Array<{
     /** The question to ask. */

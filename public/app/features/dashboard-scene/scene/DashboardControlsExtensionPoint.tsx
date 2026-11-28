@@ -8,13 +8,13 @@ import {
   type PluginExtensionDashboardControlsPanel,
 } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
-import { useFlagGrafanaDashboardQuestions } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient, useFlagGrafanaDashboardQuestions } from '@grafana/runtime/internal';
 import { sceneGraph, type SceneObject, SceneVariableValueChangedEvent } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { getSourcePanels, type SourcePanel } from '../questions/sourcePanels';
 import { type SceneQuestion } from '../questions/types';
-import { getQuestionLabel, getQuestionSelectionId } from '../questions/utils';
+import { getQuestionLabel, getQuestionSelectionId, isInControlsMenu } from '../questions/utils';
 import { questionActions } from '../sidebar/questions/actions';
 import { type QuestionsOwnerKind } from '../sidebar/questions/types';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
@@ -37,14 +37,17 @@ type ControlsOwner = DashboardScene | RowItem | TabItem;
 
 type Props =
   | {
-      /** Renders the controls in the dashboard controls bar. */
+      /** Renders the controls in the dashboard controls bar, or with `inMenu`, in its controls menu. */
       dashboard: DashboardScene;
+      /** Renders the questions placed in the controls menu, which the bar leaves out. */
+      inMenu?: boolean;
       section?: never;
     }
   | {
       /** Renders the controls above the row's or tab's panels. */
       section: RowItem | TabItem;
       dashboard?: never;
+      inMenu?: never;
     };
 
 /** A saved question that viewers can run, with its position in the saved list. */
@@ -55,21 +58,46 @@ interface AskableQuestion {
 
 /**
  * Renders the components that plugins add to the `DashboardControls` extension point. They render in the dashboard
- * controls bar and above the panels of a row or tab. Each component receives the questions saved on that dashboard,
- * row, or tab, with the panels to answer them from.
+ * controls bar, in the dashboard controls menu for the questions placed there, and above the panels of a row or tab.
+ * Each component receives the questions saved on that dashboard, row, or tab, with the panels to answer them from.
  *
  * While the dashboard is edited, each question renders as its own control, rendered by the plugin with only that
  * question, which editors can select, duplicate, and delete like a link. Running it there keeps it selected, so editors
- * can change it and run it again.
+ * can change it and run it again. The controls menu has room for every question, so it renders each as its own control
+ * for viewers too, instead of leaving the plugin to fold the ones past its limit into a menu within the menu.
  *
  * Renders nothing when `grafana.dashboardQuestions` is off, when no saved question has text (a question just added
  * in the editor has none yet), or while a panel is edited or a plan is previewed (see `getControlsMode`).
  *
  * Also renders nothing on a repeated row or tab after the first, or inside one. Repeat clones' panels have no stable
  * keys, so they're never passed on, and a later repeat's questions would be answered from the first repeat's panels.
+ *
+ * A row or tab has no controls menu, so it renders all its questions, whatever their placement.
  */
 export function DashboardControlsExtensionPoint(props: Props) {
   const owner = props.section ?? props.dashboard;
+  const inMenu = props.inMenu ?? false;
+  const shown = useShownQuestions(owner, inMenu);
+
+  return shown ? (
+    <ControlsComponents
+      owner={owner}
+      questions={shown.questions}
+      inBar={!props.section && !inMenu}
+      inMenu={inMenu}
+      isEditing={shown.isEditing}
+    />
+  ) : null;
+}
+
+/**
+ * The saved questions that the controls of `owner` render, in its controls bar, above its panels, or in the controls
+ * menu when `inMenu`. Undefined when they render nothing (see `DashboardControlsExtensionPoint`).
+ */
+function useShownQuestions(
+  owner: ControlsOwner,
+  inMenu: boolean
+): { questions: AskableQuestion[]; isEditing: boolean } | undefined {
   const enabled = useFlagGrafanaDashboardQuestions();
   const { questions } = owner.useState();
   const dashboardState = useDashboardState(owner);
@@ -77,13 +105,13 @@ export function DashboardControlsExtensionPoint(props: Props) {
   const mode = getControlsMode(dashboardState);
 
   if (!enabled || !mode || (mode === 'edit' && !savesQuestions(owner)) || isRepeatCloneOrChildOf(owner)) {
-    return null;
+    return undefined;
   }
 
-  const askable = getAskableQuestions(questions);
-  return askable.length ? (
-    <ControlsComponents owner={owner} questions={askable} inBar={!props.section} isEditing={mode === 'edit'} />
-  ) : null;
+  const placedHere = getAskableQuestions(questions).filter(
+    ({ question }) => getOwnerKind(owner) !== 'dashboard' || isInControlsMenu(question) === inMenu
+  );
+  return placedHere.length ? { questions: placedHere, isEditing: mode === 'edit' } : undefined;
 }
 
 /** Saved JSON isn't validated, so a question whose text isn't a string with content is left out. */
@@ -98,11 +126,13 @@ interface ControlsComponentsProps {
   questions: AskableQuestion[];
   /** In the dashboard controls bar. A row or tab lays its controls out in `SectionControlsRow` instead. */
   inBar: boolean;
+  /** In the dashboard controls menu, where the questions stack. */
+  inMenu: boolean;
   /** Renders one control per question, for editors to select and run. */
   isEditing: boolean;
 }
 
-function ControlsComponents({ owner, questions, inBar, isEditing }: ControlsComponentsProps) {
+function ControlsComponents({ owner, questions, inBar, inMenu, isEditing }: ControlsComponentsProps) {
   const styles = useStyles2(getStyles);
   const { components, isLoading } = useDashboardControlsComponents();
   useRerenderOnVariableChange(owner);
@@ -118,19 +148,26 @@ function ControlsComponents({ owner, questions, inBar, isEditing }: ControlsComp
 
   return (
     <div
-      className={cx(styles.container, inBar && styles.inBar)}
+      className={cx(styles.container, inBar && styles.inBar, inMenu && styles.inMenu)}
       // While the dashboard is edited, keeps a click on a question from clearing the selection, so a question run
       // while it is edited stays open in the sidebar.
       {...(isEditing && { onPointerDown: stopPropagation, onPointerUp: stopPropagation })}
     >
-      {isEditing
-        ? context.questions.map((question, i) => (
-            <EditableQuestion key={questions[i].index} owner={owner} saved={questions[i]}>
-              {components.map((Component) => (
-                <Component key={Component.meta.id} {...context} questions={[question]} />
-              ))}
-            </EditableQuestion>
-          ))
+      {isEditing || inMenu
+        ? context.questions.map((question, i) => {
+            const controls = components.map((Component) => (
+              <Component key={Component.meta.id} {...context} questions={[question]} />
+            ));
+            return isEditing ? (
+              <EditableQuestion key={questions[i].index} owner={owner} saved={questions[i]}>
+                {controls}
+              </EditableQuestion>
+            ) : (
+              <div key={questions[i].index} className={styles.question}>
+                {controls}
+              </div>
+            );
+          })
         : components.map((Component) => <Component key={Component.meta.id} {...context} />)}
     </div>
   );
@@ -264,6 +301,29 @@ export function useCanEditQuestions(object: SceneObject): boolean {
   return useQuestionsEnabled() && savesQuestions(object);
 }
 
+/**
+ * How many questions the dashboard controls menu has to show: those placed there that its controls render. The menu
+ * button counts them with its other controls, and has no menu to open without any.
+ */
+export function useControlsMenuQuestionCount(dashboard: DashboardScene): number {
+  const shown = useShownQuestions(dashboard, true);
+  const { components, isLoading } = useDashboardControlsComponents();
+  return shown && !isLoading && components.length > 0 ? shown.questions.length : 0;
+}
+
+/**
+ * Whether the dashboard places questions in its controls menu, for where a hook can't be used. Unlike
+ * `useControlsMenuQuestionCount`, it doesn't know whether a plugin adds a control to run them, nor whether the
+ * dashboard is viewed or edited, so it can say yes where the menu then has nothing to show.
+ */
+export function hasQuestionsInControlsMenu(dashboard: DashboardScene): boolean {
+  return (
+    getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardQuestions, false) &&
+    savesQuestions(dashboard) &&
+    getAskableQuestions(dashboard.state.questions).some(({ question }) => isInControlsMenu(question))
+  );
+}
+
 function toControlsPanel({ key, title, panel }: SourcePanel): PluginExtensionDashboardControlsPanel {
   return { key, title: sceneGraph.interpolate(panel, title) };
 }
@@ -313,6 +373,11 @@ function getStyles(theme: GrafanaTheme2) {
     inBar: css({
       marginBottom: theme.spacing(1),
       marginRight: theme.spacing(1),
+    }),
+    inMenu: css({
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-start',
     }),
     question: css({
       display: 'inline-flex',

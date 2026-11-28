@@ -53,6 +53,38 @@ describe('question sources', () => {
   });
 });
 
+describe('question placement', () => {
+  it('loads and saves a question placed in the controls menu, and one that is not', () => {
+    const prompts: Prompt[] = [
+      { text: 'Why did errors rise?', placement: 'inControlsMenu' },
+      { text: 'What stands out?' },
+    ];
+    const scene = load(prompts);
+
+    expect(scene.state.questions).toEqual(prompts);
+    expect(transformSceneToSaveModelSchemaV2(scene).prompts).toEqual(prompts);
+  });
+
+  // The scene only shows a question in the menu on the dashboard, but a row's saved placement must survive a save.
+  it('keeps a placement saved on a row, which ignores it, as it was saved', () => {
+    const prompts: Prompt[] = [{ text: 'Why did errors rise?', placement: 'inControlsMenu' }];
+    const saved = transformSceneToSaveModelSchemaV2(load(prompts));
+
+    expect(saved.layout.kind === 'RowsLayout' && saved.layout.spec.rows[0].spec.prompts).toEqual(prompts);
+  });
+
+  it('is set and cleared with the question, and left out of the saved question once cleared', () => {
+    const scene = load([]);
+    scene.setState({ questions: [{ text: 'Why did errors rise?', placement: 'inControlsMenu' }] });
+    expect(transformSceneToSaveModelSchemaV2(scene).prompts).toEqual([
+      { text: 'Why did errors rise?', placement: 'inControlsMenu' },
+    ]);
+
+    scene.setState({ questions: [{ text: 'Why did errors rise?' }] });
+    expect(transformSceneToSaveModelSchemaV2(scene).prompts).toEqual([{ text: 'Why did errors rise?' }]);
+  });
+});
+
 // Nothing checks a spec applied through the mutation API, so a question can arrive as something the schema forbids.
 describe('saved questions that do not follow the schema', () => {
   it('load with sources that are not a list left out, so the question is answered from every panel', () => {
@@ -87,6 +119,22 @@ describe('saved questions that do not follow the schema', () => {
       'Why did errors rise?',
       'What stands out?',
       'Latency',
+    ]);
+  });
+
+  it('load with a placement the scene does not know left out, so the question shows above the panels', () => {
+    const scene = load(
+      malformed(
+        { text: 'Why did errors rise?', placement: 'inFooter' },
+        { text: 'What stands out?', placement: true },
+        { text: 'Which endpoints got slower?', placement: 'inControlsMenu' }
+      )
+    );
+
+    expect(scene.state.questions).toEqual([
+      { text: 'Why did errors rise?' },
+      { text: 'What stands out?' },
+      { text: 'Which endpoints got slower?', placement: 'inControlsMenu' },
     ]);
   });
 });

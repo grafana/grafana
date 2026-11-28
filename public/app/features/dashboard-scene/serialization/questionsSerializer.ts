@@ -37,14 +37,18 @@ export function serializeQuestions(owner: SceneObject, questions: SceneQuestion[
  *
  * Saved JSON isn't validated, and neither is a spec applied through the mutation API, so this is where a question
  * becomes one the rest of the scene can rely on: sources that aren't a list are left out, and so is a title that
- * isn't a string.
+ * isn't a string, or a placement that isn't one the scene knows.
  */
 export function deserializeQuestions(
   saved: Prompt[] | undefined,
   elements: DashboardV2Spec['elements']
 ): SceneQuestion[] | undefined {
-  return saved?.map(({ sources, title, ...rest }) => {
-    const question = typeof title === 'string' ? { ...rest, title } : rest;
+  return saved?.map(({ sources, title, placement, ...rest }) => {
+    const question = {
+      ...rest,
+      ...(typeof title === 'string' && { title }),
+      ...(placement === 'inControlsMenu' && { placement }),
+    };
     const picked = (Array.isArray(sources) ? sources : []).flatMap(({ element, ...source }) => {
       // A source that names nothing must not break the load.
       const name = element?.name;

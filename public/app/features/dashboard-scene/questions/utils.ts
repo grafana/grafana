@@ -7,6 +7,17 @@ export function getQuestionLabel(question: SceneQuestion): string {
   return question.title?.trim() || question.text;
 }
 
+/** Whether a question shows in the dashboard controls menu, rather than above the panels. */
+export function isInControlsMenu(question: SceneQuestion): boolean {
+  return question.placement === 'inControlsMenu';
+}
+
+/** `question` placed in the controls menu, or above the panels when `inMenu` is false. */
+export function withQuestionPlacement(question: SceneQuestion, inMenu: boolean): SceneQuestion {
+  const { placement: _, ...rest } = question;
+  return inMenu ? { ...rest, placement: 'inControlsMenu' } : rest;
+}
+
 /**
  * The key of the object that edits a question in the sidebar. The question's control on the dashboard shows as
  * selected while the sidebar has that key selected.

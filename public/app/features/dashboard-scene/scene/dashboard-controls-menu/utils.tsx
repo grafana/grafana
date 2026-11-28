@@ -1,6 +1,7 @@
 import { type SceneDataState, sceneGraph, type SceneVariable } from '@grafana/scenes';
 import { type DashboardLink, VariableHide } from '@grafana/schema';
 
+import { hasQuestionsInControlsMenu, useControlsMenuQuestionCount } from '../DashboardControlsExtensionPoint';
 import { isDashboardDataLayerSetState } from '../DashboardDataLayerSet';
 import { type DashboardScene } from '../DashboardScene';
 
@@ -39,22 +40,24 @@ export function useDashboardControls(dashboard: DashboardScene) {
   const dataState = sceneGraph.getData(dashboard).useState();
   const links = getDashboardControlsLinks(dashboardState.links);
   const annotations = getDashboardControlsAnnotations(dataState);
+  const questionCount = useControlsMenuQuestionCount(dashboard);
 
   return {
     variables,
     links,
     annotations,
+    questionCount,
   };
 }
 
 export function useHasDashboardControls(dashboard: DashboardScene) {
-  const { variables, links, annotations } = useDashboardControls(dashboard);
+  const { variables, links, annotations, questionCount } = useDashboardControls(dashboard);
 
-  return variables.length > 0 || links.length > 0 || annotations.length > 0;
+  return variables.length > 0 || links.length > 0 || annotations.length > 0 || questionCount > 0;
 }
 
 export function hasDashboardControls(dashboard: DashboardScene) {
   const { variables, links, annotations } = getDashboardControls(dashboard);
 
-  return variables.length > 0 || links.length > 0 || annotations.length > 0;
+  return variables.length > 0 || links.length > 0 || annotations.length > 0 || hasQuestionsInControlsMenu(dashboard);
 }

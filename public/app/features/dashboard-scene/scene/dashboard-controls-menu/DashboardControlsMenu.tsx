@@ -7,6 +7,7 @@ import { Menu, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 import { sortDefaultLinksFirst, sortDefaultVarsFirst } from '../../utils/dashboardControls';
+import { DashboardControlsExtensionPoint } from '../DashboardControlsExtensionPoint';
 import { DataLayerControlEditWrapper } from '../DashboardDataLayerControls';
 import { DashboardLinkRenderer } from '../DashboardLinkRenderer';
 import { type DashboardScene } from '../DashboardScene';
@@ -16,6 +17,8 @@ interface DashboardControlsMenuProps {
   variables: SceneVariable[];
   links: DashboardLink[];
   annotations: SceneDataLayerProvider[];
+  /** Whether questions are placed in the menu, for the controls that plugins add to run them. */
+  hasQuestions: boolean;
   dashboardUID?: string;
   isEditing?: boolean;
   dashboard: DashboardScene;
@@ -25,6 +28,7 @@ export function DashboardControlsMenu({
   variables,
   links,
   annotations,
+  hasQuestions,
   dashboardUID,
   isEditing,
   dashboard,
@@ -86,6 +90,14 @@ export function DashboardControlsMenu({
                 />
               </div>
             ))}
+          </>
+        )}
+
+        {/* Questions */}
+        {hasQuestions && (
+          <>
+            {(variables.length > 0 || annotations.length > 0 || links.length > 0) && <MenuDivider />}
+            <DashboardControlsExtensionPoint dashboard={dashboard} inMenu />
           </>
         )}
       </div>
