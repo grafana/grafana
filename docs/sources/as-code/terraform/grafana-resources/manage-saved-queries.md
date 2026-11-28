@@ -13,10 +13,12 @@ labels:
     - enterprise
 title: Manage saved queries using Terraform
 menuTitle: Manage saved queries
-weight: 400
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/manage-saved-queries/
+weight: 200
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/grafana-resources/manage-saved-queries/
 aliases:
   - ../infrastructure-as-code/terraform/manage-saved-queries/
+  - ../manage-saved-queries/
+  - ../../infrastructure-as-code/terraform/manage-saved-queries/
 ---
 
 # Manage saved queries using Terraform
@@ -25,6 +27,10 @@ This guide shows you how to manage [saved queries](https://grafana.com/docs/graf
 
 {{< admonition type="note" >}}
 Saved queries are only available on Grafana Enterprise and Grafana Cloud.
+{{< /admonition >}}
+
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 {{< /admonition >}}
 
 ## Before you begin
