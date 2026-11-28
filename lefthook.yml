@@ -51,3 +51,8 @@ pre-commit:
       glob: '*devenv/dev-dashboards/**'
       files: git diff --name-only --cached --diff-filter=ACMRD
       run: make gen-jsonnet && git add devenv/jsonnet/dev-dashboards.libsonnet
+
+    codeowners-check:
+      # Same ownership rule as the CI "Codeowners Validator" workflow, run offline on the staged files.
+      # Fails when a newly added or renamed file has no owner in .github/CODEOWNERS.
+      run: node scripts/codeowners-manifest/check-staged.js
