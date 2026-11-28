@@ -6,13 +6,14 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	alert_models "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -21,11 +22,25 @@ type AlertRuleProvisioner interface {
 	Provision(ctx context.Context, files []*AlertingFile) error
 }
 
+// RuleService is the subset of provisioning.AlertRuleService used by the
+// alert rule file provisioner.
+type RuleService interface {
+	GetAlertRule(ctx context.Context, user identity.Requester, ruleUID string) (alert_models.AlertRule, utils.ManagerProperties, error)
+	CreateAlertRule(ctx context.Context, user identity.Requester, rule alert_models.AlertRule, manager utils.ManagerProperties) (alert_models.AlertRule, error)
+	UpdateAlertRule(ctx context.Context, user identity.Requester, rule alert_models.AlertRule, manager utils.ManagerProperties) (alert_models.AlertRule, error)
+	UpdateRuleGroup(ctx context.Context, user identity.Requester, namespaceUID string, ruleGroup string, intervalSeconds int64) error
+	DeleteAlertRule(ctx context.Context, user identity.Requester, ruleUID string, manager utils.ManagerProperties) error
+}
+
+// maxProvisionRetries bounds how often an operation is retried after an
+// optimistic-lock conflict.
+const maxProvisionRetries = 3
+
 func NewAlertRuleProvisioner(
 	logger log.Logger,
 	folderService folder.Service,
 	dashboardProvService dashboards.DashboardProvisioningService,
-	ruleService provisioning.AlertRuleService) AlertRuleProvisioner {
+	ruleService RuleService) AlertRuleProvisioner {
 	return &defaultAlertRuleProvisioner{
 		logger:               logger,
 		folderService:        folderService,
@@ -38,7 +53,7 @@ type defaultAlertRuleProvisioner struct {
 	logger               log.Logger
 	folderService        folder.Service
 	dashboardProvService dashboards.DashboardProvisioningService
-	ruleService          provisioning.AlertRuleService
+	ruleService          RuleService
 }
 
 func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
@@ -60,24 +75,46 @@ func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
 			for _, rule := range group.Rules {
 				rule.NamespaceUID = folderUID
 				rule.RuleGroup = group.Title
-				err = prov.provisionRule(ctx, u, rule)
+				err = prov.retryOnOptimisticLock(func() error {
+					return prov.provisionRule(ctx, u, rule)
+				})
 				if err != nil {
 					return err
 				}
 			}
-			err = prov.ruleService.UpdateRuleGroup(ctx, u, folderUID, group.Title, group.Interval)
+			err = prov.retryOnOptimisticLock(func() error {
+				return prov.ruleService.UpdateRuleGroup(ctx, u, folderUID, group.Title, group.Interval)
+			})
 			if err != nil {
 				return err
 			}
 		}
 		for _, deleteRule := range file.DeleteRules {
-			err := prov.ruleService.DeleteAlertRule(ctx, provisionerUser(deleteRule.OrgID), deleteRule.UID, alert_models.ProvenanceToManagerProperties(alert_models.ProvenanceFile))
+			err := prov.retryOnOptimisticLock(func() error {
+				return prov.ruleService.DeleteAlertRule(ctx, provisionerUser(deleteRule.OrgID), deleteRule.UID, alert_models.ProvenanceToManagerProperties(alert_models.ProvenanceFile))
+			})
 			if err != nil {
 				return err
 			}
 		}
 	}
 	return nil
+}
+
+// retryOnOptimisticLock re-runs fn when it fails with an optimistic-lock
+// conflict. Concurrent provisioning runs (e.g. reload calls from several HA
+// replicas) race on the version of the same alert rules; file provisioning is
+// declarative, so re-running the operation after the other run committed
+// converges to the same state.
+func (prov *defaultAlertRuleProvisioner) retryOnOptimisticLock(fn func() error) error {
+	var err error
+	for attempt := 0; attempt < maxProvisionRetries; attempt++ {
+		if err = fn(); !errors.Is(err, rulestore.ErrOptimisticLock) {
+			break
+		}
+		prov.logger.Info("retrying provisioning operation after optimistic lock conflict", "attempt", attempt+1)
+	}
+	return err
 }
 
 func (prov *defaultAlertRuleProvisioner) provisionRule(
