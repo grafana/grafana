@@ -140,7 +140,7 @@ func TestCreateProvider(t *testing.T) {
 				_, ok := provider.(*ofrep.Provider)
 				assert.True(t, ok, "expected provider to be of type ofrep.Provider")
 			default:
-				_, ok := provider.(memprovider.InMemoryProvider)
+				_, ok := provider.(*memprovider.InMemoryProvider)
 				assert.True(t, ok, "expected provider to be of type memprovider.InMemoryProvider")
 			}
 		})
