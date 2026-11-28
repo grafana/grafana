@@ -20,9 +20,33 @@ import (
 // through OBO exchange, including callers without an ID token.
 func NewRemoteResourceClient(cfg *setting.Cfg, tracer trace.Tracer, reg prometheus.Registerer) (resource.ResourceClient, error) {
 	clientCfg := grpcutils.ReadGrpcClientConfig(cfg)
-	allowInsecure := cfg.Env == setting.Dev
+	baseExchanger, err := newServiceTokenExchangeClient(cfg, clientCfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return unified.NewStandaloneRemoteResourceClientWithAuth(cfg, tracer, reg, resource.RemoteResourceClientConfig{
+		AllowInsecure:  cfg.Env == setting.Dev,
+		Namespace:      clientCfg.TokenNamespace,
+		Audiences:      []string{"resourceStore"},
+		TokenExchanger: baseExchanger,
+	})
+}
+
+// NewServiceTokenExchanger exchanges the service's own CAP token, from
+// [grpc_client_authentication], for signed tokens. It returns nil when the
+// token or the exchange URL is not set.
+func NewServiceTokenExchanger(cfg *setting.Cfg) (authnlib.TokenExchanger, error) {
+	clientCfg := grpcutils.ReadGrpcClientConfig(cfg)
+	if clientCfg.Token == "" || clientCfg.TokenExchangeURL == "" {
+		return nil, nil
+	}
+	return newServiceTokenExchangeClient(cfg, clientCfg)
+}
+
+func newServiceTokenExchangeClient(cfg *setting.Cfg, clientCfg *grpcutils.GrpcClientConfig) (*authnlib.TokenExchangeClient, error) {
 	var exchangeOpts []authnlib.ExchangeClientOpts
-	if allowInsecure {
+	if cfg.Env == setting.Dev {
 		// Keep connection timeouts and pooling when overriding certificate verification.
 		transport := http.DefaultTransport.(*http.Transport).Clone()
 		transport.TLSClientConfig = &tls.Config{
@@ -33,18 +57,12 @@ func NewRemoteResourceClient(cfg *setting.Cfg, tracer trace.Tracer, reg promethe
 			&http.Client{Transport: transport, Timeout: 5 * time.Second},
 		))
 	}
-	baseExchanger, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+	exchanger, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
 		Token:            clientCfg.Token,
 		TokenExchangeURL: clientCfg.TokenExchangeURL,
 	}, exchangeOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("error creating token exchange client: %w", err)
 	}
-
-	return unified.NewStandaloneRemoteResourceClientWithAuth(cfg, tracer, reg, resource.RemoteResourceClientConfig{
-		AllowInsecure:  allowInsecure,
-		Namespace:      clientCfg.TokenNamespace,
-		Audiences:      []string{"resourceStore"},
-		TokenExchanger: baseExchanger,
-	})
+	return exchanger, nil
 }

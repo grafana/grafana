@@ -176,7 +176,7 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 	cfg.SectionWithEnvOverrides("cloud_router").Key("plugins_url").SetValue(manifests.URL + "/plugins")
 	loader, err := router.NewCloudRoutesLoader(cfg, router.PluginDependencies{
 		Cfg: cfg, Unified: helper.GetEnv().ResourceClient,
-		RESTConfigProvider: router.NewLoopbackRestConfigProvider(routerHandler),
+		RESTConfigProvider: router.NewLoopbackRestConfigProvider(routerHandler, nil),
 		SecureValues:       secret.NewMockInlineSecureValueSupport(t), Decrypter: decrypter,
 	})
 	require.NoError(t, err)
