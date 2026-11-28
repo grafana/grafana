@@ -32,7 +32,7 @@ interface Props {
   variable: MultiValueVariable;
 }
 
-export function TabItemRepeater({ tab, variable }: Props) {
+export function TabItemRepeater({ tab, manager, variable }: Props) {
   const { repeatedTabs } = tab.useState();
   const styles = useStyles2(getStyles);
 
@@ -40,7 +40,14 @@ export function TabItemRepeater({ tab, variable }: Props) {
   useEffect(() => {
     setTimeout(() => performTabRepeats(variable, tab, false), 0);
 
-    const variableChangeSub = variable.subscribeToState((state) => performTabRepeats(variable, tab, false));
+    const variableChangeSub = variable.subscribeToState((state, prevState) => {
+      performTabRepeats(variable, tab, false);
+      // getCurrentTab() selects no tab while the repeat variable loads. A load that ends with unchanged values
+      // skips the repeat (and its re-render), so the layout must re-render here to pick a tab.
+      if (state.loading !== prevState.loading) {
+        manager.forceRender();
+      }
+    });
     const editEventSub = tab.subscribeToEvent(DashboardStateChangedEvent, (e) =>
       performTabRepeats(variable, tab, true)
     );
@@ -49,7 +56,7 @@ export function TabItemRepeater({ tab, variable }: Props) {
       editEventSub.unsubscribe();
       variableChangeSub.unsubscribe();
     };
-  }, [variable, tab]);
+  }, [variable, tab, manager]);
 
   if (
     repeatedTabs === undefined ||
