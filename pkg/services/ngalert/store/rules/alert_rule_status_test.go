@@ -1,7 +1,6 @@
 package rules
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -26,7 +25,7 @@ func TestIntegrationSaveAlertRuleStatus(t *testing.T) {
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	b := &fakeBus{}
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	gen := models.RuleGen.With(models.RuleGen.WithIntervalMatching(store.Cfg.BaseInterval))
 	rule := createRule(t, store, gen)

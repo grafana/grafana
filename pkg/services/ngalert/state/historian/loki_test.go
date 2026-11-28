@@ -840,7 +840,7 @@ func TestRecordStates(t *testing.T) {
 			Labels: data.Labels{"a": "b"},
 		})
 
-		err := <-loki.Record(context.Background(), rule, states)
+		err := <-loki.Record(t.Context(), rule, states)
 
 		require.NoError(t, err)
 		require.Contains(t, "/loki/api/v1/push", req.LastRequest.URL.Path)
@@ -857,8 +857,8 @@ func TestRecordStates(t *testing.T) {
 			Labels: data.Labels{"a": "b"},
 		})
 
-		<-loki.Record(context.Background(), rule, states)
-		<-errLoki.Record(context.Background(), rule, states)
+		<-loki.Record(t.Context(), rule, states)
+		<-errLoki.Record(t.Context(), rule, states)
 
 		exp := bytes.NewBufferString(`
 # HELP grafana_alerting_state_history_transitions_failed_total The total number of state transitions that failed to be written - they are not retried.
@@ -889,7 +889,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 		rule := createTestRule()
 		states := []state.StateTransition{}
 
-		err := <-loki.Record(context.Background(), rule, states)
+		err := <-loki.Record(t.Context(), rule, states)
 
 		require.NoError(t, err)
 		require.Nil(t, req.LastRequest)
@@ -908,7 +908,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 			},
 		})
 
-		err := <-loki.Record(context.Background(), rule, states)
+		err := <-loki.Record(t.Context(), rule, states)
 
 		require.NoError(t, err)
 		require.Contains(t, "/loki/api/v1/push", req.LastRequest.URL.Path)
@@ -926,7 +926,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 			State: eval.Alerting,
 		})
 
-		err := <-loki.Record(context.Background(), rule, states)
+		err := <-loki.Record(t.Context(), rule, states)
 
 		require.NoError(t, err)
 		require.Contains(t, "/loki/api/v1/push", req.LastRequest.URL.Path)
@@ -971,7 +971,7 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 			ac.CanReadAllRulesFunc = func(ctx context.Context, requester identity.Requester) (bool, error) {
 				return true, nil
 			}
-			result, err := createLoki(ac).getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: rule.UID, SignedInUser: usr})
+			result, err := createLoki(ac).getFolderUIDsForFilter(t.Context(), models.HistoryQuery{OrgID: orgID, RuleUID: rule.UID, SignedInUser: usr})
 			assert.NoError(t, err)
 			assert.Len(t, result, 1)
 			assert.Contains(t, result, rule.GetNamespaceUID())
@@ -981,7 +981,7 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 			assert.Equal(t, usr, ac.Calls[0].Arguments[1])
 
 			t.Run("even if rule does not exist", func(t *testing.T) {
-				result, err := createLoki(ac).getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: "not-found", SignedInUser: usr})
+				result, err := createLoki(ac).getFolderUIDsForFilter(t.Context(), models.HistoryQuery{OrgID: orgID, RuleUID: "not-found", SignedInUser: usr})
 				assert.NoError(t, err)
 				assert.Empty(t, result)
 			})
@@ -997,7 +997,7 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 			}
 			loki := createLoki(ac)
 
-			result, err := loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: rule.UID, SignedInUser: usr})
+			result, err := loki.getFolderUIDsForFilter(t.Context(), models.HistoryQuery{OrgID: orgID, RuleUID: rule.UID, SignedInUser: usr})
 			assert.NoError(t, err)
 			assert.Len(t, result, 1)
 			assert.Contains(t, result, rule.GetNamespaceUID())
@@ -1014,12 +1014,12 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 				ac.AuthorizeAccessInFolderFunc = func(ctx context.Context, requester identity.Requester, namespaced models.Namespaced) error {
 					return authzErr
 				}
-				result, err = loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: rule.UID, SignedInUser: usr})
+				result, err = loki.getFolderUIDsForFilter(t.Context(), models.HistoryQuery{OrgID: orgID, RuleUID: rule.UID, SignedInUser: usr})
 				require.ErrorIs(t, err, authzErr)
 			})
 
 			t.Run("should fail if rule does not exist", func(t *testing.T) {
-				result, err = loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: "not-found", SignedInUser: usr})
+				result, err = loki.getFolderUIDsForFilter(t.Context(), models.HistoryQuery{OrgID: orgID, RuleUID: "not-found", SignedInUser: usr})
 				require.ErrorIs(t, err, models.ErrAlertRuleNotFound)
 			})
 		})
@@ -1031,7 +1031,7 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 					ac.CanReadAllRulesFunc = func(ctx context.Context, requester identity.Requester) (bool, error) {
 						return authBypass, nil
 					}
-					result, err := createLoki(ac).getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: rule.UID, SignedInUser: usr})
+					result, err := createLoki(ac).getFolderUIDsForFilter(t.Context(), models.HistoryQuery{OrgID: orgID, RuleUID: rule.UID, SignedInUser: usr})
 					assert.NoError(t, err)
 					assert.Len(t, result, 1)
 					assert.Contains(t, result, rule.GetNamespaceUID())
@@ -1046,7 +1046,7 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 			ac.CanReadAllRulesFunc = func(ctx context.Context, requester identity.Requester) (bool, error) {
 				return true, nil
 			}
-			result, err := createLoki(ac).getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, SignedInUser: usr})
+			result, err := createLoki(ac).getFolderUIDsForFilter(t.Context(), models.HistoryQuery{OrgID: orgID, SignedInUser: usr})
 			assert.NoError(t, err)
 			assert.Empty(t, result)
 
@@ -1065,7 +1065,7 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 			}
 			loki := createLoki(ac)
 
-			result, err := loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, SignedInUser: usr})
+			result, err := loki.getFolderUIDsForFilter(t.Context(), models.HistoryQuery{OrgID: orgID, SignedInUser: usr})
 			assert.NoError(t, err)
 			assert.ElementsMatch(t, folders, result)
 
@@ -1087,7 +1087,7 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 				loki := createLoki(ac)
 				loki.ruleStore = fakes.NewRuleStore(t)
 
-				result, err = loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, SignedInUser: usr})
+				result, err = loki.getFolderUIDsForFilter(t.Context(), models.HistoryQuery{OrgID: orgID, SignedInUser: usr})
 				require.ErrorIs(t, err, rulesAuthz.ErrAuthorizationBase)
 				require.Empty(t, result)
 			})
@@ -1096,7 +1096,7 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 				ac.HasAccessInFolderFunc = func(ctx context.Context, requester identity.Requester, namespaced models.Namespaced) (bool, error) {
 					return false, nil
 				}
-				result, err = loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, SignedInUser: usr})
+				result, err = loki.getFolderUIDsForFilter(t.Context(), models.HistoryQuery{OrgID: orgID, SignedInUser: usr})
 				require.ErrorIs(t, err, rulesAuthz.ErrAuthorizationBase)
 				require.Empty(t, result)
 			})
@@ -1250,7 +1250,7 @@ func TestGetFolderUIDsForFilterWithHistoricalFolders(t *testing.T) {
 			loki.ac = ac
 
 			// Test conditions.
-			result, err := loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: tc.rule.UID, SignedInUser: usr})
+			result, err := loki.getFolderUIDsForFilter(t.Context(), models.HistoryQuery{OrgID: orgID, RuleUID: tc.rule.UID, SignedInUser: usr})
 			assert.NoError(t, err)
 			assert.ElementsMatch(t, tc.expectedFolders, result)
 		})

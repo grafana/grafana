@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"net/http"
 	"testing"
 	"time"
@@ -152,7 +151,7 @@ func TestRouteCreateSilence(t *testing.T) {
 				alertmanagerFor, err := sut.mam.AlertmanagerFor(1)
 				require.NoError(t, err)
 				silence.ID = ""
-				newID, err := alertmanagerFor.CreateSilence(context.Background(), silence)
+				newID, err := alertmanagerFor.CreateSilence(t.Context(), silence)
 				require.NoError(t, err)
 				silence.ID = newID
 			}

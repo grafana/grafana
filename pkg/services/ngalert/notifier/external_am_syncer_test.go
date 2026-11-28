@@ -282,7 +282,7 @@ func buildSyncTestMOA(
 	// Bootstrap: seeds default Alertmanager configurations and registers Alertmanager
 	// instances for each org. The internal call to syncExternalAMs is a no-op here
 	// because the feature flag has not been enabled yet.
-	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
+	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(t.Context()))
 
 	if featureEnabled {
 		require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
@@ -302,7 +302,7 @@ func buildSyncTestMOA(
 // was skipped or because it failed).
 func assertNoExtraConfigSaved(t *testing.T, cs *fakeConfigStore, orgID int64) {
 	t.Helper()
-	saved, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), orgID)
+	saved, err := cs.GetLatestAlertmanagerConfiguration(t.Context(), orgID)
 	require.NoError(t, err)
 	cfg, err := Load([]byte(saved.AlertmanagerConfiguration))
 	require.NoError(t, err)
@@ -411,7 +411,7 @@ func TestSyncExternalAMs_FeatureFlagDisabled(t *testing.T) {
 	adminCfg := newFakeConfigClient()
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, false, "", []int64{1}, newFakeDatasourceProxy())
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
 	// Flag off → FetchExtraConfig short-circuits before any admin-config lookup.
 	assert.Equal(t, 0, adminCfg.totalGetCalls())
@@ -423,7 +423,7 @@ func TestSyncExternalAMs_NoUID_Skipped(t *testing.T) {
 	adminCfg.setUID(1, "")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, true, "", []int64{1}, newFakeDatasourceProxy())
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
 	assertNoExtraConfigSaved(t, cs, 1)
 }
@@ -440,7 +440,7 @@ func TestSyncExternalAMs_SeedsSingletonWhenUnconfigured(t *testing.T) {
 	_, err := adminCfg.lookup("org-1")
 	require.True(t, k8serrors.IsNotFound(err), "singleton should be absent before the sync tick")
 
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
 	// The singleton now exists, carrying Synced=Unknown/NotConfigured (sync is on
 	// but nothing is configured for this org) and no spec.
@@ -474,7 +474,7 @@ func TestSyncExternalAMs_SeedDoesNotClobberExistingConfig(t *testing.T) {
 	adminCfg.setUID(1, "mimir-uid")
 
 	moa, _ := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
 	obj, err := adminCfg.lookup("org-1")
 	require.NoError(t, err)
@@ -501,10 +501,10 @@ func TestSyncExternalAMs_DisabledOrgSkipped(t *testing.T) {
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1, 2}, proxy)
 	moa.settings.UnifiedAlerting.DisabledOrgs = map[int64]struct{}{2: {}}
 
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1, 2})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1, 2})
 
 	// Org 1 succeeded.
-	saved, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 1)
+	saved, err := cs.GetLatestAlertmanagerConfiguration(t.Context(), 1)
 	require.NoError(t, err)
 	cfg, err := Load([]byte(saved.AlertmanagerConfiguration))
 	require.NoError(t, err)
@@ -530,9 +530,9 @@ func TestSyncExternalAMs_OperatorUIDOverridesDB(t *testing.T) {
 	adminCfg.setUID(1, "db-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "operator-uid", []int64{1}, proxy)
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
-	saved, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 1)
+	saved, err := cs.GetLatestAlertmanagerConfiguration(t.Context(), 1)
 	require.NoError(t, err)
 	cfg, err := Load([]byte(saved.AlertmanagerConfiguration))
 	require.NoError(t, err)
@@ -545,7 +545,7 @@ func TestSyncExternalAMs_GetConfigurationError(t *testing.T) {
 	adminCfg.setErr(1, fmt.Errorf("admin config client error"))
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, true, "", []int64{1}, newFakeDatasourceProxy())
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
 	// Admin-config lookup error → FetchExtraConfig logs and returns (nil, 0); no save.
 	assertNoExtraConfigSaved(t, cs, 1)
@@ -567,13 +567,13 @@ func TestSyncExternalAMs_PerOrgErrorIsolation(t *testing.T) {
 	adminCfg.setUID(2, "ds-2")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1, 2}, proxy)
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1, 2})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1, 2})
 
 	// Org 1 failed — no ExtraConfig saved (default config remains).
 	assertNoExtraConfigSaved(t, cs, 1)
 
 	// Org 2 succeeded — config saved with correct identifier.
-	saved, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 2)
+	saved, err := cs.GetLatestAlertmanagerConfiguration(t.Context(), 2)
 	require.NoError(t, err)
 	cfg, err := Load([]byte(saved.AlertmanagerConfiguration))
 	require.NoError(t, err)
@@ -599,7 +599,7 @@ func TestSyncExternalAMs_HTTPTimeout(t *testing.T) {
 
 	// Bound the parent context so the request returns quickly via context cancellation
 	// rather than the HTTP client's hard 10s timeout.
-	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	ctx, cancel := context.WithTimeout(t.Context(), 50*time.Millisecond)
 	defer cancel()
 
 	start := time.Now()
@@ -623,9 +623,9 @@ func TestSyncExternalAMs_SuccessPath(t *testing.T) {
 	adminCfg.setUID(1, "mimir-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
-	saved, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 1)
+	saved, err := cs.GetLatestAlertmanagerConfiguration(t.Context(), 1)
 	require.NoError(t, err)
 	cfg, err := Load([]byte(saved.AlertmanagerConfiguration))
 	require.NoError(t, err)
@@ -652,7 +652,7 @@ func TestSyncExternalAMs_DedupOnIdenticalResponse(t *testing.T) {
 	// First tick: stores the config and writes a history row on top of the
 	// bootstrap default. Bootstrap counts as one history entry; the first sync
 	// adds a second.
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 	require.Len(t, cs.historicConfigs[1], 2)
 	require.NotZero(t, testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncHash.WithLabelValues("1")), "hash gauge should be set after a successful sync")
 
@@ -660,7 +660,7 @@ func TestSyncExternalAMs_DedupOnIdenticalResponse(t *testing.T) {
 	// incoming hash, so SaveAndApplyExtraConfiguration is not called and no
 	// new history row is written. Counts as success — we don't track skipped
 	// separately, matching the regular apply loop.
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 	require.Len(t, cs.historicConfigs[1], 2, "no-op sync should not write a new history row")
 
 	assert.Equal(t, float64(2), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")), "both ticks count as success")
@@ -674,11 +674,11 @@ func TestSyncExternalAMs_UnchangedTickDoesNotRewriteStatus(t *testing.T) {
 	adminCfg.setUID(1, "mimir-uid")
 
 	moa, _ := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
 	before := adminCfg.totalGetCalls()
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 	assert.Equal(t, 1, adminCfg.totalGetCalls()-before, "an unchanged tick only reads the Config to resolve the target")
 }
 
@@ -692,18 +692,18 @@ func TestSyncExternalAMs_ReEnablingWithUnchangedConfigReportsSuccess(t *testing.
 	adminCfg.setUID(1, "mimir-uid")
 
 	moa, _ := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 	require.Equal(t, alertingnotifv1beta1.ConfigConditionStatusTrue, syncedCondition(t, adminCfg).Status)
 
 	// Disable sync: the next tick records NotConfigured.
 	setSpecUID(t, adminCfg, "")
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 	require.Equal(t, conditionReasonNotConfigured, syncedCondition(t, adminCfg).Reason)
 
 	// Re-enable the same datasource. The upstream config hasn't changed, so nothing is saved, but the
 	// status must still say the sync is working rather than staying NotConfigured.
 	setSpecUID(t, adminCfg, "mimir-uid")
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
 	synced := syncedCondition(t, adminCfg)
 	assert.Equal(t, alertingnotifv1beta1.ConfigConditionStatusTrue, synced.Status)
@@ -720,7 +720,7 @@ func TestSyncExternalAMs_ReEnablingAfterRevertImportsAgain(t *testing.T) {
 	adminCfg.setUID(1, "mimir-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
-	ctx := context.Background()
+	ctx := t.Context()
 	moa.SyncAlertmanagersForOrgs(ctx, []int64{1})
 
 	// Disable sync, then revert the staged copy it left behind.
@@ -790,14 +790,14 @@ func TestSyncExternalAMs_SavesWhenResponseChanges(t *testing.T) {
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
 
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 	require.Len(t, cs.historicConfigs[1], 2, "first sync writes one history row on top of bootstrap")
 	firstHash := testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncHash.WithLabelValues("1"))
 	require.NotZero(t, firstHash)
 
 	proxy.setResponse("mimir-uid", http.StatusOK, mimirConfigBody(t, "route:\n  receiver: mimir-changed\nreceivers:\n  - name: mimir-changed"))
 
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 	require.Len(t, cs.historicConfigs[1], 3, "different response bytes should trigger a new save")
 
 	assert.Equal(t, float64(2), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")))
@@ -820,7 +820,7 @@ func TestSyncExternalAMs_IdentifierMismatchClassifiedOnMetric(t *testing.T) {
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
 
 	// Seed an existing ExtraConfig with a different identifier so the sync collides.
-	seedCtx, seedUser := identity.WithServiceIdentity(context.Background(), 1)
+	seedCtx, seedUser := identity.WithServiceIdentity(t.Context(), 1)
 	_, err := moa.SaveAndApplyExtraConfiguration(seedCtx, 1, seedUser, syncBypassAuthz{}, v1.ExtraConfiguration{
 		Identifier:         "existing-uid",
 		AlertmanagerConfig: amConfig,
@@ -828,7 +828,7 @@ func TestSyncExternalAMs_IdentifierMismatchClassifiedOnMetric(t *testing.T) {
 	require.NoError(t, err)
 	rowsBefore := len(cs.historicConfigs[1])
 
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
 	// No new history row — the save was rejected.
 	assert.Equal(t, rowsBefore, len(cs.historicConfigs[1]), "identifier collision must not write history")
@@ -855,7 +855,7 @@ func TestSyncExternalAMs_NoUpstreamConfigClassifiedOnMetric(t *testing.T) {
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
 	rowsBefore := len(cs.historicConfigs[1])
 
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
 	// No new history row — the syncer didn't attempt to persist anything.
 	assert.Equal(t, rowsBefore, len(cs.historicConfigs[1]), "empty upstream config must not write history")
@@ -885,7 +885,7 @@ func TestSyncExternalAMs_Mimir404ClassifiedAsNoUpstreamConfig(t *testing.T) {
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
 	rowsBefore := len(cs.historicConfigs[1])
 
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
 	assert.Equal(t, rowsBefore, len(cs.historicConfigs[1]), "404 upstream must not write history")
 	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "no_upstream_config")))
@@ -916,7 +916,7 @@ func TestSyncExternalAMs_ProxyLocal404ClassifiedAsFetchFailure(t *testing.T) {
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
 	rowsBefore := len(cs.historicConfigs[1])
 
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
 	assert.Equal(t, rowsBefore, len(cs.historicConfigs[1]), "proxy-local 404 must not write history")
 	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "mimir_fetch")))
@@ -993,7 +993,7 @@ receivers:
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
 
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
 	// Invalid config must not be persisted.
 	assertNoExtraConfigSaved(t, cs, 1)
@@ -1072,7 +1072,7 @@ func configWithManagedRoute(identifier string) string {
 }
 
 func TestReadImportState_Committed(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	cases := []struct {
 		name      string
 		reader    amConfigReader
@@ -1111,7 +1111,7 @@ func TestSyncExternalAMs_StopsAfterMergeCommitted(t *testing.T) {
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
 	moa.externalAMSyncer.configReader = fakeAMConfigReader{raw: configWithManagedRoute("ds-1")}
 
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
 	// Nothing imported — sync stopped.
 	assertNoExtraConfigSaved(t, cs, 1)

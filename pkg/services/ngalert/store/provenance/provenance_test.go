@@ -1,7 +1,6 @@
 package provenance_test
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -54,7 +53,7 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 					UID: "asdf",
 				}
 
-				provenance, err := store.GetProvenance(context.Background(), &rule, 1)
+				provenance, err := store.GetProvenance(t.Context(), &rule, 1)
 
 				require.NoError(t, err)
 				require.Equal(t, models.ProvenanceNone, provenance)
@@ -64,10 +63,10 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 				rule := models.AlertRule{
 					UID: "123",
 				}
-				err := store.SetProvenance(context.Background(), &rule, 1, models.ProvenanceFile)
+				err := store.SetProvenance(t.Context(), &rule, 1, models.ProvenanceFile)
 				require.NoError(t, err)
 
-				p, err := store.GetProvenance(context.Background(), &rule, 1)
+				p, err := store.GetProvenance(t.Context(), &rule, 1)
 
 				require.NoError(t, err)
 				require.Equal(t, models.ProvenanceFile, p)
@@ -80,10 +79,10 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 				ruleOrg3 := models.AlertRule{
 					UID: "456",
 				}
-				err := store.SetProvenance(context.Background(), &ruleOrg2, 2, models.ProvenanceFile)
+				err := store.SetProvenance(t.Context(), &ruleOrg2, 2, models.ProvenanceFile)
 				require.NoError(t, err)
 
-				p, err := store.GetProvenance(context.Background(), &ruleOrg3, 3)
+				p, err := store.GetProvenance(t.Context(), &ruleOrg3, 3)
 
 				require.NoError(t, err)
 				require.Equal(t, models.ProvenanceNone, p)
@@ -98,18 +97,18 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 					UID:   "789",
 					OrgID: 3,
 				}
-				err := store.SetProvenance(context.Background(), &ruleOrg2, 2, models.ProvenanceFile)
+				err := store.SetProvenance(t.Context(), &ruleOrg2, 2, models.ProvenanceFile)
 				require.NoError(t, err)
-				err = store.SetProvenance(context.Background(), &ruleOrg3, 3, models.ProvenanceFile)
-				require.NoError(t, err)
-
-				err = store.SetProvenance(context.Background(), &ruleOrg2, 2, models.ProvenanceAPI)
+				err = store.SetProvenance(t.Context(), &ruleOrg3, 3, models.ProvenanceFile)
 				require.NoError(t, err)
 
-				p, err := store.GetProvenance(context.Background(), &ruleOrg2, 2)
+				err = store.SetProvenance(t.Context(), &ruleOrg2, 2, models.ProvenanceAPI)
+				require.NoError(t, err)
+
+				p, err := store.GetProvenance(t.Context(), &ruleOrg2, 2)
 				require.NoError(t, err)
 				require.Equal(t, models.ProvenanceAPI, p)
-				p, err = store.GetProvenance(context.Background(), &ruleOrg3, 3)
+				p, err = store.GetProvenance(t.Context(), &ruleOrg3, 3)
 				require.NoError(t, err)
 				require.Equal(t, models.ProvenanceFile, p)
 			})
@@ -124,12 +123,12 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 					UID:   "790",
 					OrgID: orgID,
 				}
-				err := store.SetProvenance(context.Background(), &rule1, orgID, models.ProvenanceFile)
+				err := store.SetProvenance(t.Context(), &rule1, orgID, models.ProvenanceFile)
 				require.NoError(t, err)
-				err = store.SetProvenance(context.Background(), &rule2, orgID, models.ProvenanceAPI)
+				err = store.SetProvenance(t.Context(), &rule2, orgID, models.ProvenanceAPI)
 				require.NoError(t, err)
 
-				p, err := store.GetProvenances(context.Background(), orgID, rule1.ResourceType())
+				p, err := store.GetProvenances(t.Context(), orgID, rule1.ResourceType())
 				require.NoError(t, err)
 				require.Len(t, p, 2)
 				require.Equal(t, models.ProvenanceFile, p[rule1.UID])
@@ -142,15 +141,15 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 				rule2 := models.AlertRule{UID: "uid-2", OrgID: orgID}
 				rule3 := models.AlertRule{UID: "uid-3", OrgID: orgID}
 
-				err := store.SetProvenance(context.Background(), &rule1, orgID, models.ProvenanceFile)
+				err := store.SetProvenance(t.Context(), &rule1, orgID, models.ProvenanceFile)
 				require.NoError(t, err)
-				err = store.SetProvenance(context.Background(), &rule2, orgID, models.ProvenanceAPI)
+				err = store.SetProvenance(t.Context(), &rule2, orgID, models.ProvenanceAPI)
 				require.NoError(t, err)
-				err = store.SetProvenance(context.Background(), &rule3, orgID, models.ProvenanceFile)
+				err = store.SetProvenance(t.Context(), &rule3, orgID, models.ProvenanceFile)
 				require.NoError(t, err)
 
 				// Fetch only rule1 and rule2
-				p, err := store.GetProvenancesByUIDs(context.Background(), orgID, rule1.ResourceType(), []string{rule1.UID, rule2.UID})
+				p, err := store.GetProvenancesByUIDs(t.Context(), orgID, rule1.ResourceType(), []string{rule1.UID, rule2.UID})
 				require.NoError(t, err)
 				require.Len(t, p, 2)
 				require.Equal(t, models.ProvenanceFile, p[rule1.UID])
@@ -160,7 +159,7 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 			})
 
 			t.Run("GetProvenancesByUIDs returns empty map for empty UIDs", func(t *testing.T) {
-				p, err := store.GetProvenancesByUIDs(context.Background(), 1, "alertRule", []string{})
+				p, err := store.GetProvenancesByUIDs(t.Context(), 1, "alertRule", []string{})
 				require.NoError(t, err)
 				require.Empty(t, p)
 			})
@@ -170,16 +169,16 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 				const orgID2 = 126
 				rule := models.AlertRule{UID: "cross-org-uid"}
 
-				err := store.SetProvenance(context.Background(), &rule, orgID1, models.ProvenanceFile)
+				err := store.SetProvenance(t.Context(), &rule, orgID1, models.ProvenanceFile)
 				require.NoError(t, err)
 
 				// Should not find in different org
-				p, err := store.GetProvenancesByUIDs(context.Background(), orgID2, rule.ResourceType(), []string{rule.UID})
+				p, err := store.GetProvenancesByUIDs(t.Context(), orgID2, rule.ResourceType(), []string{rule.UID})
 				require.NoError(t, err)
 				require.Empty(t, p)
 
 				// Should find in correct org
-				p, err = store.GetProvenancesByUIDs(context.Background(), orgID1, rule.ResourceType(), []string{rule.UID})
+				p, err = store.GetProvenancesByUIDs(t.Context(), orgID1, rule.ResourceType(), []string{rule.UID})
 				require.NoError(t, err)
 				require.Len(t, p, 1)
 				require.Equal(t, models.ProvenanceFile, p[rule.UID])
@@ -191,16 +190,16 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 					UID:   "7834539",
 					OrgID: orgID,
 				}
-				err := store.SetProvenance(context.Background(), &ruleOrg, orgID, models.ProvenanceFile)
+				err := store.SetProvenance(t.Context(), &ruleOrg, orgID, models.ProvenanceFile)
 				require.NoError(t, err)
-				p, err := store.GetProvenance(context.Background(), &ruleOrg, orgID)
+				p, err := store.GetProvenance(t.Context(), &ruleOrg, orgID)
 				require.NoError(t, err)
 				require.Equal(t, models.ProvenanceFile, p)
 
-				err = store.DeleteProvenance(context.Background(), &ruleOrg, orgID)
+				err = store.DeleteProvenance(t.Context(), &ruleOrg, orgID)
 				require.NoError(t, err)
 
-				p, err = store.GetProvenance(context.Background(), &ruleOrg, orgID)
+				p, err = store.GetProvenance(t.Context(), &ruleOrg, orgID)
 				require.NoError(t, err)
 				require.Equal(t, models.ProvenanceNone, p)
 			})
@@ -214,16 +213,16 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 				empty := fakeProvisionable{resourceType: "route", resourceID: ""}
 				sibling := fakeProvisionable{resourceType: "route", resourceID: "route-a"}
 
-				require.NoError(t, store.SetProvenance(context.Background(), empty, orgID, models.ProvenanceFile))
-				require.NoError(t, store.SetProvenance(context.Background(), sibling, orgID, models.ProvenanceAPI))
+				require.NoError(t, store.SetProvenance(t.Context(), empty, orgID, models.ProvenanceFile))
+				require.NoError(t, store.SetProvenance(t.Context(), sibling, orgID, models.ProvenanceAPI))
 
-				require.NoError(t, store.DeleteProvenance(context.Background(), empty, orgID))
+				require.NoError(t, store.DeleteProvenance(t.Context(), empty, orgID))
 
-				p, err := store.GetProvenance(context.Background(), empty, orgID)
+				p, err := store.GetProvenance(t.Context(), empty, orgID)
 				require.NoError(t, err)
 				require.Equal(t, models.ProvenanceNone, p)
 
-				p, err = store.GetProvenance(context.Background(), sibling, orgID)
+				p, err = store.GetProvenance(t.Context(), sibling, orgID)
 				require.NoError(t, err)
 				require.Equal(t, models.ProvenanceAPI, p)
 			})
@@ -262,7 +261,7 @@ func TestIntegrationProvisioningStoreManagerProperties(t *testing.T) {
 			t.Run("Default manager properties of an unset record are empty", func(t *testing.T) {
 				rule := models.AlertRule{UID: "mp-unset"}
 
-				mp, err := store.GetManagerProperties(context.Background(), &rule, 1)
+				mp, err := store.GetManagerProperties(t.Context(), &rule, 1)
 
 				require.NoError(t, err)
 				require.Equal(t, utils.ManagerProperties{}, mp)
@@ -273,15 +272,15 @@ func TestIntegrationProvisioningStoreManagerProperties(t *testing.T) {
 				rule := models.AlertRule{UID: "mp-terraform", OrgID: orgID}
 				want := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "my-workspace"}
 
-				err := store.SetManagerProperties(context.Background(), &rule, orgID, want)
+				err := store.SetManagerProperties(t.Context(), &rule, orgID, want)
 				require.NoError(t, err)
 
-				got, err := store.GetManagerProperties(context.Background(), &rule, orgID)
+				got, err := store.GetManagerProperties(t.Context(), &rule, orgID)
 				require.NoError(t, err)
 				require.Equal(t, want, got)
 
 				// The legacy provenance column is kept in sync (terraform maps to api).
-				p, err := store.GetProvenance(context.Background(), &rule, orgID)
+				p, err := store.GetProvenance(t.Context(), &rule, orgID)
 				require.NoError(t, err)
 				require.Equal(t, models.ProvenanceAPI, p)
 			})
@@ -290,10 +289,10 @@ func TestIntegrationProvisioningStoreManagerProperties(t *testing.T) {
 				const orgID = 1
 				rule := models.AlertRule{UID: "mp-from-provenance", OrgID: orgID}
 
-				err := store.SetProvenance(context.Background(), &rule, orgID, models.ProvenanceFile)
+				err := store.SetProvenance(t.Context(), &rule, orgID, models.ProvenanceFile)
 				require.NoError(t, err)
 
-				mp, err := store.GetManagerProperties(context.Background(), &rule, orgID)
+				mp, err := store.GetManagerProperties(t.Context(), &rule, orgID)
 				require.NoError(t, err)
 				require.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceFile), mp)
 				require.True(t, mp.Kind.IsClassic())
@@ -308,13 +307,13 @@ func TestIntegrationProvisioningStoreManagerProperties(t *testing.T) {
 				const orgID = 1
 				rule := models.AlertRule{UID: "mp-preserve", OrgID: orgID}
 
-				err := store.SetManagerProperties(context.Background(), &rule, orgID, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"})
+				err := store.SetManagerProperties(t.Context(), &rule, orgID, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"})
 				require.NoError(t, err)
 
-				err = store.SetProvenance(context.Background(), &rule, orgID, models.ProvenanceAPI)
+				err = store.SetProvenance(t.Context(), &rule, orgID, models.ProvenanceAPI)
 				require.NoError(t, err)
 
-				mp, err := store.GetManagerProperties(context.Background(), &rule, orgID)
+				mp, err := store.GetManagerProperties(t.Context(), &rule, orgID)
 				require.NoError(t, err)
 				require.Equal(t, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"}, mp,
 					"stored terraform manager and identity must not be clobbered by a legacy api provenance write")
@@ -327,13 +326,13 @@ func TestIntegrationProvisioningStoreManagerProperties(t *testing.T) {
 				const orgID = 1
 				rule := models.AlertRule{UID: "mp-overwrite", OrgID: orgID}
 
-				err := store.SetManagerProperties(context.Background(), &rule, orgID, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"})
+				err := store.SetManagerProperties(t.Context(), &rule, orgID, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"})
 				require.NoError(t, err)
 
-				err = store.SetProvenance(context.Background(), &rule, orgID, models.ProvenanceFile)
+				err = store.SetProvenance(t.Context(), &rule, orgID, models.ProvenanceFile)
 				require.NoError(t, err)
 
-				mp, err := store.GetManagerProperties(context.Background(), &rule, orgID)
+				mp, err := store.GetManagerProperties(t.Context(), &rule, orgID)
 				require.NoError(t, err)
 				require.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceFile), mp)
 				require.Empty(t, mp.Identity)
@@ -350,15 +349,15 @@ func TestIntegrationProvisioningStoreManagerProperties(t *testing.T) {
 				otherOrgRuleFile := models.AlertRule{UID: "mp-by-uid-file-300", OrgID: otherOrgID}
 				otherOrgRuleOther := models.AlertRule{UID: "mp-by-uid-other-300", OrgID: otherOrgID}
 
-				require.NoError(t, store.SetManagerProperties(context.Background(), &ruleTF, orgID, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"}))
-				require.NoError(t, store.SetProvenance(context.Background(), &ruleFile, orgID, models.ProvenanceFile))
-				require.NoError(t, store.SetProvenance(context.Background(), &ruleOther, orgID, models.ProvenanceAPI))
+				require.NoError(t, store.SetManagerProperties(t.Context(), &ruleTF, orgID, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"}))
+				require.NoError(t, store.SetProvenance(t.Context(), &ruleFile, orgID, models.ProvenanceFile))
+				require.NoError(t, store.SetProvenance(t.Context(), &ruleOther, orgID, models.ProvenanceAPI))
 
-				require.NoError(t, store.SetManagerProperties(context.Background(), &otherOrgRuleTF, otherOrgID, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"}))
-				require.NoError(t, store.SetProvenance(context.Background(), &otherOrgRuleFile, otherOrgID, models.ProvenanceFile))
-				require.NoError(t, store.SetProvenance(context.Background(), &otherOrgRuleOther, otherOrgID, models.ProvenanceAPI))
+				require.NoError(t, store.SetManagerProperties(t.Context(), &otherOrgRuleTF, otherOrgID, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"}))
+				require.NoError(t, store.SetProvenance(t.Context(), &otherOrgRuleFile, otherOrgID, models.ProvenanceFile))
+				require.NoError(t, store.SetProvenance(t.Context(), &otherOrgRuleOther, otherOrgID, models.ProvenanceAPI))
 
-				got, err := store.GetAllManagerProperties(context.Background(), orgID, ruleTF.ResourceType())
+				got, err := store.GetAllManagerProperties(t.Context(), orgID, ruleTF.ResourceType())
 				require.NoError(t, err)
 				require.Len(t, got, 3)
 				require.Equal(t, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"}, got[ruleTF.UID])
@@ -375,9 +374,9 @@ func TestIntegrationProvisioningStoreManagerProperties(t *testing.T) {
 
 			t.Run("GetManagerProperties is scoped by org", func(t *testing.T) {
 				rule := models.AlertRule{UID: "mp-cross-org"}
-				require.NoError(t, store.SetManagerProperties(context.Background(), &rule, 301, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"}))
+				require.NoError(t, store.SetManagerProperties(t.Context(), &rule, 301, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"}))
 
-				mp, err := store.GetManagerProperties(context.Background(), &rule, 302)
+				mp, err := store.GetManagerProperties(t.Context(), &rule, 302)
 				require.NoError(t, err)
 				require.Equal(t, utils.ManagerProperties{}, mp)
 			})
@@ -410,7 +409,7 @@ func TestIntegrationSetProvenance_DeadlockScenarios(t *testing.T) {
 			go func(orgID int64) {
 				defer wg.Done()
 				time.Sleep(time.Microsecond * time.Duration(rand.Intn(100)))
-				err := store.SetProvenance(context.Background(), rule, orgID, models.ProvenanceAPI)
+				err := store.SetProvenance(t.Context(), rule, orgID, models.ProvenanceAPI)
 				require.NoError(t, err)
 			}(int64(i + 1))
 		}
@@ -427,7 +426,7 @@ func TestIntegrationSetProvenance_DeadlockScenarios(t *testing.T) {
 				defer wg.Done()
 				time.Sleep(time.Microsecond * time.Duration(rand.Intn(100)))
 				rule := &models.AlertRule{UID: uid}
-				err := store.SetProvenance(context.Background(), rule, orgID, models.ProvenanceFile)
+				err := store.SetProvenance(t.Context(), rule, orgID, models.ProvenanceFile)
 				require.NoError(t, err)
 			}(fmt.Sprintf("diff-record-same-org-%d", i))
 		}
@@ -443,13 +442,13 @@ func TestIntegrationSetProvenance_DeadlockScenarios(t *testing.T) {
 		for range concurrency {
 			wg.Go(func() {
 				time.Sleep(time.Microsecond * time.Duration(rand.Intn(100)))
-				err := store.SetProvenance(context.Background(), rule, orgID, models.ProvenanceAPI)
+				err := store.SetProvenance(t.Context(), rule, orgID, models.ProvenanceAPI)
 				require.NoError(t, err)
 			})
 
 			wg.Go(func() {
 				time.Sleep(time.Microsecond * time.Duration(rand.Intn(100)))
-				_, err := store.GetProvenance(context.Background(), rule, orgID)
+				_, err := store.GetProvenance(t.Context(), rule, orgID)
 				require.NoError(t, err)
 			})
 		}

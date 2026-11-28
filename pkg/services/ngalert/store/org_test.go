@@ -1,7 +1,6 @@
 package store
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -17,7 +16,7 @@ import (
 func TestIntegrationFetchOrgIds(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("returns empty result when no orgs exist", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore

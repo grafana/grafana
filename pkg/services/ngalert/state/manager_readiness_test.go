@@ -36,7 +36,7 @@ func newReadinessManager(t *testing.T, clk clock.Clock, requireWarm bool, timeou
 
 func warm(t *testing.T, mgr *state.Manager) {
 	t.Helper()
-	mgr.Warm(context.Background(), fakeOrgReader{}, &state.FakeRuleReader{}, &state.FakeInstanceStore{})
+	mgr.Warm(t.Context(), fakeOrgReader{}, &state.FakeRuleReader{}, &state.FakeInstanceStore{})
 }
 
 func TestManager_Readiness_WarmNotRequired(t *testing.T) {
@@ -87,7 +87,7 @@ func processResults(t *testing.T, mgr *state.Manager, now time.Time) (*models.Al
 	t.Helper()
 	rule := models.RuleGen.GenerateRef()
 	results := eval.Results{eval.ResultGen(eval.WithState(eval.Alerting), eval.WithEvaluatedAt(now))()}
-	transitions, err := mgr.ProcessEvalResults(context.Background(), now, rule, results, nil, nil)
+	transitions, err := mgr.ProcessEvalResults(t.Context(), now, rule, results, nil, nil)
 	return rule, transitions, err
 }
 
@@ -100,7 +100,7 @@ func TestManager_ProcessEvalResults_Readiness(t *testing.T) {
 
 		require.ErrorIs(t, err, state.ErrNotReady)
 		require.Empty(t, transitions)
-		require.Empty(t, mgr.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID),
+		require.Empty(t, mgr.GetStatesForRuleUID(t.Context(), rule.OrgID, rule.UID),
 			"no state should be written to a cold cache")
 	})
 
@@ -113,7 +113,7 @@ func TestManager_ProcessEvalResults_Readiness(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotEmpty(t, transitions)
-		require.NotEmpty(t, mgr.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
+		require.NotEmpty(t, mgr.GetStatesForRuleUID(t.Context(), rule.OrgID, rule.UID))
 	})
 
 	t.Run("applies results once the grace window elapses", func(t *testing.T) {
@@ -125,7 +125,7 @@ func TestManager_ProcessEvalResults_Readiness(t *testing.T) {
 
 		require.NoError(t, err, "a timed-out probe must not block processing")
 		require.NotEmpty(t, transitions)
-		require.NotEmpty(t, mgr.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
+		require.NotEmpty(t, mgr.GetStatesForRuleUID(t.Context(), rule.OrgID, rule.UID))
 	})
 
 	t.Run("never gates when a warm is not required", func(t *testing.T) {

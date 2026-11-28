@@ -41,7 +41,7 @@ func TestGetPolicyTree(t *testing.T) {
 		return models.ProvenanceAPI, nil
 	}
 
-	tree, version, err := sut.GetPolicyTree(context.Background(), orgID)
+	tree, version, err := sut.GetPolicyTree(t.Context(), orgID)
 	require.NoError(t, err)
 
 	assert.Equal(t, notifier.RouteToAPI(&expectedRoute), &tree)
@@ -90,7 +90,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 				"not-existing",
 			},
 		}
-		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
+		_, _, err := sut.UpdatePolicyTree(t.Context(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
 		require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 	})
 
@@ -105,7 +105,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 				"not-existing",
 			},
 		}
-		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
+		_, _, err := sut.UpdatePolicyTree(t.Context(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
 		require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 	})
 
@@ -118,7 +118,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 		newRoute := definitions.Route{
 			Receiver: "",
 		}
-		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
+		_, _, err := sut.UpdatePolicyTree(t.Context(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
 		require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 	})
 
@@ -134,7 +134,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 		newRoute := definitions.Route{
 			Receiver: "unknown",
 		}
-		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
+		_, _, err := sut.UpdatePolicyTree(t.Context(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
 		require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 
 		t.Run("including sub-routes", func(t *testing.T) {
@@ -144,7 +144,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 					{Receiver: "unknown"},
 				},
 			}
-			_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
+			_, _, err := sut.UpdatePolicyTree(t.Context(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
 			require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 		})
 	})
@@ -158,7 +158,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 		newRoute := definitions.Route{
 			Receiver: rev.Config.AlertmanagerConfig.Route.Receiver,
 		}
-		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, "wrong-version")
+		_, _, err := sut.UpdatePolicyTree(t.Context(), orgID, newRoute, models.ProvenanceNone, "wrong-version")
 		require.ErrorIs(t, err, ErrVersionConflict)
 	})
 
@@ -182,7 +182,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			return expectedErr
 		}
 
-		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
+		_, _, err := sut.UpdatePolicyTree(t.Context(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
 		require.ErrorIs(t, err, expectedErr)
 
 		assert.Len(t, prov.Calls, 1)
@@ -221,7 +221,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			return &rev, nil
 		}
 
-		result, version, err := sut.UpdatePolicyTree(context.Background(), orgID, route, models.ProvenanceAPI, defaultVersion)
+		result, version, err := sut.UpdatePolicyTree(t.Context(), orgID, route, models.ProvenanceAPI, defaultVersion)
 		require.NoError(t, err)
 		assert.Equal(t, route, result)
 		assert.Equal(t, calculateRouteFingerprint(*notifier.RouteFromAPI(&route)), version)
@@ -237,7 +237,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 		expectedRev.ConcurrencyToken = rev.ConcurrencyToken
 		expectedRev.Config.AlertmanagerConfig.Route = notifier.RouteFromAPI(&route)
 
-		result, version, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceAPI, defaultVersion)
+		result, version, err := sut.UpdatePolicyTree(t.Context(), orgID, newRoute, models.ProvenanceAPI, defaultVersion)
 		require.NoError(t, err)
 		assert.Equal(t, newRoute, result)
 		assert.Equal(t, calculateRouteFingerprint(*notifier.RouteFromAPI(&newRoute)), version)
@@ -269,7 +269,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 		expectedRev.Config.AlertmanagerConfig.Route = notifier.RouteFromAPI(&newRoute)
 		expectedRev.ConcurrencyToken = rev.ConcurrencyToken
 
-		result, version, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceAPI, "")
+		result, version, err := sut.UpdatePolicyTree(t.Context(), orgID, newRoute, models.ProvenanceAPI, "")
 		require.NoError(t, err)
 		assert.Equal(t, newRoute, result)
 		assert.Equal(t, calculateRouteFingerprint(*notifier.RouteFromAPI(&newRoute)), version)
@@ -318,7 +318,7 @@ func TestResetPolicyTree(t *testing.T) {
 		sut.settings = setting.UnifiedAlertingSettings{
 			DefaultConfiguration: "{",
 		}
-		_, err := sut.ResetPolicyTree(context.Background(), orgID, models.ProvenanceNone)
+		_, err := sut.ResetPolicyTree(t.Context(), orgID, models.ProvenanceNone)
 		require.ErrorContains(t, err, "failed to parse default alertmanager config")
 	})
 
@@ -335,7 +335,7 @@ func TestResetPolicyTree(t *testing.T) {
 			return expectedErr
 		}
 
-		_, err := sut.ResetPolicyTree(context.Background(), orgID, models.ProvenanceNone)
+		_, err := sut.ResetPolicyTree(t.Context(), orgID, models.ProvenanceNone)
 		require.ErrorIs(t, err, expectedErr)
 	})
 
@@ -355,7 +355,7 @@ func TestResetPolicyTree(t *testing.T) {
 			return expectedErr
 		}
 
-		_, err = sut.ResetPolicyTree(context.Background(), orgID, models.ProvenanceNone)
+		_, err = sut.ResetPolicyTree(t.Context(), orgID, models.ProvenanceNone)
 		require.ErrorIs(t, err, expectedErr)
 	})
 
@@ -380,12 +380,12 @@ func TestResetPolicyTree(t *testing.T) {
 			}, nil
 		}
 
-		expectedRev, err := store.GetFn(context.Background(), orgID)
+		expectedRev, err := store.GetFn(t.Context(), orgID)
 		require.NoError(t, err)
 		expectedRev.Config.AlertmanagerConfig.Route = getDefaultConfigRevision().Config.AlertmanagerConfig.Route
 		maps.Copy(expectedRev.Config.Receivers, getDefaultConfigRevision().Config.Receivers)
 
-		tree, err := sut.ResetPolicyTree(context.Background(), orgID, models.ProvenanceNone)
+		tree, err := sut.ResetPolicyTree(t.Context(), orgID, models.ProvenanceNone)
 		require.NoError(t, err)
 		assert.Equal(t, *notifier.RouteToAPI(defaultConfig.AlertmanagerConfig.Route), tree)
 

@@ -69,7 +69,7 @@ func TestAlertRuleService_CreateAlertRuleAuthorizesNotificationSettings(t *testi
 			return nil
 		}
 		rule := newRule()
-		_, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceAPI))
+		_, err := service.CreateAlertRule(t.Context(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceAPI))
 		require.NoError(t, err)
 		require.Equal(t, []accesscontrol.ReceiverRef{{UID: "uid-of-receiver"}}, authorized)
 	})
@@ -80,7 +80,7 @@ func TestAlertRuleService_CreateAlertRuleAuthorizesNotificationSettings(t *testi
 		ac.AuthorizeNotificationSettingsFunc = func(context.Context, identity.Requester, []accesscontrol.ReceiverRef) error {
 			return denied
 		}
-		_, err := service.CreateAlertRule(context.Background(), u, newRule(), models.ProvenanceToManagerProperties(models.ProvenanceAPI))
+		_, err := service.CreateAlertRule(t.Context(), u, newRule(), models.ProvenanceToManagerProperties(models.ProvenanceAPI))
 		require.ErrorIs(t, err, denied)
 		inserts := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
 			a, ok := cmd.([]models.InsertRule)
@@ -99,7 +99,7 @@ func TestAlertRuleService_CreateAlertRuleAuthorizesNotificationSettings(t *testi
 			*events = append(*events, "authorize "+receivers[0].UID)
 			return nil
 		}
-		_, err := service.CreateAlertRule(context.Background(), u, newRule(), models.ProvenanceToManagerProperties(models.ProvenanceAPI))
+		_, err := service.CreateAlertRule(t.Context(), u, newRule(), models.ProvenanceToManagerProperties(models.ProvenanceAPI))
 		require.NoError(t, err)
 		assert.Equal(t, []string{"authorize uid-of-receiver", "validate"}, *events)
 		assert.Equal(t, 1, provider.lookups, "the configuration should only be loaded once")
@@ -112,7 +112,7 @@ func TestAlertRuleService_CreateAlertRuleAuthorizesNotificationSettings(t *testi
 		ac.AuthorizeNotificationSettingsFunc = func(context.Context, identity.Requester, []accesscontrol.ReceiverRef) error {
 			return errors.New("denied")
 		}
-		_, err := service.CreateAlertRule(context.Background(), u, newRule(), models.ProvenanceToManagerProperties(models.ProvenanceAPI))
+		_, err := service.CreateAlertRule(t.Context(), u, newRule(), models.ProvenanceToManagerProperties(models.ProvenanceAPI))
 		require.Error(t, err)
 		assert.Empty(t, *events)
 	})
@@ -121,7 +121,7 @@ func TestAlertRuleService_CreateAlertRuleAuthorizesNotificationSettings(t *testi
 		service, _, _, _ := initService(t)
 		failure := errors.New("receiver does not exist")
 		service.nsValidatorProvider = &recordingValidatorProvider{validator: recordingValidator{events: &[]string{}, err: failure}}
-		_, err := service.CreateAlertRule(context.Background(), u, newRule(), models.ProvenanceToManagerProperties(models.ProvenanceAPI))
+		_, err := service.CreateAlertRule(t.Context(), u, newRule(), models.ProvenanceToManagerProperties(models.ProvenanceAPI))
 		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 		require.ErrorIs(t, err, failure)
 	})
@@ -133,7 +133,7 @@ func TestAlertRuleService_CreateAlertRuleAuthorizesNotificationSettings(t *testi
 			t.Fatal("receivers should not be authorized for users that can write all rules")
 			return nil
 		}
-		_, err := service.CreateAlertRule(context.Background(), u, newRule(), models.ProvenanceToManagerProperties(models.ProvenanceAPI))
+		_, err := service.CreateAlertRule(t.Context(), u, newRule(), models.ProvenanceToManagerProperties(models.ProvenanceAPI))
 		require.NoError(t, err)
 	})
 }
@@ -153,7 +153,7 @@ func TestAlertRuleService_UpdateAlertRuleAuthorizesChangedNotificationSettings(t
 		service, ruleStore, provenanceStore, ac := initService(t)
 		ruleStore.Rules = map[int64][]*models.AlertRule{orgID: rules}
 		for _, rule := range rules {
-			require.NoError(t, provenanceStore.SetProvenance(context.Background(), rule, orgID, models.ProvenanceAPI))
+			require.NoError(t, provenanceStore.SetProvenance(t.Context(), rule, orgID, models.ProvenanceAPI))
 		}
 		events := &[]string{}
 		service.nsValidatorProvider = &recordingValidatorProvider{validator: recordingValidator{events: events}}
@@ -170,7 +170,7 @@ func TestAlertRuleService_UpdateAlertRuleAuthorizesChangedNotificationSettings(t
 		rule := models.CopyRule(rules[0])
 		rule.NotificationSettings.ContactPointRouting.Receiver = "other"
 
-		_, err := service.UpdateAlertRule(context.Background(), u, *rule, models.ProvenanceToManagerProperties(models.ProvenanceAPI))
+		_, err := service.UpdateAlertRule(t.Context(), u, *rule, models.ProvenanceToManagerProperties(models.ProvenanceAPI))
 		require.NoError(t, err)
 		assert.Equal(t, []string{"authorize uid-of-other", "validate"}, *events)
 	})
@@ -180,7 +180,7 @@ func TestAlertRuleService_UpdateAlertRuleAuthorizesChangedNotificationSettings(t
 		rule := models.CopyRule(rules[0])
 		rule.Title += "_new"
 
-		_, err := service.UpdateAlertRule(context.Background(), u, *rule, models.ProvenanceToManagerProperties(models.ProvenanceAPI))
+		_, err := service.UpdateAlertRule(t.Context(), u, *rule, models.ProvenanceToManagerProperties(models.ProvenanceAPI))
 		require.NoError(t, err)
 		assert.Equal(t, []string{"validate"}, *events)
 	})

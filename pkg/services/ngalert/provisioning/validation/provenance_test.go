@@ -1,7 +1,6 @@
 package validation
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -23,8 +22,8 @@ func TestNewPermissionAwareValidator(t *testing.T) {
 		models.ProvenanceFile,
 	}
 
-	ctxWithUser := identity.WithRequester(context.Background(), &user.SignedInUser{})
-	ctxNoUser := context.Background()
+	ctxWithUser := identity.WithRequester(t.Context(), &user.SignedInUser{})
+	ctxNoUser := t.Context()
 
 	vDenied := NewPermissionAwareValidator(actest.FakeAccessControl{ExpectedEvaluate: false})
 	vAllowed := NewPermissionAwareValidator(actest.FakeAccessControl{ExpectedEvaluate: true})
@@ -77,12 +76,12 @@ func TestValidateProvenanceRelaxed(t *testing.T) {
 	}
 	t.Run("all transitions from 'none' are allowed", func(t *testing.T) {
 		for _, provenance := range all {
-			assert.NoError(t, ValidateProvenanceRelaxed(context.Background(), models.ProvenanceNone, provenance))
+			assert.NoError(t, ValidateProvenanceRelaxed(t.Context(), models.ProvenanceNone, provenance))
 		}
 	})
 	t.Run("noop transitions are allowed", func(t *testing.T) {
 		for _, provenance := range all {
-			assert.NoError(t, ValidateProvenanceRelaxed(context.Background(), provenance, provenance))
+			assert.NoError(t, ValidateProvenanceRelaxed(t.Context(), provenance, provenance))
 		}
 	})
 	t.Run("no transitions to 'none' are allowed", func(t *testing.T) {
@@ -90,7 +89,7 @@ func TestValidateProvenanceRelaxed(t *testing.T) {
 			if from == models.ProvenanceNone {
 				continue
 			}
-			assert.ErrorIsf(t, ErrProvenanceChangeNotAllowed.Base, ValidateProvenanceRelaxed(context.Background(), from, models.ProvenanceNone), "transition %s -> 'none' is allowed but should not", from)
+			assert.ErrorIsf(t, ErrProvenanceChangeNotAllowed.Base, ValidateProvenanceRelaxed(t.Context(), from, models.ProvenanceNone), "transition %s -> 'none' is allowed but should not", from)
 		}
 	})
 	t.Run("transitions between others are are allowed", func(t *testing.T) {
@@ -102,7 +101,7 @@ func TestValidateProvenanceRelaxed(t *testing.T) {
 				if to == models.ProvenanceNone || from == to {
 					continue
 				}
-				assert.NoError(t, ValidateProvenanceRelaxed(context.Background(), from, to))
+				assert.NoError(t, ValidateProvenanceRelaxed(t.Context(), from, to))
 			}
 		}
 	})

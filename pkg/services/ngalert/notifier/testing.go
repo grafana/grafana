@@ -666,7 +666,7 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 	}
 
 	if !options.skipLoad {
-		require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
+		require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(t.Context()))
 	}
 
 	if options.waitReady {

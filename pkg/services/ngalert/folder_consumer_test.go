@@ -47,10 +47,10 @@ func TestAlertRuleFolderConsumer(t *testing.T) {
 	}}
 	c := &AlertRuleFolderConsumer{store: store}
 
-	uids, err := c.FoldersInUse(context.Background(), 1)
+	uids, err := c.FoldersInUse(t.Context(), 1)
 	require.NoError(t, err)
 	require.ElementsMatch(t, []string{"a", "b"}, uids)
 
-	require.NoError(t, c.DeleteInFolder(context.Background(), 1, "a"))
+	require.NoError(t, c.DeleteInFolder(t.Context(), 1, "a"))
 	require.ElementsMatch(t, []string{"r1", "r2"}, store.deleted)
 }

@@ -47,7 +47,7 @@ func TestRecordingRule(t *testing.T) {
 
 	t.Run("when rule evaluation is not stopped", func(t *testing.T) {
 		t.Run("eval should send to evalCh", func(t *testing.T) {
-			r := blankRecordingRuleForTests(context.Background())
+			r := blankRecordingRuleForTests(t.Context())
 			expected := time.Now()
 			resultCh := make(chan evalRetval)
 			data := &Evaluation{
@@ -75,7 +75,7 @@ func TestRecordingRule(t *testing.T) {
 
 	t.Run("when rule evaluation is stopped", func(t *testing.T) {
 		t.Run("eval should do nothing", func(t *testing.T) {
-			r := blankRecordingRuleForTests(context.Background())
+			r := blankRecordingRuleForTests(t.Context())
 			r.Stop(nil)
 			ev := &Evaluation{
 				scheduledAt: time.Now(),
@@ -90,13 +90,13 @@ func TestRecordingRule(t *testing.T) {
 		})
 
 		t.Run("calling stop multiple times should not panic", func(t *testing.T) {
-			r := blankRecordingRuleForTests(context.Background())
+			r := blankRecordingRuleForTests(t.Context())
 			r.Stop(nil)
 			r.Stop(nil)
 		})
 
 		t.Run("stop should not panic if parent context stopped", func(t *testing.T) {
-			ctx, cancelFn := context.WithCancel(context.Background())
+			ctx, cancelFn := context.WithCancel(t.Context())
 			r := blankRecordingRuleForTests(ctx)
 			cancelFn()
 			r.Stop(nil)
@@ -104,7 +104,7 @@ func TestRecordingRule(t *testing.T) {
 	})
 
 	t.Run("eval should be thread-safe", func(t *testing.T) {
-		r := blankRecordingRuleForTests(context.Background())
+		r := blankRecordingRuleForTests(t.Context())
 		wg := sync.WaitGroup{}
 		go func() {
 			for {
@@ -147,7 +147,7 @@ func TestRecordingRule(t *testing.T) {
 	})
 
 	t.Run("Run should exit if idle when Stop is called", func(t *testing.T) {
-		rule := blankRecordingRuleForTests(context.Background())
+		rule := blankRecordingRuleForTests(t.Context())
 		runResult := make(chan error)
 		go func() {
 			runResult <- rule.Run()
@@ -167,7 +167,7 @@ func TestRecordingRule(t *testing.T) {
 func TestRecordingRuleIdentifier(t *testing.T) {
 	t.Run("should return correct identifier", func(t *testing.T) {
 		key := models.GenerateRuleKeyWithGroup(1)
-		r := blankRecordingRuleForTests(context.Background())
+		r := blankRecordingRuleForTests(t.Context())
 		r.key = key
 		require.Equal(t, key, r.Identifier())
 	})
@@ -235,10 +235,10 @@ func TestRecordingRuleAfterEval(t *testing.T) {
 		if cfg.isPaused {
 			rule.IsPaused = true
 		}
-		ruleStore.PutRule(context.Background(), rule)
+		ruleStore.PutRule(t.Context(), rule)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
+		process := ruleFactory.new(t.Context(), ruleWithFolder{rule: rule, folderTitle: ""})
 
 		evalDoneChan := make(chan time.Time, 1) // Buffer to avoid blocking
 		afterEvalCh := make(chan struct{}, 1)   // Buffer to avoid blocking
@@ -439,11 +439,11 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 		writeTarget.Reset()
 		rule := gen.With(withQueryForHealth("ok")).GenerateRef()
 		rule.Record.TargetDatasourceUID = dsUID
-		ruleStore.PutRule(context.Background(), rule)
+		ruleStore.PutRule(t.Context(), rule)
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
+		process := ruleFactory.new(t.Context(), ruleWithFolder{rule: rule, folderTitle: ""})
 		evalDoneChan := make(chan time.Time)
 		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
 			evalDoneChan <- t
@@ -578,11 +578,11 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 	t.Run("rule that errors", func(t *testing.T) {
 		writeTarget.Reset()
 		rule := gen.With(withQueryForHealth("error")).GenerateRef()
-		ruleStore.PutRule(context.Background(), rule)
+		ruleStore.PutRule(t.Context(), rule)
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
+		process := ruleFactory.new(t.Context(), ruleWithFolder{rule: rule, folderTitle: ""})
 		evalDoneChan := make(chan time.Time)
 		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
 			evalDoneChan <- t
@@ -729,11 +729,11 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 
 	t.Run("nodata rule", func(t *testing.T) {
 		rule := gen.With(withQueryForHealth("nodata")).GenerateRef()
-		ruleStore.PutRule(context.Background(), rule)
+		ruleStore.PutRule(t.Context(), rule)
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
+		process := ruleFactory.new(t.Context(), ruleWithFolder{rule: rule, folderTitle: ""})
 		evalDoneChan := make(chan time.Time)
 		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
 			evalDoneChan <- t
@@ -794,11 +794,11 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 			"only_end__":                               "not_filtered_4",
 		}
 
-		ruleStore.PutRule(context.Background(), rule)
+		ruleStore.PutRule(t.Context(), rule)
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
+		process := ruleFactory.new(t.Context(), ruleWithFolder{rule: rule, folderTitle: ""})
 		evalDoneChan := make(chan time.Time)
 		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
 			evalDoneChan <- t
@@ -891,7 +891,7 @@ func setupDatasourceWriter(t *testing.T, target *writer.TestRemoteWriteTarget, r
 	m := metrics.NewNGAlert(reg)
 
 	dss := &dsfakes.FakeDataSourceService{}
-	p1, _ := dss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+	p1, _ := dss.AddDataSource(t.Context(), &datasources.AddDataSourceCommand{
 		UID:      dsUID,
 		Type:     datasources.DS_PROMETHEUS,
 		JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Prometheus"}`)),
@@ -970,9 +970,9 @@ func TestRecordingRuleNoRetryOnNonRetryableWrite(t *testing.T) {
 			return fmt.Errorf("%w: payload too large", writer.ErrNonRetryableWrite)
 		},
 	}
-	ruleStore.PutRule(context.Background(), rule)
+	ruleStore.PutRule(t.Context(), rule)
 
-	process := ruleFactoryFromScheduler(sch).new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
+	process := ruleFactoryFromScheduler(sch).new(t.Context(), ruleWithFolder{rule: rule, folderTitle: ""})
 	rr := process.(*recordingRule)
 	evalDoneChan := make(chan time.Time, 1)
 	rr.evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {

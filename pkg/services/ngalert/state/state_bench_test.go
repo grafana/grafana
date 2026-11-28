@@ -1,7 +1,6 @@
 package state
 
 import (
-	"context"
 	"math/rand"
 	"net/url"
 	"testing"
@@ -37,7 +36,7 @@ func BenchmarkCreateAndPatch(b *testing.B) {
 			},
 		}
 	})()
-	ctx := context.Background()
+	ctx := b.Context()
 	log := &logtest.Fake{}
 	u, _ := url.Parse("http://localhost")
 	// values := make([]int64, count)

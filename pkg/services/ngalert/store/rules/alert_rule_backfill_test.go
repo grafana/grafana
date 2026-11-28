@@ -1,7 +1,6 @@
 package rules
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -34,7 +33,7 @@ func TestIntegration_UpdateFolderFullpathsForFolders(t *testing.T) {
 		models.RuleGen.WithIntervalMatching(store.Cfg.BaseInterval),
 	)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("should populate folder_fullpath for rules with NULL fullpath", func(t *testing.T) {
 		// Add parent and child folders to the fake service

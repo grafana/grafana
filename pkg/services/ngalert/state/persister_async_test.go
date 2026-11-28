@@ -24,7 +24,7 @@ func TestAsyncStatePersister_Async(t *testing.T) {
 				InstanceStore: store,
 			})
 
-			ctx, cancel := context.WithCancel(context.Background())
+			ctx, cancel := context.WithCancel(t.Context())
 
 			defer func() {
 				cancel()
@@ -61,7 +61,7 @@ func TestAsyncStatePersister_Async(t *testing.T) {
 				InstanceStore: store,
 			})
 
-			ctx, cancel := context.WithCancel(context.Background())
+			ctx, cancel := context.WithCancel(t.Context())
 
 			cache := newCache()
 
@@ -93,7 +93,7 @@ func TestAsyncStatePersister_Async_StopsOnContextCancel(t *testing.T) {
 		InstanceStore: store,
 	})
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	cache := newCache()
 
 	done := make(chan struct{})

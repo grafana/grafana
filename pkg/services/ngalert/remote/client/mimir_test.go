@@ -1,7 +1,6 @@
 package client
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -36,7 +35,7 @@ func TestTestReceivers_RateLimitedReturns429(t *testing.T) {
 	mc, err := New(cfg, metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry()), tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
-	_, _, err = mc.TestReceivers(context.Background(), alertingNotify.TestReceiversConfigBodyParams{})
+	_, _, err = mc.TestReceivers(t.Context(), alertingNotify.TestReceiversConfigBodyParams{})
 	require.Error(t, err)
 
 	var gErr errutil.Error

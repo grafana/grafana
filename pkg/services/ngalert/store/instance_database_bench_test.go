@@ -1,7 +1,6 @@
 package store_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -10,7 +9,7 @@ import (
 )
 
 func BenchmarkSaveAlertInstances(b *testing.B) {
-	ctx := context.Background()
+	ctx := b.Context()
 
 	benchmarkRun := func(b *testing.B, instanceCount, labelCount int) {
 		ng, _, ruleStore := tests.SetupTestEnv(b, baseIntervalSeconds)

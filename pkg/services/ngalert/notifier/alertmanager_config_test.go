@@ -65,7 +65,7 @@ func TestMultiOrgAlertmanager_SaveAndApplyExtraConfiguration(t *testing.T) {
 
 	t.Run("fails when organization does not exist", func(t *testing.T) {
 		mam := setupMam(t, nil)
-		ctx := context.Background()
+		ctx := t.Context()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		extraConfig := v1.ExtraConfiguration{
@@ -81,7 +81,7 @@ func TestMultiOrgAlertmanager_SaveAndApplyExtraConfiguration(t *testing.T) {
 
 	t.Run("save new extra configuration", func(t *testing.T) {
 		mam := setupMam(t, nil)
-		ctx := context.Background()
+		ctx := t.Context()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		extraConfig := v1.ExtraConfiguration{
@@ -120,7 +120,7 @@ receivers:
 
 	t.Run("dry run validates configuration without saving", func(t *testing.T) {
 		mam := setupMam(t, nil)
-		ctx := context.Background()
+		ctx := t.Context()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		extraConfig := v1.ExtraConfiguration{
@@ -144,7 +144,7 @@ receivers:
 
 	t.Run("replace existing extra configuration with same identifier", func(t *testing.T) {
 		mam := setupMam(t, nil)
-		ctx := context.Background()
+		ctx := t.Context()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		identifier := "test-config"
@@ -184,7 +184,7 @@ receivers:
 
 	t.Run("fail to create multiple extra configurations", func(t *testing.T) {
 		mam := setupMam(t, nil)
-		ctx := context.Background()
+		ctx := t.Context()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		firstConfig := v1.ExtraConfiguration{
@@ -236,7 +236,7 @@ receivers:
 
 	t.Run("promote merges extra config into main config", func(t *testing.T) {
 		mam := setupMam(t, nil)
-		ctx := context.Background()
+		ctx := t.Context()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		identifier := "promoted-config"
@@ -283,7 +283,7 @@ receivers:
 
 	t.Run("non-promoted extra config templates are provisioned", func(t *testing.T) {
 		mam := setupMam(t, nil)
-		ctx := context.Background()
+		ctx := t.Context()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		extraConfig := v1.ExtraConfiguration{
@@ -316,7 +316,7 @@ receivers:
 
 	t.Run("fail to create extra configuration with identifier that used in managed routes", func(t *testing.T) {
 		mam := setupMam(t, nil)
-		ctx := context.Background()
+		ctx := t.Context()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		identifier := "test-config"
@@ -392,7 +392,7 @@ func TestMultiOrgAlertmanager_DeleteExtraConfiguration(t *testing.T) {
 
 	t.Run("successfully delete existing extra configuration", func(t *testing.T) {
 		mam := setupMam(t, nil)
-		ctx := context.Background()
+		ctx := t.Context()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		identifier := "test-identifier"
@@ -424,7 +424,7 @@ receivers:
 
 	t.Run("deletion of non-existent configuration", func(t *testing.T) {
 		mam := setupMam(t, nil)
-		ctx := context.Background()
+		ctx := t.Context()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		err := mam.DeleteExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, "non-existent")
@@ -433,7 +433,7 @@ receivers:
 
 	t.Run("deletion in non-existent org fails", func(t *testing.T) {
 		mam := setupMam(t, nil)
-		ctx := context.Background()
+		ctx := t.Context()
 
 		err := mam.DeleteExtraConfiguration(ctx, 999, &user.SignedInUser{}, noopExtraConfigAuthz{}, "test-config")
 		require.Error(t, err)
@@ -443,7 +443,7 @@ receivers:
 
 func TestMultiOrgAlertmanager_ExtraConfigurationAuthz(t *testing.T) {
 	orgID := int64(1)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	validConfig := v1.ExtraConfiguration{
 		Identifier: "config-a",
@@ -545,7 +545,7 @@ receivers:
 
 func TestMultiOrgAlertmanager_PromoteExtraConfiguration(t *testing.T) {
 	orgID := int64(1)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	extraConfig := v1.ExtraConfiguration{
 		Identifier: "my-import",
@@ -716,7 +716,7 @@ receivers:
 
 	t.Run("no staged config", func(t *testing.T) {
 		mam := setupMam(t, nil)
-		ctx := context.Background()
+		ctx := t.Context()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
@@ -726,7 +726,7 @@ receivers:
 
 	t.Run("manual import with no active sync is manual", func(t *testing.T) {
 		mam := setupMam(t, nil)
-		ctx := context.Background()
+		ctx := t.Context()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, newStagedConfig("manual-import"), false, false, false)
@@ -742,7 +742,7 @@ receivers:
 		// Flag on but setupMam's syncer has no clientGenerator, so resolution errors.
 		enableSyncFlag(t)
 		mam := setupMam(t, nil)
-		ctx := context.Background()
+		ctx := t.Context()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, newStagedConfig("manual-import"), false, false, false)
@@ -763,7 +763,7 @@ receivers:
 		enableSyncFlag(t)
 		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
 		withConfigClient(mam)
-		ctx := context.Background()
+		ctx := t.Context()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, asAutoSync(newStagedConfig("mimir-ds-uid")), false, false, false)
@@ -779,7 +779,7 @@ receivers:
 		enableSyncFlag(t)
 		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
 		withConfigClient(mam)
-		ctx := context.Background()
+		ctx := t.Context()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, newStagedConfig("manual-import"), false, false, false)
@@ -796,7 +796,7 @@ receivers:
 		// auto-sync-owned once the syncer has stopped touching it.
 		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
 		withConfigClient(mam)
-		ctx := context.Background()
+		ctx := t.Context()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, newStagedConfig("mimir-ds-uid"), false, false, false)
@@ -813,7 +813,7 @@ receivers:
 		extraConfigs := []definitions.ExtraConfiguration{{Identifier: "whatever"}}
 
 		require.NotPanics(t, func() {
-			mam.setExtraConfigOrigin(context.Background(), orgID, extraConfigs)
+			mam.setExtraConfigOrigin(t.Context(), orgID, extraConfigs)
 		})
 		require.Equal(t, "manual", extraConfigs[0].ManagedBy)
 	})
@@ -822,7 +822,7 @@ receivers:
 		enableSyncFlag(t)
 		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
 		withConfigClient(mam)
-		ctx := context.Background()
+		ctx := t.Context()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, newStagedConfig("mimir-ds-uid"), false, false, false)
@@ -840,7 +840,7 @@ func TestExtraConfigOwnership(t *testing.T) {
 		orgID   = int64(1)
 		syncUID = "mimir-ds-uid"
 	)
-	ctx := context.Background()
+	ctx := t.Context()
 	signedIn := &user.SignedInUser{}
 
 	setSyncFlag := func(t *testing.T, on bool) {

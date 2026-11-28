@@ -43,7 +43,7 @@ func TestContextWithTimeoutFromRequest(t *testing.T) {
 		require.NoError(t, err)
 
 		now := time.Now()
-		ctx := context.Background()
+		ctx := t.Context()
 		ctx, cancelFunc, err := contextWithTimeoutFromRequest(
 			ctx,
 			req,
@@ -66,7 +66,7 @@ func TestContextWithTimeoutFromRequest(t *testing.T) {
 		req.Header.Set("Request-Timeout", "5")
 
 		now := time.Now()
-		ctx := context.Background()
+		ctx := t.Context()
 		ctx, cancelFunc, err := contextWithTimeoutFromRequest(
 			ctx,
 			req,
@@ -88,7 +88,7 @@ func TestContextWithTimeoutFromRequest(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set("Request-Timeout", "60")
 
-		ctx := context.Background()
+		ctx := t.Context()
 		ctx, cancelFunc, err := contextWithTimeoutFromRequest(
 			ctx,
 			req,
@@ -756,21 +756,21 @@ func createRequestCtxInOrg(org int64) *contextmodel.ReqContext {
 // setRouteProvenance marks an org's routing tree as provisioned.
 func setRouteProvenance(t *testing.T, orgID int64, ps provisioning.ProvisioningStore) {
 	t.Helper()
-	err := ps.SetProvenance(context.Background(), &apimodels.Route{}, orgID, ngmodels.ProvenanceAPI)
+	err := ps.SetProvenance(t.Context(), &apimodels.Route{}, orgID, ngmodels.ProvenanceAPI)
 	require.NoError(t, err)
 }
 
 // setContactPointProvenance marks a contact point as provisioned.
 func setContactPointProvenance(t *testing.T, orgID int64, UID string, ps provisioning.ProvisioningStore) {
 	t.Helper()
-	err := ps.SetProvenance(context.Background(), &apimodels.EmbeddedContactPoint{UID: UID}, orgID, ngmodels.ProvenanceAPI)
+	err := ps.SetProvenance(t.Context(), &apimodels.EmbeddedContactPoint{UID: UID}, orgID, ngmodels.ProvenanceAPI)
 	require.NoError(t, err)
 }
 
 // setTemplateProvenance marks a template as provisioned.
 func setTemplateProvenance(t *testing.T, orgID int64, name string, ps provisioning.ProvisioningStore) {
 	t.Helper()
-	err := ps.SetProvenance(context.Background(), &v1.TemplateGroup{Title: name}, orgID, ngmodels.ProvenanceAPI)
+	err := ps.SetProvenance(t.Context(), &v1.TemplateGroup{Title: name}, orgID, ngmodels.ProvenanceAPI)
 	require.NoError(t, err)
 }
 

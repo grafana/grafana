@@ -1,7 +1,6 @@
 package state
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -65,13 +64,13 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 
 	t.Run("should save all transitions if doNotSaveNormalState is false", func(t *testing.T) {
 		trace := tracing.NewNoopTracerProvider().Tracer("test")
-		_, span := trace.Start(context.Background(), "")
+		_, span := trace.Start(t.Context(), "")
 		st := &FakeInstanceStore{}
 		syncStatePersister := NewSyncStatePersisiter(&logtest.Fake{}, ManagerCfg{
 			InstanceStore:           st,
 			MaxStateSaveConcurrency: 1,
 		})
-		syncStatePersister.Sync(context.Background(), span, ruleKey, transitions)
+		syncStatePersister.Sync(t.Context(), span, ruleKey, transitions)
 		savedKeys := map[ngmodels.AlertInstanceKey]ngmodels.AlertInstance{}
 		for _, op := range st.RecordedOps() {
 			saved := op.(ngmodels.AlertInstance)
@@ -86,13 +85,13 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 
 	t.Run("should not save Normal->Normal if doNotSaveNormalState is true", func(t *testing.T) {
 		trace := tracing.NewNoopTracerProvider().Tracer("test")
-		_, span := trace.Start(context.Background(), "")
+		_, span := trace.Start(t.Context(), "")
 		st := &FakeInstanceStore{}
 		syncStatePersister := NewSyncStatePersisiter(&logtest.Fake{}, ManagerCfg{
 			InstanceStore:           st,
 			MaxStateSaveConcurrency: 1,
 		})
-		syncStatePersister.Sync(context.Background(), span, ruleKey, transitions)
+		syncStatePersister.Sync(t.Context(), span, ruleKey, transitions)
 
 		savedKeys := map[ngmodels.AlertInstanceKey]ngmodels.AlertInstance{}
 		for _, op := range st.RecordedOps() {
@@ -109,7 +108,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 
 	t.Run("should save expected fields", func(t *testing.T) {
 		trace := tracing.NewNoopTracerProvider().Tracer("test")
-		_, span := trace.Start(context.Background(), "")
+		_, span := trace.Start(t.Context(), "")
 		st := &FakeInstanceStore{}
 		syncStatePersister := NewSyncStatePersisiter(&logtest.Fake{}, ManagerCfg{
 			InstanceStore:           st,
@@ -162,7 +161,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 			PreviousStateReason: util.GenerateShortUID(),
 		}
 
-		syncStatePersister.Sync(context.Background(), span, ruleKey, []StateTransition{transition})
+		syncStatePersister.Sync(t.Context(), span, ruleKey, []StateTransition{transition})
 
 		require.Len(t, st.RecordedOps(), 1)
 		saved := st.RecordedOps()[0].(ngmodels.AlertInstance)

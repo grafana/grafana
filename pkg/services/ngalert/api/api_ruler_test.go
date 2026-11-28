@@ -75,7 +75,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 		// add random data
-		ruleStore.PutRule(context.Background(), gen.GenerateManyRef(1, 5)...)
+		ruleStore.PutRule(t.Context(), gen.GenerateManyRef(1, 5)...)
 		return ruleStore
 	}
 
@@ -89,7 +89,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 				authorizedRulesInFolder := folderGen.With(gen.WithGroupPrefix("authz-")).GenerateManyRef(1, 5)
 
-				ruleStore.PutRule(context.Background(), authorizedRulesInFolder...)
+				ruleStore.PutRule(t.Context(), authorizedRulesInFolder...)
 
 				permissions := createPermissionsForRulesWithoutDS(authorizedRulesInFolder, orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
@@ -101,7 +101,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			})
 			t.Run("return Forbidden if user is not authorized to access any group in the folder", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
-				ruleStore.PutRule(context.Background(), gen.With(gen.WithNamespace(folder.ToFolderReference())).GenerateManyRef(1, 5)...)
+				ruleStore.PutRule(t.Context(), gen.With(gen.WithNamespace(folder.ToFolderReference())).GenerateManyRef(1, 5)...)
 
 				request := createRequestContextWithPerms(orgID, map[int64]map[string][]string{}, nil)
 
@@ -120,12 +120,12 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 				provisionedRulesInFolder := folderGen.With(gen.WithGroupPrefix("provisioned-")).GenerateManyRef(1, 5)
 				for _, rule := range provisionedRulesInFolder {
-					err := provisioningStore.SetProvenance(context.Background(), rule, orgID, models.ProvenanceAPI)
+					err := provisioningStore.SetProvenance(t.Context(), rule, orgID, models.ProvenanceAPI)
 					require.NoError(t, err)
 				}
 
-				ruleStore.PutRule(context.Background(), authorizedRulesInFolder...)
-				ruleStore.PutRule(context.Background(), provisionedRulesInFolder...)
+				ruleStore.PutRule(t.Context(), authorizedRulesInFolder...)
+				ruleStore.PutRule(t.Context(), provisionedRulesInFolder...)
 
 				permissions := createPermissionsForRules(append(authorizedRulesInFolder, provisionedRulesInFolder...), orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
@@ -142,10 +142,10 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				folderGen := gen.With(gen.WithNamespace(folder.ToFolderReference()))
 
 				provisionedRulesInFolder := folderGen.With(gen.WithSameGroup()).GenerateManyRef(1, 5)
-				err := provisioningStore.SetProvenance(context.Background(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
+				err := provisioningStore.SetProvenance(t.Context(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
 				require.NoError(t, err)
 
-				ruleStore.PutRule(context.Background(), provisionedRulesInFolder...)
+				ruleStore.PutRule(t.Context(), provisionedRulesInFolder...)
 
 				permissions := createPermissionsForRules(provisionedRulesInFolder, orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
@@ -171,11 +171,11 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				authorizedRulesInFolder := folderGen.With(gen.WithSameGroup()).GenerateManyRef(1, 5)
 
 				provisionedRulesInFolder := folderGen.With(gen.WithSameGroup()).GenerateManyRef(1, 5)
-				err := provisioningStore.SetProvenance(context.Background(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
+				err := provisioningStore.SetProvenance(t.Context(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
 				require.NoError(t, err)
 
-				ruleStore.PutRule(context.Background(), authorizedRulesInFolder...)
-				ruleStore.PutRule(context.Background(), provisionedRulesInFolder...)
+				ruleStore.PutRule(t.Context(), authorizedRulesInFolder...)
+				ruleStore.PutRule(t.Context(), provisionedRulesInFolder...)
 
 				permissions := createPermissionsForRules(append(authorizedRulesInFolder, provisionedRulesInFolder...), orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
@@ -207,7 +207,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				groupGen := gen.With(gen.WithNamespace(folder.ToFolderReference()), gen.WithSameGroup())
 
 				authorizedRulesInGroup := groupGen.GenerateManyRef(1, 5)
-				ruleStore.PutRule(context.Background(), authorizedRulesInGroup...)
+				ruleStore.PutRule(t.Context(), authorizedRulesInGroup...)
 
 				permissions := createPermissionsForRules([]*models.AlertRule{}, orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
@@ -225,10 +225,10 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				groupGen := gen.With(gen.WithNamespace(folder.ToFolderReference()), gen.WithSameGroup())
 
 				provisionedRulesInFolder := groupGen.GenerateManyRef(1, 5)
-				err := provisioningStore.SetProvenance(context.Background(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
+				err := provisioningStore.SetProvenance(t.Context(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
 				require.NoError(t, err)
 
-				ruleStore.PutRule(context.Background(), provisionedRulesInFolder...)
+				ruleStore.PutRule(t.Context(), provisionedRulesInFolder...)
 
 				permissions := createPermissionsForRules(provisionedRulesInFolder, orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
@@ -253,9 +253,9 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 			folderGen := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder.ToFolderReference()), gen.WithUpdatedBy(new(models.UserUID("test-user"))))
 			queryAccessRules := folderGen.GenerateManyRef(2, 6)
-			ruleStore.PutRule(context.Background(), queryAccessRules...)
+			ruleStore.PutRule(t.Context(), queryAccessRules...)
 			noQueryAccessRules := folderGen.GenerateManyRef(2, 6)
-			ruleStore.PutRule(context.Background(), noQueryAccessRules...)
+			ruleStore.PutRule(t.Context(), noQueryAccessRules...)
 
 			allRules := make([]*models.AlertRule, 0, len(queryAccessRules)+len(noQueryAccessRules))
 			allRules = append(allRules, queryAccessRules...)
@@ -309,7 +309,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 		expectedRules := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder.ToFolderReference())).GenerateManyRef(2, 6)
-		ruleStore.PutRule(context.Background(), expectedRules...)
+		ruleStore.PutRule(t.Context(), expectedRules...)
 
 		fakeUserService := usertest.NewUserServiceFake()
 		userUids := make([]string, 0)
@@ -330,7 +330,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		rule := &models.AlertRule{
 			UID: expectedRules[0].UID,
 		}
-		err := svc.provenanceStore.SetProvenance(context.Background(), rule, orgID, models.ProvenanceAPI)
+		err := svc.provenanceStore.SetProvenance(t.Context(), rule, orgID, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		perms := createPermissionsForRules(expectedRules, orgID)
@@ -374,7 +374,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		for range 10 {
 			expectedRules = append(expectedRules, gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex(), gen.WithUpdatedBy(new(models.UserUID(util.GenerateShortUID())))).GenerateManyRef(5, 10)...)
 		}
-		ruleStore.PutRule(context.Background(), expectedRules...)
+		ruleStore.PutRule(t.Context(), expectedRules...)
 
 		perms := createPermissionsForRules(expectedRules, orgID)
 		req := createRequestContextWithPerms(orgID, perms, nil)
@@ -442,7 +442,7 @@ func TestRouteGetRuleByUID(t *testing.T) {
 			gen.WithKeepFiringFor(30*time.Second),
 		).GenerateManyRef(3)
 		require.Len(t, createdRules, 3)
-		ruleStore.PutRule(context.Background(), createdRules...)
+		ruleStore.PutRule(t.Context(), createdRules...)
 
 		perms := createPermissionsForRules(createdRules, orgID)
 		req := createRequestContextWithPerms(orgID, perms, nil)
@@ -570,7 +570,7 @@ func TestRouteGetRuleByUID(t *testing.T) {
 
 		createdRules := gen.With(gen.WithUniqueGroupIndex(), gen.WithUniqueID()).GenerateManyRef(3)
 		require.Len(t, createdRules, 3)
-		ruleStore.PutRule(context.Background(), createdRules...)
+		ruleStore.PutRule(t.Context(), createdRules...)
 
 		perms := createPermissionsForRules(createdRules, orgID)
 		req := createRequestContextWithPerms(orgID, perms, nil)
@@ -608,7 +608,7 @@ func TestRouteGetRuleVersionsByUID(t *testing.T) {
 			}
 		}
 
-		ruleStore.PutRule(context.Background(), rule)
+		ruleStore.PutRule(t.Context(), rule)
 		ruleStore.History[rule.GUID] = append(ruleStore.History[rule.GUID], history...)
 
 		perms := createPermissionsForRules([]*models.AlertRule{rule}, orgID)
@@ -677,7 +677,7 @@ func TestRouteGetRuleVersionsByUID(t *testing.T) {
 		}
 		guid := uuid.NewV4().String()
 		rule := gen.With(gen.WithKey(ruleKey), gen.WithGUID(guid)).GenerateRef()
-		ruleStore.PutRule(context.Background(), rule)
+		ruleStore.PutRule(t.Context(), rule)
 		ruleStore.History[guid] = nil
 
 		perms := createPermissionsForRules([]*models.AlertRule{rule}, orgID)
@@ -701,7 +701,7 @@ func TestRouteGetRuleVersionsByUID(t *testing.T) {
 		}
 		guid := uuid.NewV4().String()
 		rule := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey), gen.WithNamespaceUID(anotherFolder.UID)).GenerateRef()
-		ruleStore.PutRule(context.Background(), rule)
+		ruleStore.PutRule(t.Context(), rule)
 		historyRules := gen.With(gen.WithGUID(guid), gen.WithKey(ruleKey)).GenerateManyRef(3)
 		history := make([]*models.AlertRuleVersion, len(historyRules))
 		for i, alertRule := range historyRules {
@@ -739,7 +739,7 @@ func TestRouteGetRulesConfig(t *testing.T) {
 
 			group1 := gen.With(gen.WithGroupKey(group1Key), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(2, 6)
 			group2 := gen.With(gen.WithGroupKey(group2Key), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(2, 6)
-			ruleStore.PutRule(context.Background(), append(group1, group2...)...)
+			ruleStore.PutRule(t.Context(), append(group1, group2...)...)
 
 			t.Run("and do not return group if user does not have access to one of rules", func(t *testing.T) {
 				permissions := createPermissionsForRules(append(group1, group2[1:]...), orgID)
@@ -781,7 +781,7 @@ func TestRouteGetRulesConfig(t *testing.T) {
 			rules = append(rules, gen.With(gen.WithGroupKey(groupKey)).GenerateRef())
 			expected = append(expected, f.UID)
 		}
-		ruleStore.PutRule(context.Background(), rules...)
+		ruleStore.PutRule(t.Context(), rules...)
 
 		req := createRequestContextWithPerms(orgID, createPermissionsForRules(rules, orgID), nil)
 		response := createService(ruleStore, usertest.NewUserServiceFake()).RouteGetRulesConfig(req)
@@ -809,7 +809,7 @@ func TestRouteGetRulesConfig(t *testing.T) {
 		ruleUpdatedBy := new(models.UserUID(util.GenerateShortUID()))
 
 		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex(), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(5, 10)
-		ruleStore.PutRule(context.Background(), expectedRules...)
+		ruleStore.PutRule(t.Context(), expectedRules...)
 
 		perms := createPermissionsForRules(expectedRules, orgID)
 		req := createRequestContextWithPerms(orgID, perms, nil)
@@ -925,7 +925,7 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 		ruleUpdatedBy := new(models.UserUID(util.GenerateShortUID()))
 
 		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex(), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(5, 10)
-		ruleStore.PutRule(context.Background(), expectedRules...)
+		ruleStore.PutRule(t.Context(), expectedRules...)
 
 		perms := createPermissionsForRules(expectedRules, orgID)
 		req := createRequestContextWithPerms(orgID, perms, nil)
@@ -966,7 +966,7 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 		groupKey.NamespaceUID = folder.UID
 
 		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
-		ruleStore.PutRule(context.Background(), expectedRules...)
+		ruleStore.PutRule(t.Context(), expectedRules...)
 
 		perms := createPermissionsForRules(expectedRules, orgID)
 		req := createRequestContextWithPerms(orgID, perms, nil)
@@ -1014,7 +1014,7 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 		provenanceStore := &provisioning.MockProvisioningStore{}
 		provenanceStore.EXPECT().GetProvenances(mock.Anything, orgID, "alertRule").Return(storeResult, nil)
 
-		result := verifyProvisionedRulesNotAffected(context.Background(), provenanceStore, orgID, ch)
+		result := verifyProvisionedRulesNotAffected(t.Context(), provenanceStore, orgID, ch)
 		require.Error(t, result)
 		require.ErrorIs(t, result, errProvisionedResource)
 		assert.Contains(t, result.Error(), allRules[0].GetGroupKey().String())
@@ -1030,7 +1030,7 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 		provenanceStore := &provisioning.MockProvisioningStore{}
 		provenanceStore.EXPECT().GetProvenances(mock.Anything, orgID, "alertRule").Return(storeResult, nil)
 
-		result := verifyProvisionedRulesNotAffected(context.Background(), provenanceStore, orgID, ch)
+		result := verifyProvisionedRulesNotAffected(t.Context(), provenanceStore, orgID, ch)
 		require.NoError(t, result)
 	})
 
@@ -1038,7 +1038,7 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 		provenanceStore := &provisioning.MockProvisioningStore{}
 		provenanceStore.EXPECT().GetProvenances(mock.Anything, orgID, "alertRule").Return(make(map[string]models.Provenance, len(allRules)), nil)
 
-		result := verifyProvisionedRulesNotAffected(context.Background(), provenanceStore, orgID, ch)
+		result := verifyProvisionedRulesNotAffected(t.Context(), provenanceStore, orgID, ch)
 		require.NoError(t, result)
 	})
 }
@@ -1074,7 +1074,7 @@ func TestValidateQueries(t *testing.T) {
 
 	t.Run("should not validate deleted rules or updated rules with ignored fields", func(t *testing.T) {
 		validator := &recordingConditionValidator{}
-		err := validateQueries(context.Background(), &delta, validator, nil)
+		err := validateQueries(t.Context(), &delta, validator, nil)
 		require.NoError(t, err)
 		noValidate := []string{"Deleted", "Update_Index_New"}
 		for _, condition := range validator.recorded {
@@ -1093,7 +1093,7 @@ func TestValidateQueries(t *testing.T) {
 				return nil
 			},
 		}
-		err := validateQueries(context.Background(), &delta, validator, nil)
+		err := validateQueries(t.Context(), &delta, validator, nil)
 		require.Error(t, err)
 		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 	})
@@ -1106,7 +1106,7 @@ func TestValidateQueries(t *testing.T) {
 				return nil
 			},
 		}
-		err := validateQueries(context.Background(), &delta, validator, nil)
+		err := validateQueries(t.Context(), &delta, validator, nil)
 		require.Error(t, err)
 		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 		require.ErrorContains(t, err, delta.Update[0].New.UID)
@@ -1256,13 +1256,13 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 			gen.WithIsPaused(false),
 		).GenerateManyRef(3)
 		for _, r := range provisionedRules {
-			err := provisioningStore.SetProvenance(context.Background(), r, orgID, models.ProvenanceAPI)
+			err := provisioningStore.SetProvenance(t.Context(), r, orgID, models.ProvenanceAPI)
 			require.NoError(t, err)
 		}
 
-		ruleStore.PutRule(context.Background(), unpausedRules...)
-		ruleStore.PutRule(context.Background(), provisionedRules...)
-		ruleStore.PutRule(context.Background(), pausedRules...)
+		ruleStore.PutRule(t.Context(), unpausedRules...)
+		ruleStore.PutRule(t.Context(), provisionedRules...)
+		ruleStore.PutRule(t.Context(), pausedRules...)
 
 		allRules := append(append(unpausedRules, provisionedRules...), pausedRules...)
 		permissions := createPermissionsForRules(allRules, orgID)
@@ -1300,13 +1300,13 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 			gen.WithIsPaused(false),
 		).GenerateManyRef(2)
 		for _, r := range provisionedRules {
-			err := provisioningStore.SetProvenance(context.Background(), r, orgID, models.ProvenanceAPI)
+			err := provisioningStore.SetProvenance(t.Context(), r, orgID, models.ProvenanceAPI)
 			require.NoError(t, err)
 		}
 
-		ruleStore.PutRule(context.Background(), pausedRules...)
-		ruleStore.PutRule(context.Background(), provisionedRules...)
-		ruleStore.PutRule(context.Background(), unpausedRules...)
+		ruleStore.PutRule(t.Context(), pausedRules...)
+		ruleStore.PutRule(t.Context(), provisionedRules...)
+		ruleStore.PutRule(t.Context(), unpausedRules...)
 
 		allRules := append(append(pausedRules, provisionedRules...), unpausedRules...)
 		permissions := createPermissionsForRules(allRules, orgID)
@@ -1338,8 +1338,8 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 		groupA := gen.With(gen.WithSameGroup()).GenerateManyRef(3)
 		groupB := gen.With(gen.WithSameGroup()).GenerateManyRef(2)
 
-		ruleStore.PutRule(context.Background(), groupA...)
-		ruleStore.PutRule(context.Background(), groupB...)
+		ruleStore.PutRule(t.Context(), groupA...)
+		ruleStore.PutRule(t.Context(), groupB...)
 
 		allRules := append(append([]*models.AlertRule{}, groupA...), groupB...)
 		permissions := createPermissionsForRules(allRules, orgID)
@@ -1364,12 +1364,12 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 		nonProvisionedGroup := gen.With(gen.WithSameGroup()).GenerateManyRef(3)
 		provisionedGroup := gen.With(gen.WithSameGroup()).GenerateManyRef(2)
 		for _, r := range provisionedGroup {
-			err := provisioningStore.SetProvenance(context.Background(), r, orgID, models.ProvenanceAPI)
+			err := provisioningStore.SetProvenance(t.Context(), r, orgID, models.ProvenanceAPI)
 			require.NoError(t, err)
 		}
 
-		ruleStore.PutRule(context.Background(), nonProvisionedGroup...)
-		ruleStore.PutRule(context.Background(), provisionedGroup...)
+		ruleStore.PutRule(t.Context(), nonProvisionedGroup...)
+		ruleStore.PutRule(t.Context(), provisionedGroup...)
 
 		allRules := append(append([]*models.AlertRule{}, nonProvisionedGroup...), provisionedGroup...)
 		permissions := createPermissionsForRules(allRules, orgID)
@@ -1393,11 +1393,11 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 
 		provisionedGroup := gen.With(gen.WithSameGroup()).GenerateManyRef(4)
 		for _, r := range provisionedGroup {
-			err := provisioningStore.SetProvenance(context.Background(), r, orgID, models.ProvenanceAPI)
+			err := provisioningStore.SetProvenance(t.Context(), r, orgID, models.ProvenanceAPI)
 			require.NoError(t, err)
 		}
 
-		ruleStore.PutRule(context.Background(), provisionedGroup...)
+		ruleStore.PutRule(t.Context(), provisionedGroup...)
 
 		permissions := createPermissionsForRules(provisionedGroup, orgID)
 		requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
@@ -1425,12 +1425,12 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 		nonProvisionedGroup := gen.With(gen.WithSameGroup(), gen.WithIsPaused(true)).GenerateManyRef(3)
 		provisionedGroup := gen.With(gen.WithSameGroup(), gen.WithIsPaused(false)).GenerateManyRef(2)
 		for _, r := range provisionedGroup {
-			err := provisioningStore.SetProvenance(context.Background(), r, orgID, models.ProvenanceAPI)
+			err := provisioningStore.SetProvenance(t.Context(), r, orgID, models.ProvenanceAPI)
 			require.NoError(t, err)
 		}
 
-		ruleStore.PutRule(context.Background(), nonProvisionedGroup...)
-		ruleStore.PutRule(context.Background(), provisionedGroup...)
+		ruleStore.PutRule(t.Context(), nonProvisionedGroup...)
+		ruleStore.PutRule(t.Context(), provisionedGroup...)
 
 		allRules := append(append([]*models.AlertRule{}, nonProvisionedGroup...), provisionedGroup...)
 		permissions := createPermissionsForRules(allRules, orgID)
@@ -1457,7 +1457,7 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 		// Create already unpaused rules
 		rules := gen.With(gen.WithGroupPrefix("paused-"), gen.WithIsPaused(false)).GenerateManyRef(5)
 
-		ruleStore.PutRule(context.Background(), rules...)
+		ruleStore.PutRule(t.Context(), rules...)
 
 		permissions := createPermissionsForRules(rules, orgID)
 		requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
@@ -1520,7 +1520,7 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 		provisioningStore := fakes.NewFakeProvisioningStore()
 
 		rules := gen.GenerateManyRef(2)
-		ruleStore.PutRule(context.Background(), rules...)
+		ruleStore.PutRule(t.Context(), rules...)
 
 		permissions := map[int64]map[string][]string{orgID: {}}
 		requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
@@ -1554,7 +1554,7 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 			models.RuleGen.WithNamespaceUID(managedFolder.UID),
 		)
 		rules := ruleGen.GenerateManyRef(2)
-		ruleStore.PutRule(context.Background(), rules...)
+		ruleStore.PutRule(t.Context(), rules...)
 
 		permissions := createPermissionsForRules(rules, orgID)
 		requestCtx := createRequestContextWithPerms(orgID, permissions, nil)

@@ -1,7 +1,6 @@
 package image
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -21,7 +20,7 @@ func TestUploadingService(t *testing.T) {
 	u := imguploader.NewMockImageUploader(c)
 	s := NewUploadingService(u, prometheus.NewRegistry())
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	u.EXPECT().Upload(ctx, "foo.png").Return("https://example.com/foo.png", nil)
 	image, err := s.Upload(ctx, models.Image{Path: "foo.png"})

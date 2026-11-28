@@ -2,7 +2,6 @@ package state
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"math/rand"
 	"strings"
@@ -24,7 +23,7 @@ import (
 )
 
 func Test_expand(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	logger := log.NewNopLogger()
 
 	// This test asserts that multierror returns a nil error if there are no errors.
@@ -139,7 +138,7 @@ func Test_expand(t *testing.T) {
 }
 
 func Test_expandAnnotationsAndLabels_sizeCap(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	logger := log.NewNopLogger()
 	result := eval.Result{Instance: data.Labels{}, EvaluatedAt: time.Now()}
 

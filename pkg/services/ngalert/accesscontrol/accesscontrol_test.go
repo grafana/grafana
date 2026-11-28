@@ -1,7 +1,6 @@
 package accesscontrol
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -17,13 +16,13 @@ import (
 func TestHasAccessOrError(t *testing.T) {
 	t.Run("returns nil when user has access", func(t *testing.T) {
 		svc := genericService{ac: &actest.FakeAccessControl{ExpectedEvaluate: true}}
-		err := svc.HasAccessOrError(context.Background(), &identity.StaticRequester{}, accesscontrol.EvalPermission("test:action"), func() string { return "test action" })
+		err := svc.HasAccessOrError(t.Context(), &identity.StaticRequester{}, accesscontrol.EvalPermission("test:action"), func() string { return "test action" })
 		require.NoError(t, err)
 	})
 
 	t.Run("returns errutil.Forbidden when user lacks access", func(t *testing.T) {
 		svc := genericService{ac: &actest.FakeAccessControl{ExpectedEvaluate: false}}
-		err := svc.HasAccessOrError(context.Background(), &identity.StaticRequester{}, accesscontrol.EvalPermission("test:action"), func() string { return "test action" })
+		err := svc.HasAccessOrError(t.Context(), &identity.StaticRequester{}, accesscontrol.EvalPermission("test:action"), func() string { return "test action" })
 		require.Error(t, err)
 
 		var grafanaErr errutil.Error
@@ -34,7 +33,7 @@ func TestHasAccessOrError(t *testing.T) {
 	t.Run("wraps internal evaluation error as errutil.Error", func(t *testing.T) {
 		internalErr := errors.New("scope resolution failed")
 		svc := genericService{ac: &actest.FakeAccessControl{ExpectedErr: internalErr}}
-		err := svc.HasAccessOrError(context.Background(), &identity.StaticRequester{}, accesscontrol.EvalPermission("test:action"), func() string { return "test action" })
+		err := svc.HasAccessOrError(t.Context(), &identity.StaticRequester{}, accesscontrol.EvalPermission("test:action"), func() string { return "test action" })
 		require.Error(t, err)
 
 		// The wrapped error should be detectable as errutil.Error by ErrOrFallback

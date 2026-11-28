@@ -59,7 +59,7 @@ func TestAsyncRuleStatePersister_Async(t *testing.T) {
 				InstanceStore: store,
 			})
 
-			ctx, cancel := context.WithCancel(context.Background())
+			ctx, cancel := context.WithCancel(t.Context())
 
 			cache := newCache()
 
@@ -91,7 +91,7 @@ func TestAsyncRuleStatePersister_Async_StopsOnContextCancel(t *testing.T) {
 		InstanceStore: store,
 	})
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	cache := newCache()
 
 	done := make(chan struct{})
@@ -126,7 +126,7 @@ func TestAsyncRuleStatePersister_Sync(t *testing.T) {
 			InstanceStore: store,
 		})
 
-		persister.Sync(context.Background(), nil, models.AlertRuleKeyWithGroup{}, StateTransitions{
+		persister.Sync(t.Context(), nil, models.AlertRuleKeyWithGroup{}, StateTransitions{
 			{State: &State{OrgID: 1, AlertRuleUID: "1"}},
 		})
 

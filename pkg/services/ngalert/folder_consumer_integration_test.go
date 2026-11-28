@@ -55,7 +55,7 @@ func TestIntegrationAlertRuleFolderConsumers_RoutedSQL(t *testing.T) {
 				}, nil
 			}
 
-			ctx, requester := identity.WithServiceIdentity(context.Background(), 2)
+			ctx, requester := identity.WithServiceIdentity(t.Context(), 2)
 			c := ProvideAlertRuleFolderConsumer(service)
 			folders, err := c.FoldersInUse(ctx, 2)
 			require.NoError(t, err)
@@ -66,7 +66,7 @@ func TestIntegrationAlertRuleFolderConsumers_RoutedSQL(t *testing.T) {
 
 			requesters = nil
 			if consumer == "folder reconciler" {
-				require.NoError(t, c.DeleteInFolder(context.Background(), 2, "target-folder"))
+				require.NoError(t, c.DeleteInFolder(t.Context(), 2, "target-folder"))
 			} else {
 				require.NoError(t, cleaner.NewContentsCleaner(service).DeleteInFolder(ctx, "org-2", "target-folder", requester))
 			}
@@ -108,11 +108,11 @@ func TestIntegrationAlertRuleFolderConsumers_ProviderFailure(t *testing.T) {
 			var err error
 			switch operation {
 			case "list":
-				_, err = c.FoldersInUse(context.Background(), 2)
+				_, err = c.FoldersInUse(t.Context(), 2)
 			case "reconciler read", "reconciler delete":
-				err = c.DeleteInFolder(context.Background(), 2, "target-folder")
+				err = c.DeleteInFolder(t.Context(), 2, "target-folder")
 			default:
-				ctx, requester := identity.WithServiceIdentity(context.Background(), 2)
+				ctx, requester := identity.WithServiceIdentity(t.Context(), 2)
 				err = cleaner.NewContentsCleaner(service).DeleteInFolder(ctx, "org-2", "target-folder", requester)
 			}
 			require.ErrorIs(t, err, failure)
@@ -136,7 +136,7 @@ func TestIntegrationAlertRuleFolderConsumers_SQLFailureRollsBack(t *testing.T) {
 			},
 		}, nil
 	}
-	err := ProvideAlertRuleFolderConsumer(service).DeleteInFolder(context.Background(), 2, "target-folder")
+	err := ProvideAlertRuleFolderConsumer(service).DeleteInFolder(t.Context(), 2, "target-folder")
 	require.ErrorContains(t, err, "missing_alert_instance")
 	assertFolderConsumerRows(t, raw.SQLStore, "alert_rule", 2, []string{"target-folder", "other-folder"})
 }
@@ -149,7 +149,7 @@ func TestIntegrationAlertRuleFolderConsumers_DefaultSQLJoinsTransaction(t *testi
 			seedFolderConsumerRules(t, raw, "other-folder")
 			require.Nil(t, raw.LegacyDatabaseProvider)
 			failure := errors.New("later transaction step failed")
-			err := raw.SQLStore.InTransaction(context.Background(), func(ctx context.Context) error {
+			err := raw.SQLStore.InTransaction(t.Context(), func(ctx context.Context) error {
 				if consumer == "folder reconciler" {
 					if err := ProvideAlertRuleFolderConsumer(service).DeleteInFolder(ctx, 2, "target-folder"); err != nil {
 						return err
@@ -201,7 +201,7 @@ func seedFolderConsumerRules(t *testing.T, raw *rules.RuleStore, otherFolder str
 		rule.OrgID = fixture.orgID
 		rule.NamespaceUID = fixture.folder
 		rule.UID = fixture.uid
-		_, err := raw.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.InsertRule{{AlertRule: rule}})
+		_, err := raw.InsertAlertRules(t.Context(), &models.AlertingUserUID, []models.InsertRule{{AlertRule: rule}})
 		require.NoError(t, err)
 	}
 }
@@ -209,7 +209,7 @@ func seedFolderConsumerRules(t *testing.T, raw *rules.RuleStore, otherFolder str
 func copyFolderConsumerTables(t *testing.T, store db.DB) {
 	t.Helper()
 	for _, table := range []string{"alert_rule", "alert_instance", "alert_rule_state", "alert_rule_version"} {
-		err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
+		err := store.WithDbSession(t.Context(), func(sess *db.Session) error {
 			_, err := sess.Exec(fmt.Sprintf("CREATE TABLE routed_%s AS SELECT * FROM %s", table, table))
 			return err
 		})
@@ -220,7 +220,7 @@ func copyFolderConsumerTables(t *testing.T, store db.DB) {
 func assertFolderConsumerRows(t *testing.T, store db.DB, table string, orgID int64, want []string) {
 	t.Helper()
 	var folders []string
-	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
+	err := store.WithDbSession(t.Context(), func(sess *db.Session) error {
 		return sess.Table(table).Cols("namespace_uid").Where("org_id = ?", orgID).Find(&folders)
 	})
 	require.NoError(t, err)

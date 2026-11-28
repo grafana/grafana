@@ -130,7 +130,7 @@ func TestNewAlertmanager(t *testing.T) {
 				DefaultConfig:     defaultGrafanaConfig,
 			}
 			am, err := NewAlertmanager(
-				context.Background(),
+				t.Context(),
 				cfg,
 				nil,
 				notifier.NewCrypto(secretsService, nil, log.NewNopLogger()),
@@ -193,7 +193,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &c))
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(db.InitTestDB(t)))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	var err error
-	c.AlertmanagerConfig.Receivers, err = encryptedGrafanaReceivers(c.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
+	c.AlertmanagerConfig.Receivers, err = encryptedGrafanaReceivers(c.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(t.Context(), secretsService))
 	require.NoError(t, err)
 
 	// The encrypted configuration should be different than the one we will send.
@@ -228,7 +228,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 		SmtpConfig:    func(context.Context) (client.SmtpConfig, error) { return smtp, smtpErr },
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	store := ngfakes.NewFakeKVStore(t)
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, testSilence1))
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, testNflog1))
@@ -375,7 +375,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	var inputCfg v1store.AMConfigDB
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &inputCfg))
 	var err error
-	inputCfg.AlertmanagerConfig.Receivers, err = encryptedGrafanaReceivers(inputCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
+	inputCfg.AlertmanagerConfig.Receivers, err = encryptedGrafanaReceivers(inputCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(t.Context(), secretsService))
 	require.NoError(t, err)
 	testGrafanaConfigWithEncryptedSecret := cloneConfig(inputCfg)
 
@@ -540,7 +540,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 
 			features := featuremgmt.WithFeatures()
 			moa, _ := newRemoteMOA(t, cfg, test.autogenConfig, features, secretsService)
@@ -665,7 +665,7 @@ func TestCompareAndSendConfigurationConvertsMimirReceivers(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 			got = ""
 
 			features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
@@ -868,7 +868,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 					CreatedAt:                 time.Now().Unix(),
 				}
 			}()
-			applied, err := moa.ApplyConfig(context.Background(), 1, dbConfig)
+			applied, err := moa.ApplyConfig(t.Context(), 1, dbConfig)
 			require.NoError(t, err)
 			require.True(t, applied)
 
@@ -933,7 +933,7 @@ receivers:
 			CreatedAt:                 time.Now().Unix(),
 		}
 	}()
-	applied, err := moa.ApplyConfig(context.Background(), 1, dbConfig)
+	applied, err := moa.ApplyConfig(t.Context(), 1, dbConfig)
 	require.NoError(t, err)
 	require.True(t, applied)
 
@@ -1014,7 +1014,7 @@ receivers:
 
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(db.InitTestDB(t)))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	tc := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Encrypt extra configs since this tests the database path
 	err := tc.EncryptExtraConfigs(ctx, &cfg)
@@ -1079,7 +1079,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	moa, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 	am.state = notifier.NewFileStore(1, store)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, testSilence1))
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, testNflog1))
 
@@ -1164,7 +1164,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	{
 		postableCfg, err := loadDBModel([]byte(testGrafanaConfigWithSecret))
 		require.NoError(t, err)
-		postableCfg.AlertmanagerConfig.Receivers, err = encryptedGrafanaReceivers(postableCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
+		postableCfg.AlertmanagerConfig.Receivers, err = encryptedGrafanaReceivers(postableCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(t.Context(), secretsService))
 		require.NoError(t, err)
 
 		// The encrypted configuration should be different than the one we will send.
@@ -1242,7 +1242,7 @@ func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
 		DefaultConfig:     defaultGrafanaConfig,
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
@@ -1272,7 +1272,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 		DefaultConfig:     defaultGrafanaConfig,
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
@@ -1354,7 +1354,7 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 		DefaultConfig:     defaultGrafanaConfig,
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
@@ -1429,7 +1429,7 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 		DefaultConfig:     defaultGrafanaConfig,
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
@@ -1464,7 +1464,7 @@ func TestIntegrationRemoteAlertmanagerTestTemplates(t *testing.T) {
 		DefaultConfig:     defaultGrafanaConfig,
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
@@ -1521,7 +1521,7 @@ func TestIntegrationRemoteAlertmanagerTestIntegration(t *testing.T) {
 		DefaultConfig:     defaultGrafanaConfig,
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
@@ -1587,7 +1587,7 @@ func newRemoteMOA(t *testing.T, cfg AlertmanagerConfig, notificationSettings map
 	fstore := notifier.NewFileStore(1, ngfakes.NewFakeKVStore(t))
 
 	am, err := NewAlertmanager(
-		context.Background(),
+		t.Context(),
 		cfg,
 		fstore,
 		testCrypto,

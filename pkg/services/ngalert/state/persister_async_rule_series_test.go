@@ -60,7 +60,7 @@ func TestAsyncRuleStatePersister_FullSyncSeries(t *testing.T) {
 		store := &seriesRecordingStore{FakeInstanceStore: &FakeInstanceStore{}}
 		p := NewAsyncRuleStatePersister(log.New("test"), clock.New(), time.Second, ManagerCfg{InstanceStore: store}).(*AsyncRuleStatePersister)
 
-		require.NoError(t, p.fullSync(context.Background(), seriesProvider{cache: newCache(), series: series}))
+		require.NoError(t, p.fullSync(t.Context(), seriesProvider{cache: newCache(), series: series}))
 
 		require.Equal(t, 1, store.seriesSyncs)
 		require.Equal(t, 0, store.plainSyncs)
@@ -71,7 +71,7 @@ func TestAsyncRuleStatePersister_FullSyncSeries(t *testing.T) {
 		store := &seriesRecordingStore{FakeInstanceStore: &FakeInstanceStore{}}
 		p := NewAsyncRuleStatePersister(log.New("test"), clock.New(), time.Second, ManagerCfg{InstanceStore: store}).(*AsyncRuleStatePersister)
 
-		require.NoError(t, p.fullSync(context.Background(), newCache()))
+		require.NoError(t, p.fullSync(t.Context(), newCache()))
 
 		require.Equal(t, 0, store.seriesSyncs)
 		require.Equal(t, 1, store.plainSyncs)
@@ -86,7 +86,7 @@ func TestAsyncRuleStatePersister_FullSyncSeries(t *testing.T) {
 
 		c := newCache()
 		c.set(&State{OrgID: 1, AlertRuleUID: "alert", State: eval.Normal})
-		require.NoError(t, p.fullSync(context.Background(), seriesProvider{cache: c, series: series}))
+		require.NoError(t, p.fullSync(t.Context(), seriesProvider{cache: c, series: series}))
 		require.Len(t, store.RecordedOps(), 1)
 	})
 }

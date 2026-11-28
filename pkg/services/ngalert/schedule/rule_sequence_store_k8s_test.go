@@ -65,13 +65,13 @@ func TestK8sRuleSequenceStore_getClient_retries_on_failure(t *testing.T) {
 	store := NewK8sRuleSequenceStore(gen, "", log.NewNopLogger())
 
 	// First call should fail and propagate the error.
-	_, err := store.GetRuleSequencesForScheduling(context.Background())
+	_, err := store.GetRuleSequencesForScheduling(t.Context())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "apiserver not ready")
 	assert.Equal(t, 1, gen.calls)
 
 	// Second call should retry (error is not cached).
-	_, err = store.GetRuleSequencesForScheduling(context.Background())
+	_, err = store.GetRuleSequencesForScheduling(t.Context())
 	require.Error(t, err)
 	assert.Equal(t, 2, gen.calls, "expected retry after transient failure")
 
@@ -112,7 +112,7 @@ func TestK8sRuleSequenceStore_listsInConfiguredNamespace(t *testing.T) {
 			cli := &recordingClient{}
 			store := NewK8sRuleSequenceStore(&fakeClientGenerator{client: cli}, tc.namespace, log.NewNopLogger())
 
-			_, err := store.GetRuleSequencesForScheduling(context.Background())
+			_, err := store.GetRuleSequencesForScheduling(t.Context())
 			require.NoError(t, err)
 			assert.Equal(t, []string{tc.namespace}, cli.namespaces)
 		})

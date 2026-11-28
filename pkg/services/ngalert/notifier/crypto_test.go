@@ -49,7 +49,7 @@ func TestEncryptExtraConfigs(t *testing.T) {
 				},
 			}
 
-			err := c.EncryptExtraConfigs(context.Background(), cfg)
+			err := c.EncryptExtraConfigs(t.Context(), cfg)
 
 			require.NoError(t, err)
 			require.Equal(t, tt.expectedConfig, cfg.ExtraConfigs[0].AlertmanagerConfig)
@@ -171,7 +171,7 @@ func TestDecryptExtraConfigs(t *testing.T) {
 				},
 			}
 
-			err := c.DecryptExtraConfigs(context.Background(), cfg)
+			err := c.DecryptExtraConfigs(t.Context(), cfg)
 
 			if tt.expectedError != "" {
 				require.ErrorContains(t, err, tt.expectedError)

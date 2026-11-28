@@ -1,7 +1,6 @@
 package store
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -23,7 +22,7 @@ import (
 // not update any rule. If it did, UpdateAlertRules would bump every rule's
 // version (resourceVersion) on every poll tick.
 func TestConvertedRuleReApplyProducesNoDelta(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	newConverter := func() *prom.Converter {
 		c, err := prom.NewConverter(prom.Config{

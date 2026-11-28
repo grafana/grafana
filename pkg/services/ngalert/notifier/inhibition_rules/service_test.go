@@ -53,7 +53,7 @@ var (
 )
 
 func TestService_GetInhibitionRules(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	orgID := int64(1)
 	grafanaRules, importedRules := getTestRules(t)
 
@@ -113,7 +113,7 @@ func TestService_GetInhibitionRules(t *testing.T) {
 }
 
 func TestService_GetInhibitionRule(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	orgID := int64(1)
 	grafanaRules, importedRules := getTestRules(t)
 
@@ -159,7 +159,7 @@ func TestService_GetInhibitionRule(t *testing.T) {
 }
 
 func TestService_UpdateInhibitionRule(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	orgID := int64(1)
 	grafanaRules, importedRules := getTestRules(t)
 
@@ -227,7 +227,7 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 }
 
 func TestService_DeleteInhibitionRule(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	orgID := int64(1)
 	grafanaRules, importedRules := getTestRules(t)
 

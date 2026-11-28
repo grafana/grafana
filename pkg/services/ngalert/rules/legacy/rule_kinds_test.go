@@ -81,7 +81,7 @@ func newKindsEnv(t *testing.T) *kindsEnv {
 
 func TestRuleKindsGet(t *testing.T) {
 	e := newKindsEnv(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("returns the rule of its own kind", func(t *testing.T) {
 		alertRule, err := e.alerts.Get(ctx, e.user, e.user.OrgID, e.alerting.UID)
@@ -118,7 +118,7 @@ func TestRuleKindsGet(t *testing.T) {
 func TestRuleKindsUseRequestOrg(t *testing.T) {
 	// A Grafana server admin can call another org's namespace, so the objects carry the request's org, not the user's.
 	e := newKindsEnv(t)
-	ctx := context.Background()
+	ctx := t.Context()
 	const requestOrg int64 = 2
 	require.NotEqual(t, requestOrg, e.user.OrgID)
 	want := nsMapperForTest()(requestOrg)
@@ -140,7 +140,7 @@ func TestRuleKindsUseRequestOrg(t *testing.T) {
 
 func TestRuleKindsSaveStatus(t *testing.T) {
 	e := newKindsEnv(t)
-	ctx := context.Background()
+	ctx := t.Context()
 	const requestOrg int64 = 2
 
 	require.NoError(t, e.alerts.SaveStatus(ctx, requestOrg, e.alerting.UID, v1beta1.AlertRuleStatus{LastError: new("alert failed")}))
@@ -158,7 +158,7 @@ func TestRuleKindsSaveStatus(t *testing.T) {
 
 func TestRuleKindsListFiltersByKind(t *testing.T) {
 	e := newKindsEnv(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// The fake store ignores the rule type, so give each call only rules of the kind it asks for, and check the
 	// recorded queries. The caller's rule type is ignored: each facade only lists its own kind.
@@ -182,7 +182,7 @@ func TestRuleKindsListFiltersByKind(t *testing.T) {
 }
 
 func TestRuleKindsDeleteUsesManagerFromObject(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	manager := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf"}
 	otherManager := utils.ManagerProperties{Kind: utils.ManagerKindKubectl, Identity: "kubectl"}
 

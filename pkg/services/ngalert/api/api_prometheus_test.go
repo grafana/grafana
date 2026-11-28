@@ -427,7 +427,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
 
 		rule := gen.With(asFixture(), withClassicConditionSingleQuery(), gen.WithNoNotificationSettings()).GenerateRef()
-		fakeStore.PutRule(context.Background(), rule)
+		fakeStore.PutRule(t.Context(), rule)
 
 		// Create two states with different evaluation times and durations.
 		// State 1: newer evaluation time
@@ -713,7 +713,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			fakeStore, fakeAIM, api := setupAPI(t)
 			rule := gen.With(gen.WithOrgID(orgID), asFixture(), withClassicConditionSingleQuery()).GenerateRef()
 			fakeAIM.GenerateAlertInstances(1, rule.UID, 1, withRecoveringState())
-			fakeStore.PutRule(context.Background(), rule)
+			fakeStore.PutRule(t.Context(), rule)
 
 			r := api.RouteGetRuleStatuses(c)
 			require.Equal(t, http.StatusOK, r.Status())
@@ -740,7 +740,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			rule := gen.With(gen.WithOrgID(orgID), asFixture(), withClassicConditionSingleQuery()).GenerateRef()
 			fakeAIM.GenerateAlertInstances(orgID, rule.UID, 1, withRecoveringState())
 			fakeAIM.GenerateAlertInstances(orgID, rule.UID, 1, withAlertingState())
-			fakeStore.PutRule(context.Background(), rule)
+			fakeStore.PutRule(t.Context(), rule)
 
 			r := api.RouteGetRuleStatuses(c)
 			require.Equal(t, http.StatusOK, r.Status())
@@ -770,8 +770,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			alertingRule := gen.With(gen.WithOrgID(orgID), gen.WithGroupKey(groupKey), withClassicConditionSingleQuery()).GenerateRef()
 			fakeAIM.GenerateAlertInstances(orgID, recoveringRule.UID, 1, withRecoveringState())
 			fakeAIM.GenerateAlertInstances(orgID, alertingRule.UID, 1, withAlertingState())
-			fakeStore.PutRule(context.Background(), recoveringRule)
-			fakeStore.PutRule(context.Background(), alertingRule)
+			fakeStore.PutRule(t.Context(), recoveringRule)
+			fakeStore.PutRule(t.Context(), alertingRule)
 
 			req, err := http.NewRequest("GET", "/api/v1/rules?state=recovering", nil)
 			require.NoError(t, err)
@@ -811,7 +811,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			groupKey := ngmodels.GenerateGroupKey(orgID)
 			gen := ngmodels.RuleGen
 			rules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
-			ruleStore.PutRule(context.Background(), rules...)
+			ruleStore.PutRule(t.Context(), rules...)
 
 			api := NewPrometheusSrv(
 				log.NewNopLogger(),
@@ -882,10 +882,10 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			gen.WithLabels(map[string]string{"__grafana_origin": "plugin/grafana-slo-app"}),
 		).GenerateRef()
 
-		ruleStore.PutRule(context.Background(), rulesInGroup1...)
-		ruleStore.PutRule(context.Background(), rulesInGroup2...)
-		ruleStore.PutRule(context.Background(), rulesInGroup3...)
-		ruleStore.PutRule(context.Background(), pluginRule)
+		ruleStore.PutRule(t.Context(), rulesInGroup1...)
+		ruleStore.PutRule(t.Context(), rulesInGroup2...)
+		ruleStore.PutRule(t.Context(), rulesInGroup3...)
+		ruleStore.PutRule(t.Context(), pluginRule)
 
 		api := NewPrometheusSrv(
 			log.NewNopLogger(),
@@ -986,7 +986,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.NoError(t, json.Unmarshal(resp.Body(), result))
 
 			require.Len(t, result.Data.RuleGroups, 1)
-			folder, err := ruleStore.GetNamespaceByUID(context.Background(), "folder-1", orgID, user)
+			folder, err := ruleStore.GetNamespaceByUID(t.Context(), "folder-1", orgID, user)
 			require.NoError(t, err)
 			require.Equal(t, folder.Fullpath, result.Data.RuleGroups[0].File)
 			require.Equal(t, "rule-group-3", result.Data.RuleGroups[0].Name)
@@ -1106,7 +1106,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			})).GenerateManyRef(1)
 
 			allRules = append(allRules, rules...)
-			ruleStore.PutRule(context.Background(), rules...)
+			ruleStore.PutRule(t.Context(), rules...)
 		}
 
 		api := NewPrometheusSrv(
@@ -1141,7 +1141,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Len(t, result.Data.RuleGroups, 9)
 			require.NotZero(t, len(result.Data.Totals))
 			for i := range 9 {
-				folder, err := ruleStore.GetNamespaceByUID(context.Background(), fmt.Sprintf("namespace_%d", i/9), orgID, user)
+				folder, err := ruleStore.GetNamespaceByUID(t.Context(), fmt.Sprintf("namespace_%d", i/9), orgID, user)
 				require.NoError(t, err)
 				require.Equal(t, folder.Fullpath, result.Data.RuleGroups[i].File)
 				require.Equal(t, fmt.Sprintf("rule_group_%d", i), result.Data.RuleGroups[i].Name)
@@ -1202,7 +1202,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Empty(t, result.Data.NextToken)
 
 			for i := range 9 {
-				folder, err := ruleStore.GetNamespaceByUID(context.Background(), fmt.Sprintf("namespace_%d", i/9), orgID, user)
+				folder, err := ruleStore.GetNamespaceByUID(t.Context(), fmt.Sprintf("namespace_%d", i/9), orgID, user)
 				require.NoError(t, err)
 				require.Equal(t, folder.Fullpath, returnedGroups[i].File)
 				require.Equal(t, fmt.Sprintf("rule_group_%d", i), returnedGroups[i].Name)
@@ -1224,7 +1224,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Len(t, result.Data.Totals, 0)
 			require.NotEmpty(t, result.Data.NextToken)
 
-			folder, err := ruleStore.GetNamespaceByUID(context.Background(), "namespace_0", orgID, user)
+			folder, err := ruleStore.GetNamespaceByUID(t.Context(), "namespace_0", orgID, user)
 			require.NoError(t, err)
 			require.Equal(t, folder.Fullpath, result.Data.RuleGroups[0].File)
 			require.Equal(t, "rule_group_0", result.Data.RuleGroups[0].Name)
@@ -1261,7 +1261,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			})).GenerateManyRef(10)
 
 			allRules = append(allRules, rules...)
-			ruleStore.PutRule(context.Background(), rules...)
+			ruleStore.PutRule(t.Context(), rules...)
 		}
 
 		api := NewPrometheusSrv(
@@ -1399,8 +1399,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			fakeAIM := NewFakeAlertInstanceManager(t)
 
 			rules := gen.GenerateManyRef(2, 6)
-			ruleStore.PutRule(context.Background(), rules...)
-			ruleStore.PutRule(context.Background(), gen.GenerateManyRef(2, 6)...)
+			ruleStore.PutRule(t.Context(), rules...)
+			ruleStore.PutRule(t.Context(), gen.GenerateManyRef(2, 6)...)
 
 			api := NewPrometheusSrv(
 				log.NewNopLogger(),
@@ -1447,7 +1447,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		// while the second one will have a DatasourceError alert.
 		rules[1].ExecErrState = ngmodels.AlertingErrState
 		rules[2].ExecErrState = ngmodels.ErrorErrState
-		fakeStore.PutRule(context.Background(), rules...)
+		fakeStore.PutRule(t.Context(), rules...)
 
 		// create a normal and alerting state for the first rule
 		fakeAIM.GenerateAlertInstances(orgID, rules[0].UID, 1)
@@ -1499,7 +1499,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
 		// Create rules in the same Rule Group to keep assertions simple
 		rules := gen.GenerateManyRef(1)
-		fakeStore.PutRule(context.Background(), rules...)
+		fakeStore.PutRule(t.Context(), rules...)
 
 		getRuleResponse := func() apimodels.RuleResponse {
 			r, err := http.NewRequest("GET", "/api/v1/rules", nil)
@@ -1555,7 +1555,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		fakeStore, _, api := setupAPI(t)
 
 		rules := gen.GenerateManyRef(2)
-		fakeStore.PutRule(context.Background(), rules...)
+		fakeStore.PutRule(t.Context(), rules...)
 
 		t.Run("first without limit", func(t *testing.T) {
 			r, err := http.NewRequest("GET", "/api/v1/rules", nil)
@@ -1586,7 +1586,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	t.Run("test with limit rules", func(t *testing.T) {
 		fakeStore, _, api := setupAPI(t)
 		rules := gen.With(gen.WithGroupName("Rule-Group-1")).GenerateManyRef(2)
-		fakeStore.PutRule(context.Background(), rules...)
+		fakeStore.PutRule(t.Context(), rules...)
 
 		t.Run("first without limit", func(t *testing.T) {
 			r, err := http.NewRequest("GET", "/api/v1/rules", nil)
@@ -1663,7 +1663,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	t.Run("test with limit alerts", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
 		rules := gen.With(gen.WithGroupName("Rule-Group-1")).GenerateManyRef(2)
-		fakeStore.PutRule(context.Background(), rules...)
+		fakeStore.PutRule(t.Context(), rules...)
 		// create a normal and firing alert for each rule
 		for _, r := range rules {
 			fakeAIM.GenerateAlertInstances(orgID, r.UID, 1)
@@ -1764,7 +1764,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		// while the second one will have a DatasourceError alert.
 		rules[1].ExecErrState = ngmodels.AlertingErrState
 		rules[2].ExecErrState = ngmodels.ErrorErrState
-		fakeStore.PutRule(context.Background(), rules...)
+		fakeStore.PutRule(t.Context(), rules...)
 
 		// create a normal and alerting state for the first rule
 		fakeAIM.GenerateAlertInstances(orgID, rules[0].UID, 1)
@@ -1936,7 +1936,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})).GenerateManyRef(4)
 		ngmodels.AlertRulesBy(ngmodels.AlertRulesByIndex).Sort(rules)
 		// Set health states
-		fakeStore.PutRule(context.Background(), rules...)
+		fakeStore.PutRule(t.Context(), rules...)
 
 		// create alert instances for each rule
 		fakeAIM.GenerateAlertInstances(orgID, rules[0].UID, 1)
@@ -2092,7 +2092,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			RuleGroup:    "Rule-Group-1",
 			OrgID:        orgID,
 		})).GenerateManyRef(1)
-		fakeStore.PutRule(context.Background(), rules...)
+		fakeStore.PutRule(t.Context(), rules...)
 
 		// create a normal and alerting state for each rule
 		fakeAIM.GenerateAlertInstances(orgID, rules[0].UID, 1,
@@ -2266,7 +2266,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		}), gen.WithNotificationSettings(
 			ngmodels.NotificationSettingsGen(ngmodels.NSMuts.WithReceiver("webhook-a"), ngmodels.NSMuts.WithGroupBy("alertname"))(),
 		)).GenerateManyRef(1)
-		fakeStore.PutRule(context.Background(), rules...)
+		fakeStore.PutRule(t.Context(), rules...)
 
 		t.Run("unknown receiver_name returns empty list", func(t *testing.T) {
 			r, err := http.NewRequest("GET", "/api/v1/rules?receiver_name=webhook-b", nil)
@@ -2321,7 +2321,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				},
 			),
 		).GenerateRef()
-		fakeStore.PutRule(context.Background(), ruleA)
+		fakeStore.PutRule(t.Context(), ruleA)
 
 		ruleB := gen.With(
 			gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
@@ -2336,7 +2336,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				},
 			),
 		).GenerateRef()
-		fakeStore.PutRule(context.Background(), ruleB)
+		fakeStore.PutRule(t.Context(), ruleB)
 		r, err := http.NewRequest("GET", "/api/v1/rules?compact=true&receiver_name=receiver-a", nil)
 		require.NoError(t, err)
 		c := &contextmodel.ReqContext{
@@ -2361,17 +2361,17 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		// Rule without provenance
 		ruleNoProv := gen.With(gen.WithOrgID(orgID), asFixture(), withClassicConditionSingleQuery()).GenerateRef()
 		fakeAIM.GenerateAlertInstances(orgID, ruleNoProv.UID, 1)
-		fakeStore.PutRule(context.Background(), ruleNoProv)
+		fakeStore.PutRule(t.Context(), ruleNoProv)
 
 		// Rule with provenance
 		ruleWithProv := gen.With(gen.WithOrgID(orgID), asFixture(), withClassicConditionSingleQuery()).GenerateRef()
 		ruleWithProv.UID = "provRuleUID"
 		ruleWithProv.Title = "ProvisionedRule"
 		fakeAIM.GenerateAlertInstances(orgID, ruleWithProv.UID, 1)
-		fakeStore.PutRule(context.Background(), ruleWithProv)
+		fakeStore.PutRule(t.Context(), ruleWithProv)
 
 		// Add provenance for ruleWithProv
-		err := provStore.SetProvenance(context.Background(), ruleWithProv, orgID, ngmodels.ProvenanceAPI)
+		err := provStore.SetProvenance(t.Context(), ruleWithProv, orgID, ngmodels.ProvenanceAPI)
 		require.NoError(t, err)
 
 		req, err := http.NewRequest("GET", "/api/v1/rules", nil)
@@ -2449,7 +2449,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 						}
 						return s
 					})
-					store.PutRule(context.Background(), rule)
+					store.PutRule(t.Context(), rule)
 				}
 			}
 		}
@@ -2525,14 +2525,14 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 					s.Labels = data.Labels{"test": "label"}
 					return s
 				})
-				fakeStore.PutRule(context.Background(), rule)
+				fakeStore.PutRule(t.Context(), rule)
 			}
 
 			// Set provenance for all rules
-			err := fakeProvisioning.SetProvenance(context.Background(),
+			err := fakeProvisioning.SetProvenance(t.Context(),
 				&ngmodels.AlertRule{UID: "rule-1", OrgID: orgID}, orgID, ngmodels.ProvenanceAPI)
 			require.NoError(t, err)
-			err = fakeProvisioning.SetProvenance(context.Background(),
+			err = fakeProvisioning.SetProvenance(t.Context(),
 				&ngmodels.AlertRule{UID: "rule-3", OrgID: orgID}, orgID, ngmodels.ProvenanceFile)
 			require.NoError(t, err)
 
@@ -2575,7 +2575,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				s.Labels = data.Labels{"test": "label"}
 				return s
 			})
-			fakeStore.PutRule(context.Background(), rule)
+			fakeStore.PutRule(t.Context(), rule)
 
 			fakeProvisioning.GetProvenancesByUIDsFunc = func(ctx context.Context, orgID int64, resourceType string, uids []string) (map[string]ngmodels.Provenance, error) {
 				return nil, errors.New("database connection failed")
@@ -2614,7 +2614,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				s.Labels = data.Labels{"test": "label"}
 				return s
 			})
-			fakeStore.PutRule(context.Background(), rule)
+			fakeStore.PutRule(t.Context(), rule)
 
 			fakeProvisioning.GetProvenancesFunc = func(ctx context.Context, orgID int64, resourceType string) (map[string]ngmodels.Provenance, error) {
 				return nil, errors.New("database connection failed")
@@ -3344,7 +3344,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			NamespaceUID: "folder-sort-check",
 			OrgID:        orgID,
 		})).GenerateRef()
-		ruleStore.PutRule(context.Background(), rule)
+		ruleStore.PutRule(t.Context(), rule)
 
 		permissions := createPermissionsForRules([]*ngmodels.AlertRule{rule}, orgID)
 
@@ -3495,7 +3495,7 @@ func TestNewDBRuleMutator(t *testing.T) {
 		rule := ngmodels.RuleGen.With(ngmodels.RuleGen.WithOrgID(orgID), ngmodels.RuleGen.WithUID(ruleUID)).GenerateRef()
 		alertingRule := apimodels.AlertingRule{State: "inactive"}
 
-		mutator(context.Background(), rule, &alertingRule, nil, nil, nil, -1)
+		mutator(t.Context(), rule, &alertingRule, nil, nil, nil, -1)
 
 		require.Equal(t, 1, callCount, "GetStatesForRuleUID should be called exactly once")
 		assert.Equal(t, "firing", alertingRule.State)
@@ -3511,7 +3511,7 @@ func TestNewDBRuleMutator(t *testing.T) {
 		rule := ngmodels.RuleGen.With(ngmodels.RuleGen.WithOrgID(orgID), ngmodels.RuleGen.WithUID(ruleUID)).GenerateRef()
 		alertingRule := apimodels.AlertingRule{State: "inactive"}
 
-		totals, _ := mutator(context.Background(), rule, &alertingRule, nil, nil, nil, -1)
+		totals, _ := mutator(t.Context(), rule, &alertingRule, nil, nil, nil, -1)
 
 		// Status fields
 		assert.Equal(t, "ok", alertingRule.Health)
@@ -3530,7 +3530,7 @@ func TestNewDBRuleMutator(t *testing.T) {
 		rule := ngmodels.RuleGen.With(ngmodels.RuleGen.WithOrgID(orgID), ngmodels.RuleGen.WithUID("no-states")).GenerateRef()
 		alertingRule := apimodels.AlertingRule{State: "inactive"}
 
-		totals, _ := mutator(context.Background(), rule, &alertingRule, nil, nil, nil, -1)
+		totals, _ := mutator(t.Context(), rule, &alertingRule, nil, nil, nil, -1)
 
 		assert.Equal(t, "ok", alertingRule.Health)
 		assert.Equal(t, "inactive", alertingRule.State)
@@ -3550,8 +3550,8 @@ func TestNewDBRuleMutator(t *testing.T) {
 		defaultRule := apimodels.AlertingRule{State: "inactive"}
 		singleRule := apimodels.AlertingRule{State: "inactive"}
 
-		defaultTotals, defaultFiltered := defaultMutator(context.Background(), rule, &defaultRule, nil, nil, nil, -1)
-		singleTotals, singleFiltered := singleMutator(context.Background(), rule, &singleRule, nil, nil, nil, -1)
+		defaultTotals, defaultFiltered := defaultMutator(t.Context(), rule, &defaultRule, nil, nil, nil, -1)
+		singleTotals, singleFiltered := singleMutator(t.Context(), rule, &singleRule, nil, nil, nil, -1)
 
 		// Status fields should match
 		assert.Equal(t, defaultRule.Health, singleRule.Health)
@@ -3621,7 +3621,7 @@ func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAl
 		return s
 	})
 
-	fakeStore.PutRule(context.Background(), r)
+	fakeStore.PutRule(t.Context(), r)
 }
 
 // asFixture removes variable values of the alert rule.
@@ -3722,7 +3722,7 @@ func TestPrepareRuleGroupStatusesV2_StatusPreparer(t *testing.T) {
 		store := fakes.NewRuleStore(t)
 		allowed := map[string]string{}
 		for _, r := range rules {
-			store.PutRule(context.Background(), r)
+			store.PutRule(t.Context(), r)
 			allowed[r.NamespaceUID] = "folder"
 		}
 		return store, allowed
@@ -3739,7 +3739,7 @@ func TestPrepareRuleGroupStatusesV2_StatusPreparer(t *testing.T) {
 
 		var capturedUIDs []string
 		opts := RuleGroupStatusesOptions{
-			Ctx:               context.Background(),
+			Ctx:               t.Context(),
 			OrgID:             orgID,
 			Query:             url.Values{},
 			AllowedNamespaces: allowed,
@@ -3770,7 +3770,7 @@ func TestPrepareRuleGroupStatusesV2_StatusPreparer(t *testing.T) {
 		var calls int
 		var pages [][]string
 		opts := RuleGroupStatusesOptions{
-			Ctx:               context.Background(),
+			Ctx:               t.Context(),
 			OrgID:             orgID,
 			Query:             query,
 			AllowedNamespaces: allowed,
@@ -3799,7 +3799,7 @@ func TestPrepareRuleGroupStatusesV2_StatusPreparer(t *testing.T) {
 		store, allowed := newStore(t, rule)
 
 		opts := RuleGroupStatusesOptions{
-			Ctx:               context.Background(),
+			Ctx:               t.Context(),
 			OrgID:             orgID,
 			Query:             url.Values{},
 			AllowedNamespaces: allowed,

@@ -1,7 +1,6 @@
 package accesscontrol
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -515,7 +514,7 @@ func TestReceiverAccess(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			svc := NewReceiverAccess[*models.Receiver](&recordingAccessControlFake{}, false)
 
-			actual, err := svc.Access(context.Background(), testCase.user, allReceivers...)
+			actual, err := svc.Access(t.Context(), testCase.user, allReceivers...)
 
 			assert.NoError(t, err)
 			assert.Equalf(t, testCase.expected, actual, "expected: %v, actual: %v", testCase.expected, actual)
@@ -525,7 +524,7 @@ func TestReceiverAccess(t *testing.T) {
 				provisioningPerms = testCase.expectedWithProvisioning
 			}
 			svc = NewReceiverAccess[*models.Receiver](&recordingAccessControlFake{}, true)
-			actual, err = svc.Access(context.Background(), testCase.user, allReceivers...)
+			actual, err = svc.Access(t.Context(), testCase.user, allReceivers...)
 			assert.NoError(t, err)
 			assert.Equalf(t, provisioningPerms, actual, "expectedWithProvisioning: %v, actual: %v", provisioningPerms, actual)
 		})

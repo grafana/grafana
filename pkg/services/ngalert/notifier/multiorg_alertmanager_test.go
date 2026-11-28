@@ -43,7 +43,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 	mam := setupMam(t, cfg)
 	reg := mam.metrics.Registerer.(*prometheus.Registry)
 	orgStore := mam.orgStore.(*FakeOrgStore)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Ensure that one Alertmanager is created per org.
 	{
@@ -125,7 +125,7 @@ grafana_alerting_discovered_configurations 4
 
 func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T) {
 	mam := setupMam(t, nil)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Include a broken configuration for organization 2.
 	var orgWithBadConfig int64 = 2
@@ -204,7 +204,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 
 func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	mam := setupMam(t, nil)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Ensure that one Alertmanagers is created per org.
 	{
@@ -241,7 +241,7 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 
 func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 	mam := setupMam(t, nil)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Ensure that one Alertmanager is created per org.
 	{
@@ -321,7 +321,7 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 
 func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration_LegacyTimeIntervalUID(t *testing.T) {
 	mam := setupMam(t, nil)
-	ctx := context.Background()
+	ctx := t.Context()
 	require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 	// A blob written before time interval UIDs were persisted.
@@ -416,7 +416,7 @@ func TestMultiOrgAlertmanager_cleanPermissions(t *testing.T) {
 
 			newUIDs, err := extractReceiverUIDs(tc.next.AlertmanagerConfiguration)
 			require.NoError(t, err)
-			require.NoError(t, moa.cleanPermissions(context.Background(), 1, tc.previous, newUIDs))
+			require.NoError(t, moa.cleanPermissions(t.Context(), 1, tc.previous, newUIDs))
 
 			require.ElementsMatch(t, tc.deleted, permissions.deleted)
 			require.ElementsMatch(t, tc.defaults, permissions.defaults)
@@ -440,7 +440,7 @@ func (r *receiverPermissionRecorder) SetDefaultPermissions(_ context.Context, _ 
 
 func TestMultiOrgAlertmanager_Silences(t *testing.T) {
 	mam := setupMam(t, nil)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Ensure that one Alertmanager is created per org.
 	{

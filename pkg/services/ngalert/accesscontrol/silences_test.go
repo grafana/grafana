@@ -102,7 +102,7 @@ func TestFilterByAccess(t *testing.T) {
 			}
 			svc := NewSilenceService(ac, store)
 
-			actual, err := svc.FilterByAccess(context.Background(), testCase.user, silences...)
+			actual, err := svc.FilterByAccess(t.Context(), testCase.user, silences...)
 
 			if testCase.expectedErr != nil {
 				assert.ErrorIs(t, err, testCase.expectedErr)
@@ -201,7 +201,7 @@ func TestAuthorizeReadSilence(t *testing.T) {
 					}
 					svc := NewSilenceService(ac, store)
 
-					err := svc.AuthorizeReadSilence(context.Background(), testCase.user, silence)
+					err := svc.AuthorizeReadSilence(t.Context(), testCase.user, silence)
 					if testCase.expectedErr != nil {
 						assert.ErrorIs(t, err, testCase.expectedErr)
 					} else {
@@ -214,7 +214,7 @@ func TestAuthorizeReadSilence(t *testing.T) {
 					}
 
 					// Verify SilenceAccess.
-					permSets, err := svc.SilenceAccess(context.Background(), testCase.user, []*models.Silence{silence})
+					permSets, err := svc.SilenceAccess(t.Context(), testCase.user, []*models.Silence{silence})
 					assert.NoError(t, err)
 					assert.Len(t, permSets, 1)
 					assert.Equal(t, testCase.expectedErr == nil, permSets[silence].Has(models.SilencePermissionRead))
@@ -377,7 +377,7 @@ func TestAuthorizeCreateSilence(t *testing.T) {
 					}
 					svc := NewSilenceService(ac, store)
 
-					err := svc.AuthorizeCreateSilence(context.Background(), testCase.user, silence)
+					err := svc.AuthorizeCreateSilence(t.Context(), testCase.user, silence)
 					if expectedErr != nil {
 						assert.Error(t, err)
 						assert.ErrorIs(t, err, expectedErr)
@@ -391,7 +391,7 @@ func TestAuthorizeCreateSilence(t *testing.T) {
 					}
 
 					// Verify SilenceAccess.
-					permSets, err := svc.SilenceAccess(context.Background(), testCase.user, []*models.Silence{silence})
+					permSets, err := svc.SilenceAccess(t.Context(), testCase.user, []*models.Silence{silence})
 					assert.NoError(t, err)
 					assert.Len(t, permSets, 1)
 					assert.Equal(t, expectedErr == nil, permSets[silence].Has(models.SilencePermissionCreate))
@@ -554,7 +554,7 @@ func TestAuthorizeUpdateSilence(t *testing.T) {
 					}
 					svc := NewSilenceService(ac, store)
 
-					err := svc.AuthorizeUpdateSilence(context.Background(), testCase.user, silence)
+					err := svc.AuthorizeUpdateSilence(t.Context(), testCase.user, silence)
 					if expectedErr != nil {
 						assert.Error(t, err)
 						assert.ErrorIs(t, err, expectedErr)
@@ -568,7 +568,7 @@ func TestAuthorizeUpdateSilence(t *testing.T) {
 					}
 
 					// Verify SilenceAccess.
-					permSets, err := svc.SilenceAccess(context.Background(), testCase.user, []*models.Silence{silence})
+					permSets, err := svc.SilenceAccess(t.Context(), testCase.user, []*models.Silence{silence})
 					assert.NoError(t, err)
 					assert.Len(t, permSets, 1)
 					assert.Equal(t, expectedErr == nil, permSets[silence].Has(models.SilencePermissionWrite))
@@ -812,7 +812,7 @@ func TestSilenceAccess(t *testing.T) {
 			}
 			svc := NewSilenceService(ac, store)
 
-			perms, err := svc.SilenceAccess(context.Background(), tc.user, silences)
+			perms, err := svc.SilenceAccess(t.Context(), tc.user, silences)
 			assert.NoError(t, err)
 			if tc.expectedDbAccess {
 				assert.Equalf(t, 1, store.Calls, "expected 1 db access, but got %d store calls", store.Calls)

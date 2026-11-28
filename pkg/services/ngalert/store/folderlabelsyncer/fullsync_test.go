@@ -104,7 +104,7 @@ func TestFullSyncOrg(t *testing.T) {
 		}}
 		s := newTestService(store, folders)
 
-		n, err := s.fullSyncOrg(context.Background(), 1)
+		n, err := s.fullSyncOrg(t.Context(), 1)
 		require.NoError(t, err)
 		require.Equal(t, 3, n)
 		require.ElementsMatch(t, []models.FolderKey{
@@ -121,7 +121,7 @@ func TestFullSyncOrg(t *testing.T) {
 		}}
 		s := newTestService(store, folders)
 
-		n, err := s.fullSyncOrg(context.Background(), 1)
+		n, err := s.fullSyncOrg(t.Context(), 1)
 		require.NoError(t, err)
 		require.Zero(t, n)
 		require.Empty(t, s.take())
@@ -131,7 +131,7 @@ func TestFullSyncOrg(t *testing.T) {
 		folders := &fakeFolderClient{}
 		s := newTestService(&fakeSyncerStore{}, folders)
 
-		_, err := s.fullSyncOrg(context.Background(), 1)
+		_, err := s.fullSyncOrg(t.Context(), 1)
 		require.NoError(t, err)
 		require.Equal(t, [][]string{
 			{HasAlertRulesLabel + "=true"},
@@ -147,7 +147,7 @@ func TestFullSyncOrg(t *testing.T) {
 		store := &fakeSyncerStore{}
 		s := newTestService(store, &fakeFolderClient{})
 
-		_, err := s.fullSyncOrg(context.Background(), 7)
+		_, err := s.fullSyncOrg(t.Context(), 7)
 		require.NoError(t, err)
 
 		require.NotNil(t, store.gotCtx)
@@ -158,11 +158,11 @@ func TestFullSyncOrg(t *testing.T) {
 
 	t.Run("surfaces errors from either side of the diff", func(t *testing.T) {
 		s := newTestService(&fakeSyncerStore{folderUIDsErr: errors.New("boom")}, &fakeFolderClient{})
-		_, err := s.fullSyncOrg(context.Background(), 1)
+		_, err := s.fullSyncOrg(t.Context(), 1)
 		require.ErrorContains(t, err, "list folders with alert rules")
 
 		s = newTestService(&fakeSyncerStore{}, &fakeFolderClient{listErr: errors.New("boom")})
-		_, err = s.fullSyncOrg(context.Background(), 1)
+		_, err = s.fullSyncOrg(t.Context(), 1)
 		require.ErrorContains(t, err, "list labeled folders")
 	})
 }
@@ -179,20 +179,20 @@ func TestFullSync(t *testing.T) {
 		}
 		s := newTestService(store, folders)
 
-		require.NoError(t, s.FullSync(context.Background()))
+		require.NoError(t, s.FullSync(t.Context()))
 		require.Equal(t, []models.FolderKey{{OrgID: 2, UID: "folder-a"}}, s.take())
 	})
 
 	t.Run("surfaces org enumeration failure", func(t *testing.T) {
 		s := newTestService(&fakeSyncerStore{orgsErr: errors.New("boom")}, &fakeFolderClient{})
-		require.ErrorContains(t, s.FullSync(context.Background()), "fetch orgs")
+		require.ErrorContains(t, s.FullSync(t.Context()), "fetch orgs")
 	})
 
 	t.Run("stops when the context is cancelled", func(t *testing.T) {
 		store := &fakeSyncerStore{orgs: []int64{1, 2}, folderUIDs: set("folder-a")}
 		s := newTestService(store, &fakeFolderClient{})
 
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 		cancel()
 
 		require.ErrorIs(t, s.FullSync(ctx), context.Canceled)
@@ -205,7 +205,7 @@ func TestFullSync(t *testing.T) {
 		s := newTestService(store, folders)
 		s.disabledOrgs = map[int64]struct{}{3: {}}
 
-		require.NoError(t, s.FullSync(context.Background()))
+		require.NoError(t, s.FullSync(t.Context()))
 
 		require.ElementsMatch(t, []models.FolderKey{{OrgID: 1, UID: "folder-a"}, {OrgID: 2, UID: "folder-a"}}, s.take())
 		// Skipped before the folder walk, not merely filtered when queueing: the walk is the expensive

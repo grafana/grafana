@@ -1,7 +1,6 @@
 package notifier
 
 import (
-	"context"
 	"encoding/base64"
 	"strings"
 	"testing"
@@ -15,7 +14,7 @@ import (
 
 func TestFileStore_Silences(t *testing.T) {
 	store := fakes.NewFakeKVStore(t)
-	ctx := context.Background()
+	ctx := t.Context()
 	var orgId int64 = 1
 
 	// Initialize kvstore.
@@ -63,7 +62,7 @@ func TestFileStore_Silences(t *testing.T) {
 
 func TestFileStore_NotificationLog(t *testing.T) {
 	store := fakes.NewFakeKVStore(t)
-	ctx := context.Background()
+	ctx := t.Context()
 	var orgId int64 = 1
 
 	// Initialize kvstore.
@@ -109,7 +108,7 @@ func TestFileStore_NotificationLog(t *testing.T) {
 
 func TestFileStore_FlushLog(t *testing.T) {
 	store := fakes.NewFakeKVStore(t)
-	ctx := context.Background()
+	ctx := t.Context()
 	var orgId int64 = 1
 
 	// Initialize kvstore with empty flush log state.

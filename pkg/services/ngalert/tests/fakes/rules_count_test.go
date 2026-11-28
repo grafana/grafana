@@ -1,7 +1,6 @@
 package fakes
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -13,7 +12,7 @@ import (
 
 func TestRuleStore_CountRuleGroups(t *testing.T) {
 	store := NewRuleStore(t)
-	ctx := context.Background()
+	ctx := t.Context()
 	count, err := store.CountRuleGroups(ctx, 0)
 	require.NoError(t, err)
 	assert.Zero(t, count)

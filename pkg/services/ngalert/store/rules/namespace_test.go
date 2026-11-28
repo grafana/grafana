@@ -49,14 +49,14 @@ func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
 	}
 
 	t.Run("returns all folders", func(t *testing.T) {
-		namespaces, err := store.GetUserVisibleNamespaces(context.Background(), 1, admin)
+		namespaces, err := store.GetUserVisibleNamespaces(t.Context(), 1, admin)
 		require.NoError(t, err)
 		require.Len(t, namespaces, len(folders))
 	})
 
 	t.Run("returns empty list for a non existing org", func(t *testing.T) {
 		emptyOrgID := int64(999)
-		namespaces, err := store.GetUserVisibleNamespaces(context.Background(), emptyOrgID, admin)
+		namespaces, err := store.GetUserVisibleNamespaces(t.Context(), emptyOrgID, admin)
 		require.NoError(t, err)
 		require.Empty(t, namespaces)
 	})
@@ -67,7 +67,7 @@ func TestGetNamespaceByUID(t *testing.T) {
 
 	for _, uid := range []string{folder.LegacyRootFolderUID, folder.GeneralFolderUID} { //nolint:staticcheck
 		t.Run("rejects root folder UID "+uid, func(t *testing.T) {
-			_, err := store.GetNamespaceByUID(context.Background(), uid, 1, nil)
+			_, err := store.GetNamespaceByUID(t.Context(), uid, 1, nil)
 			require.ErrorIs(t, err, folder.ErrInvalidUID)
 		})
 	}
@@ -79,7 +79,7 @@ func TestGetNamespaceByTitle(t *testing.T) {
 	store := RuleStore{
 		FolderService: folderService,
 	}
-	_, err := store.GetNamespaceByTitle(context.Background(), "Test Folder", 1, nil, folder.LegacyRootFolderUID) //nolint:staticcheck
+	_, err := store.GetNamespaceByTitle(t.Context(), "Test Folder", 1, nil, folder.LegacyRootFolderUID) //nolint:staticcheck
 	require.Error(t, err)
 	require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
 
@@ -88,7 +88,7 @@ func TestGetNamespaceByTitle(t *testing.T) {
 
 func TestGetOrCreateNamespaceByTitle(t *testing.T) {
 	store := RuleStore{}
-	_, created, err := store.GetOrCreateNamespaceByTitle(context.Background(), "", 1, nil, folder.LegacyRootFolderUID) //nolint:staticcheck
+	_, created, err := store.GetOrCreateNamespaceByTitle(t.Context(), "", 1, nil, folder.LegacyRootFolderUID) //nolint:staticcheck
 	require.False(t, created)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "title is empty")
@@ -142,7 +142,7 @@ func (s *statefulFolderService) Create(_ context.Context, cmd *folder.CreateFold
 }
 
 func TestGetOrCreateNamespaceByUID(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	admin := &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleAdmin}
 
 	t.Run("rejects empty uid and title", func(t *testing.T) {

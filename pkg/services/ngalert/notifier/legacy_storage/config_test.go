@@ -46,7 +46,7 @@ func TestAlertmanagerConfigStoreGet(t *testing.T) {
 
 		storeMock.EXPECT().GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(&expected, nil)
 
-		revision, err := store.Get(context.Background(), orgID)
+		revision, err := store.Get(t.Context(), orgID)
 		require.NoError(t, err)
 
 		require.Equal(t, expected.ConfigurationVersion, revision.Version)
@@ -69,7 +69,7 @@ func TestAlertmanagerConfigStoreGet(t *testing.T) {
 			expectedErr := errors.New("test=err")
 			storeMock.EXPECT().GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(nil, expectedErr)
 
-			_, err := store.Get(context.Background(), orgID)
+			_, err := store.Get(t.Context(), orgID)
 			require.ErrorIs(t, err, expectedErr)
 		})
 
@@ -78,7 +78,7 @@ func TestAlertmanagerConfigStoreGet(t *testing.T) {
 			store := NewAlertmanagerConfigStore(storeMock, newFakeCrypto(), featuremgmt.WithFeatures())
 			storeMock.EXPECT().GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(nil, nil)
 
-			_, err := store.Get(context.Background(), orgID)
+			_, err := store.Get(t.Context(), orgID)
 			require.Truef(t, ErrNoAlertmanagerConfiguration.Is(err), "expected ErrNoAlertmanagerConfiguration but got %s", err.Error())
 		})
 
@@ -89,7 +89,7 @@ func TestAlertmanagerConfigStoreGet(t *testing.T) {
 				AlertmanagerConfiguration: "invalid-json",
 			}, nil)
 
-			_, err := store.Get(context.Background(), orgID)
+			_, err := store.Get(t.Context(), orgID)
 			require.Truef(t, ErrBadAlertmanagerConfiguration.Base.Is(err), "expected ErrBadAlertmanagerConfiguration but got %s", err.Error())
 		})
 
@@ -106,7 +106,7 @@ func TestAlertmanagerConfigStoreGet(t *testing.T) {
 				AlertmanagerConfiguration: defaultConfig,
 			}, nil)
 
-			_, err := store.Get(context.Background(), orgID)
+			_, err := store.Get(t.Context(), orgID)
 			require.ErrorIs(t, err, expectedErr)
 		})
 	})
@@ -141,7 +141,7 @@ func TestAlertmanagerConfigStoreSave(t *testing.T) {
 			return nil
 		})
 
-		err := store.Save(context.Background(), &revision, orgID)
+		err := store.Save(t.Context(), &revision, orgID)
 		require.NoError(t, err)
 
 		storeMock.AssertCalled(t, "UpdateAlertmanagerConfiguration", mock.Anything, mock.Anything)
@@ -161,7 +161,7 @@ func TestAlertmanagerConfigStoreSave(t *testing.T) {
 			expectedErr := errors.New("test-err")
 			storeMock.EXPECT().UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(expectedErr)
 
-			err := store.Save(context.Background(), &revision, orgID)
+			err := store.Save(t.Context(), &revision, orgID)
 
 			require.ErrorIs(t, err, expectedErr)
 		})
@@ -176,7 +176,7 @@ func TestAlertmanagerConfigStoreSave(t *testing.T) {
 				return expectedErr
 			}
 
-			err := store.Save(context.Background(), &revision, orgID)
+			err := store.Save(t.Context(), &revision, orgID)
 			require.ErrorIs(t, err, expectedErr)
 		})
 	})

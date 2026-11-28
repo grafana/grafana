@@ -21,7 +21,7 @@ func (failingConfigProvider) GetSections(context.Context, ...string) (*ini.File,
 }
 
 func TestLiveSmtpConfig(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("reads the settings on every call", func(t *testing.T) {
 		cfg := setting.NewCfg()

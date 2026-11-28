@@ -130,7 +130,7 @@ func TestGetManagedRoute(t *testing.T) {
 
 		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*v1.ManagedRoute]{})
 
-		route, err := sut.GetManagedRoute(context.Background(), orgID, "imported", user)
+		route, err := sut.GetManagedRoute(t.Context(), orgID, "imported", user)
 		require.NoError(t, err)
 
 		assert.Equal(t, models.ProvenanceConvertedPrometheus, route.Provenance)
@@ -158,7 +158,7 @@ func TestGetManagedRoute(t *testing.T) {
 
 		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*v1.ManagedRoute]{})
 
-		route, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, user)
+		route, err := sut.GetManagedRoute(t.Context(), orgID, models.DefaultRoutingTreeName, user)
 		require.NoError(t, err)
 
 		assert.Equal(t, models.ProvenanceAPI, route.Provenance)
@@ -184,7 +184,7 @@ func TestGetManagedRoute(t *testing.T) {
 
 		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*v1.ManagedRoute]{})
 
-		_, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, user)
+		_, err := sut.GetManagedRoute(t.Context(), orgID, models.DefaultRoutingTreeName, user)
 		require.ErrorIs(t, err, expectedErr)
 	})
 
@@ -200,10 +200,10 @@ func TestGetManagedRoute(t *testing.T) {
 
 		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*v1.ManagedRoute]{})
 
-		singleRoute, err := sut.GetManagedRoute(context.Background(), orgID, "imported", user)
+		singleRoute, err := sut.GetManagedRoute(t.Context(), orgID, "imported", user)
 		require.NoError(t, err)
 
-		allRoutes, err := sut.GetManagedRoutes(context.Background(), orgID, user)
+		allRoutes, err := sut.GetManagedRoutes(t.Context(), orgID, user)
 		require.NoError(t, err)
 
 		var listRoute *v1.ManagedRoute
@@ -231,7 +231,7 @@ func TestGetManagedRoute(t *testing.T) {
 
 		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*v1.ManagedRoute]{})
 
-		_, err := sut.GetManagedRoute(context.Background(), orgID, "does-not-exist", user)
+		_, err := sut.GetManagedRoute(t.Context(), orgID, "does-not-exist", user)
 		require.ErrorIs(t, err, models.ErrRouteNotFound)
 	})
 
@@ -241,7 +241,7 @@ func TestGetManagedRoute(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*v1.ManagedRoute]())
 
-		_, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, user)
+		_, err := sut.GetManagedRoute(t.Context(), orgID, models.DefaultRoutingTreeName, user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 }
@@ -261,7 +261,7 @@ func TestGetManagedRoutes(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*v1.ManagedRoute]())
 
-		_, err := sut.GetManagedRoutes(context.Background(), orgID, usr)
+		_, err := sut.GetManagedRoutes(t.Context(), orgID, usr)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 
@@ -290,7 +290,7 @@ func TestGetManagedRoutes(t *testing.T) {
 			},
 		})
 
-		routes, err := sut.GetManagedRoutes(context.Background(), orgID, usr)
+		routes, err := sut.GetManagedRoutes(t.Context(), orgID, usr)
 		require.NoError(t, err)
 
 		names := make([]string, 0, len(routes))
@@ -315,7 +315,7 @@ func TestGetManagedRoutes(t *testing.T) {
 			},
 		})
 
-		routes, err := sut.GetManagedRoutes(context.Background(), orgID, usr)
+		routes, err := sut.GetManagedRoutes(t.Context(), orgID, usr)
 		require.NoError(t, err)
 		assert.Empty(t, routes)
 	})
@@ -331,7 +331,7 @@ func TestGetManagedRoutes(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*v1.ManagedRoute]{})
 
-		routes, err := sut.GetManagedRoutes(context.Background(), orgID, usr)
+		routes, err := sut.GetManagedRoutes(t.Context(), orgID, usr)
 		require.NoError(t, err)
 		// user-defined + route-a + route-b
 		assert.Len(t, routes, 3)
@@ -348,7 +348,7 @@ func TestCreateManagedRoute(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*v1.ManagedRoute]())
 
-		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
+		_, err := sut.CreateManagedRoute(t.Context(), orgID, "new-route", v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 	t.Run("sets default permissions when create", func(t *testing.T) {
@@ -369,7 +369,7 @@ func TestCreateManagedRoute(t *testing.T) {
 		}
 		sut := createServiceSut(configStore, provStore, features, authz)
 
-		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
+		_, err := sut.CreateManagedRoute(t.Context(), orgID, "new-route", v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
 		require.NoError(t, err)
 		assert.Equal(t, []string{"AuthorizeCreate", "SetDefaultPermissions"}, authz.Calls.Methods())
 	})
@@ -385,7 +385,7 @@ func TestUpdateManagedRoute(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*v1.ManagedRoute]())
 
-		_, err := sut.UpdateManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, "v1", user)
+		_, err := sut.UpdateManagedRoute(t.Context(), orgID, models.DefaultRoutingTreeName, v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, "v1", user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 }
@@ -400,7 +400,7 @@ func TestDeleteManagedRoute(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*v1.ManagedRoute]())
 
-		err := sut.DeleteManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, models.ProvenanceNone, "v1", user)
+		err := sut.DeleteManagedRoute(t.Context(), orgID, models.DefaultRoutingTreeName, models.ProvenanceNone, "v1", user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 
@@ -422,7 +422,7 @@ func TestDeleteManagedRoute(t *testing.T) {
 		}
 		sut := createServiceSut(configStore, provStore, features, authz)
 
-		err := sut.DeleteManagedRoute(context.Background(), orgID, "route-a", models.ProvenanceNone, "", user)
+		err := sut.DeleteManagedRoute(t.Context(), orgID, "route-a", models.ProvenanceNone, "", user)
 		require.NoError(t, err)
 		assert.Equal(t, []string{"AuthorizeDeleteByUID", "DeleteAllPermissions"}, authz.Calls.Methods())
 	})
@@ -439,7 +439,7 @@ func TestDeleteManagedRoute(t *testing.T) {
 		authz := &acfakes.FakeRouteAccessService[*v1.ManagedRoute]{}
 		sut := createServiceSut(configStore, provStore, features, authz)
 
-		err := sut.DeleteManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, models.ProvenanceNone, "", user)
+		err := sut.DeleteManagedRoute(t.Context(), orgID, models.DefaultRoutingTreeName, models.ProvenanceNone, "", user)
 		require.NoError(t, err)
 		assert.Equal(t, []string{"AuthorizeDeleteByUID"}, authz.Calls.Methods())
 	})
@@ -465,7 +465,7 @@ func TestManagedRouteCRUD_DefaultTreeAlias(t *testing.T) {
 		rev := configRevisionWithManagedRoutes()
 		sut := newSut(rev, featuremgmt.WithFeatures(), &acfakes.FakeRouteAccessService[*v1.ManagedRoute]{})
 
-		route, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, user)
+		route, err := sut.GetManagedRoute(t.Context(), orgID, models.DefaultRoutingTreeNameAlias, user)
 		require.NoError(t, err)
 		// The route resolves to the root route...
 		assert.Equal(t, rev.Config.AlertmanagerConfig.Route.Receiver, route.Receiver)
@@ -478,10 +478,10 @@ func TestManagedRouteCRUD_DefaultTreeAlias(t *testing.T) {
 		sut := newSut(rev, featuremgmt.WithFeatures(), &acfakes.FakeRouteAccessService[*v1.ManagedRoute]{})
 
 		// Fetch the current version so the optimistic concurrency check passes.
-		current, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, user)
+		current, err := sut.GetManagedRoute(t.Context(), orgID, models.DefaultRoutingTreeNameAlias, user)
 		require.NoError(t, err)
 
-		updated, err := sut.UpdateManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, v1.Route{Receiver: "empty"}, models.ProvenanceNone, current.Version, user)
+		updated, err := sut.UpdateManagedRoute(t.Context(), orgID, models.DefaultRoutingTreeNameAlias, v1.Route{Receiver: "empty"}, models.ProvenanceNone, current.Version, user)
 		require.NoError(t, err)
 		assert.Equal(t, models.DefaultRoutingTreeName, updated.GetUID())
 		// The root route was modified in place; no managed route was created under the alias.
@@ -494,7 +494,7 @@ func TestManagedRouteCRUD_DefaultTreeAlias(t *testing.T) {
 		authz := &acfakes.FakeRouteAccessService[*v1.ManagedRoute]{}
 		sut := newSut(rev, featuremgmt.WithFeatures(), authz)
 
-		err := sut.DeleteManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, models.ProvenanceNone, "", user)
+		err := sut.DeleteManagedRoute(t.Context(), orgID, models.DefaultRoutingTreeNameAlias, models.ProvenanceNone, "", user)
 		require.NoError(t, err)
 		// Same as deleting by the emitted name: it resets (not deletes) and keeps the route's permissions.
 		assert.Equal(t, []string{"AuthorizeDeleteByUID"}, authz.Calls.Methods())
@@ -504,7 +504,7 @@ func TestManagedRouteCRUD_DefaultTreeAlias(t *testing.T) {
 		rev := configRevisionWithManagedRoutes()
 		sut := newSut(rev, featuremgmt.WithFeatures(), &acfakes.FakeRouteAccessService[*v1.ManagedRoute]{})
 
-		_, err := sut.CreateManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
+		_, err := sut.CreateManagedRoute(t.Context(), orgID, models.DefaultRoutingTreeNameAlias, v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
 		require.ErrorIs(t, err, models.ErrRouteExists)
 		assert.NotContains(t, rev.Config.ManagedRoutes, models.DefaultRoutingTreeNameAlias)
 	})

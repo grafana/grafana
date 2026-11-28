@@ -19,7 +19,7 @@ func TestMultipleBackend(t *testing.T) {
 		three := &fakeBackend{resp: data.NewFrame("three")}
 		fan := NewMultipleBackend(one, two, three)
 
-		resp, err := fan.Query(context.Background(), ngmodels.HistoryQuery{})
+		resp, err := fan.Query(t.Context(), ngmodels.HistoryQuery{})
 
 		require.NoError(t, err)
 		require.Equal(t, "one", resp.Name)
@@ -33,7 +33,7 @@ func TestMultipleBackend(t *testing.T) {
 		rule := history_model.RuleMeta{}
 		vs := []state.StateTransition{{}}
 
-		err := <-fan.Record(context.Background(), rule, vs)
+		err := <-fan.Record(t.Context(), rule, vs)
 
 		require.NoError(t, err)
 		require.NotEmpty(t, one.last)
@@ -49,7 +49,7 @@ func TestMultipleBackend(t *testing.T) {
 		rule := history_model.RuleMeta{}
 		vs := []state.StateTransition{{}}
 
-		err := <-fan.Record(context.Background(), rule, vs)
+		err := <-fan.Record(t.Context(), rule, vs)
 
 		require.Error(t, err)
 		require.ErrorContains(t, err, "error one")

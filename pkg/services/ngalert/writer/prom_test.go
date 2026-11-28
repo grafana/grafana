@@ -92,7 +92,7 @@ func TestPrometheusWriter_Write(t *testing.T) {
 	frames := frameGenFromLabels(t, data.FrameTypeNumericWide, series)
 	emptyFrames := data.Frames{data.NewFrame("test")}
 
-	ctx := ngmodels.WithRuleKey(context.Background(), ngmodels.GenerateRuleKey(1))
+	ctx := ngmodels.WithRuleKey(t.Context(), ngmodels.GenerateRuleKey(1))
 
 	t.Run("error when frames are empty", func(t *testing.T) {
 		err := writer.Write(ctx, "test", now, emptyFrames, 1, map[string]string{})
@@ -294,7 +294,7 @@ func TestPrometheusWriter_Write_Batching(t *testing.T) {
 	now := time.Now()
 	series := []map[string]string{{"foo": "1"}, {"foo": "2"}, {"foo": "3"}, {"foo": "4"}}
 	frames := frameGenFromLabels(t, data.FrameTypeNumericWide, series)
-	ctx := ngmodels.WithRuleKey(context.Background(), ngmodels.GenerateRuleKey(1))
+	ctx := ngmodels.WithRuleKey(t.Context(), ngmodels.GenerateRuleKey(1))
 
 	t.Run("MaxBatchSize zero sends everything in a single request", func(t *testing.T) {
 		client := &testClient{}
@@ -837,7 +837,7 @@ func TestPrometheusWriter_WriteStale(t *testing.T) {
 		metrics: metrics.NewRemoteWriterMetrics(prometheus.NewRegistry()),
 	}
 	now := time.Now()
-	ctx := ngmodels.WithRuleKey(context.Background(), ngmodels.GenerateRuleKey(1))
+	ctx := ngmodels.WithRuleKey(t.Context(), ngmodels.GenerateRuleKey(1))
 	labelSets := []map[string]string{{"foo": "1", "extra": "label"}, {"foo": "2", "extra": "label"}}
 
 	t.Run("writes the stale NaN bit pattern for each series", func(t *testing.T) {

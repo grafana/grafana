@@ -1,7 +1,6 @@
 package image
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -14,7 +13,7 @@ import (
 
 func TestInmemCacheService(t *testing.T) {
 	s := NewInmemCacheService(time.Second, prometheus.DefaultRegisterer)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// should be a miss
 	actual, ok := s.Get(ctx, "test")
