@@ -95,6 +95,7 @@ func ProvideService(
 				Roots: []string{
 					"/testdata/",
 					"/img/",
+					"/build/img/icons/",
 					"/gazetteer/",
 					"/maps/",
 				},
