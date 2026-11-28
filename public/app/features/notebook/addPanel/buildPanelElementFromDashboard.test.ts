@@ -1,6 +1,15 @@
+import {
+  type AnnotationQuery,
+  dataFrameFromJSON,
+  type DataFrameJSON,
+  getDefaultTimeRange,
+  LoadingState,
+  toDataFrame,
+} from '@grafana/data';
 import { getDataSourceInstance } from '@grafana/runtime';
 import {
   CustomVariable,
+  SceneDataNode,
   type SceneObject,
   SceneQueryRunner,
   SceneTimeRange,
@@ -12,7 +21,11 @@ import {
 import { type DataQuery } from '@grafana/schema';
 import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 
-import { buildPanelElementFromDashboard } from './buildPanelElementFromDashboard';
+import {
+  buildPanelAnnotationsFromDashboard,
+  buildPanelElementFromDashboard,
+  hasPanelAnnotations,
+} from './buildPanelElementFromDashboard';
 
 const interpolateVariablesInQueries = jest.fn();
 
@@ -336,5 +349,56 @@ describe('buildPanelElementFromDashboard', () => {
 
       expect(element.kind).toBe('LibraryPanel');
     });
+  });
+});
+
+describe('buildPanelAnnotationsFromDashboard', () => {
+  const builtIn: AnnotationQuery = { name: 'Annotations & Alerts', enable: true, hide: true, iconColor: 'cyan' };
+  const deploys: AnnotationQuery = { name: 'Deploys', enable: true, hide: false, iconColor: 'blue' };
+
+  /** A panel showing these annotation rows, as a layer leaves them after processing. */
+  function panelShowing(rows: Array<{ time: number; text: string; source: AnnotationQuery }>) {
+    const frame = toDataFrame(
+      rows.map((row) => ({ ...row, color: '#00f', type: row.source.name, isRegion: false, panelId: 1 }))
+    );
+    return new VizPanel({
+      $data: new SceneDataNode({
+        data: { state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange(), annotations: [frame] },
+      }),
+    });
+  }
+
+  function frozenRows(snapshot: DataFrameJSON[]) {
+    const frame = dataFrameFromJSON(snapshot[0]);
+    return {
+      fields: frame.fields.map((field) => field.name),
+      texts: frame.fields.find((field) => field.name === 'text')?.values,
+    };
+  }
+
+  it('freezes what the panel shows into one layer per source layer, keeping its name and look', () => {
+    const panel = panelShowing([
+      { time: 1700000000000, text: 'deploy v1', source: deploys },
+      { time: 1700000100000, text: 'manual note', source: builtIn },
+      { time: 1700000200000, text: 'deploy v2', source: deploys },
+    ]);
+
+    const annotations = buildPanelAnnotationsFromDashboard(panel);
+
+    expect(
+      annotations.map(({ spec: { name, enable, hide, iconColor } }) => ({ name, enable, hide, iconColor }))
+    ).toEqual([
+      { name: 'Deploys', enable: true, hide: false, iconColor: 'blue' },
+      { name: 'Annotations & Alerts', enable: true, hide: true, iconColor: 'cyan' },
+    ]);
+    expect(annotations.map((annotation) => frozenRows(annotation.spec.query.spec.snapshot))).toEqual([
+      { fields: ['time', 'text', 'panelId'], texts: ['deploy v1', 'deploy v2'] },
+      { fields: ['time', 'text', 'panelId'], texts: ['manual note'] },
+    ]);
+  });
+
+  it('offers annotations only for a panel that is showing some', () => {
+    expect(hasPanelAnnotations(panelShowing([{ time: 1700000000000, text: 'deploy', source: deploys }]))).toBe(true);
+    expect(hasPanelAnnotations(panelShowing([]))).toBe(false);
   });
 });

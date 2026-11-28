@@ -1221,4 +1221,69 @@ describe('AddPanelToNotebookModalBody', () => {
       );
     });
   });
+
+  describe('annotations', () => {
+    const annotations = [
+      {
+        kind: 'AnnotationQuery' as const,
+        spec: {
+          name: 'Deploys',
+          enable: true,
+          hide: false,
+          iconColor: 'blue',
+          query: { kind: 'DataQuery' as const, version: 'v0', group: 'prometheus', spec: { expr: 'deploys' } },
+        },
+      },
+    ];
+
+    function renderWithAnnotations(buildAnnotations?: () => typeof annotations) {
+      return render(
+        <AddPanelToNotebookModalBody
+          buildPanel={async () => panel()}
+          onDismiss={jest.fn()}
+          entryPoint="dashboard_panel"
+          isLibraryPanel={false}
+          capturedTimeRange={RELATIVE_CAPTURE}
+          buildAnnotations={buildAnnotations}
+        />
+      );
+    }
+
+    async function addToCheckoutNotebook(user: ReturnType<typeof render>['user']) {
+      await chooseExisting(user);
+      await user.click(selectNotebook('Checkout error spike'));
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+    }
+
+    it('adds the panel with its annotations by default', async () => {
+      const { user } = renderWithAnnotations(() => annotations);
+
+      expect(screen.getByRole('checkbox', { name: /^Include annotations/ })).toBeChecked();
+      await addToCheckoutNotebook(user);
+
+      await waitFor(() => expect(addToExisting).toHaveBeenCalled());
+      expect(addToExisting.mock.calls[0][1]).toEqual([
+        { kind: 'panel', panel: { ...panel(), spec: { ...panel().spec, annotations } }, isLibraryPanel: false },
+      ]);
+    });
+
+    it('adds the panel without annotations, and does not build them, when unchecked', async () => {
+      const buildAnnotations = jest.fn(() => annotations);
+      const { user } = renderWithAnnotations(buildAnnotations);
+
+      await user.click(screen.getByRole('checkbox', { name: /^Include annotations/ }));
+      await addToCheckoutNotebook(user);
+
+      await waitFor(() => expect(addToExisting).toHaveBeenCalled());
+      expect(addToExisting.mock.calls[0][1]).toEqual([{ kind: 'panel', panel: panel(), isLibraryPanel: false }]);
+      expect(buildAnnotations).not.toHaveBeenCalled();
+    });
+
+    it('offers no annotations checkbox for a panel that shows none', () => {
+      renderWithAnnotations(undefined);
+
+      expect(lockCheckbox()).toBeInTheDocument();
+      expect(screen.queryByRole('checkbox', { name: /^Include annotations/ })).not.toBeInTheDocument();
+    });
+  });
 });

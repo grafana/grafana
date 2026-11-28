@@ -3,6 +3,7 @@ import { vizPanelToSchemaV2 } from 'app/features/dashboard-scene/serialization/t
 
 import { type NotebookScene } from '../scene/NotebookScene';
 import { buildCellTimeRangeSpec, withQueryOptionsTimeRange } from '../scene/layout-notebook/cellTimeRange';
+import { serializeFrozenAnnotations } from '../scene/layout-notebook/frozenAnnotations';
 import { type NotebookElement, type Spec as NotebookSpec } from '../types';
 
 /**
@@ -53,7 +54,7 @@ function getElements(scene: NotebookScene): Record<string, NotebookElement> {
   // The same cells the layout writes, or the block the editor keeps at the bottom would leave an
   // element behind with nothing referencing it.
   for (const cell of scene.state.body.contentCells()) {
-    const { elementName, body: panel, content, $timeRange } = cell.state;
+    const { elementName, body: panel, content, $timeRange, $data } = cell.state;
 
     if (panel) {
       // Both optional args must stay omitted. A dsReferencesMapping routes vizPanelToSchemaV2
@@ -63,10 +64,15 @@ function getElements(scene: NotebookScene): Record<string, NotebookElement> {
       // here either. Neither constraint is visible in the signature, and the save PR is where
       // someone would thread a mapping through to preserve datasource references.
       const built = vizPanelToSchemaV2(panel);
-      elements[elementName] =
-        built.kind === 'Panel' && $timeRange
-          ? withQueryOptionsTimeRange(built, buildCellTimeRangeSpec($timeRange))
-          : built;
+      if (built.kind !== 'Panel') {
+        elements[elementName] = built;
+        continue;
+      }
+
+      // Run from the cell, but saved with the panel they belong to.
+      const annotations = serializeFrozenAnnotations($data);
+      const element = $timeRange ? withQueryOptionsTimeRange(built, buildCellTimeRangeSpec($timeRange)) : built;
+      elements[elementName] = annotations ? { ...element, spec: { ...element.spec, annotations } } : element;
     } else if (content) {
       elements[elementName] = { kind: 'Cell', spec: { content } };
     }

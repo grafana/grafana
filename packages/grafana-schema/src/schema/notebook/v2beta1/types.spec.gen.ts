@@ -174,6 +174,9 @@ export interface V2PanelSpec {
 	data: V2QueryGroupKind;
 	vizConfig: VizConfigKind;
 	transparent?: boolean;
+	// The annotations this panel showed when it was added from a dashboard, the only way a cell gets
+	// any. Each cell has its own, so they are kept with its panel.
+	annotations?: AnnotationQueryKind[];
 }
 
 export const defaultV2PanelSpec = (): V2PanelSpec => ({
@@ -765,6 +768,76 @@ export interface DynamicConfigValue {
 
 export const defaultDynamicConfigValue = (): DynamicConfigValue => ({
 	id: "",
+});
+
+export interface AnnotationQueryKind {
+	kind: "AnnotationQuery";
+	spec: AnnotationQuerySpec;
+}
+
+export const defaultAnnotationQueryKind = (): AnnotationQueryKind => ({
+	kind: "AnnotationQuery",
+	spec: defaultAnnotationQuerySpec(),
+});
+
+export interface AnnotationQuerySpec {
+	query: DataQueryKind;
+	enable: boolean;
+	hide: boolean;
+	iconColor: string;
+	name: string;
+	builtIn?: boolean;
+	filter?: AnnotationPanelFilter;
+	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+	placement?: "inControlsMenu";
+	// Mappings define how to convert data frame fields to annotation event fields.
+	mappings?: Record<string, AnnotationEventFieldMapping>;
+	// Catch-all field for datasource-specific properties. Should not be available in as code tooling.
+	legacyOptions?: Record<string, any>;
+}
+
+export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
+	query: defaultDataQueryKind(),
+	enable: false,
+	hide: false,
+	iconColor: "",
+	name: "",
+	builtIn: false,
+	placement: AnnotationQueryPlacement,
+});
+
+export interface AnnotationPanelFilter {
+	// Should the specified panels be included or excluded
+	exclude?: boolean;
+	// Panel IDs that should be included or excluded
+	ids: number[];
+}
+
+export const defaultAnnotationPanelFilter = (): AnnotationPanelFilter => ({
+	exclude: false,
+	ids: [],
+});
+
+/**
+ * Annotation Query placement. Defines where the annotation query should be displayed.
+ * - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+ */
+export const AnnotationQueryPlacement = "inControlsMenu";
+
+/**
+ * Annotation event field mapping. Defines how to map a data frame field to an annotation event field.
+ */
+export interface AnnotationEventFieldMapping {
+	// Source type for the field value
+	source?: string;
+	// Constant value to use when source is "text"
+	value?: string;
+	// Regular expression to apply to the field value
+	regex?: string;
+}
+
+export const defaultAnnotationEventFieldMapping = (): AnnotationEventFieldMapping => ({
+	source: "field",
 });
 
 export interface LibraryPanelKind {

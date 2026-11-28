@@ -92,6 +92,9 @@ V2PanelSpec: {
 	data:         V2QueryGroupKind
 	vizConfig:    VizConfigKind
 	transparent?: bool
+	// The annotations this panel showed when it was added from a dashboard, the only way a cell gets
+	// any. Each cell has its own, so they are kept with its panel.
+	annotations?: [...AnnotationQueryKind]
 }
 
 V2QueryGroupKind: {

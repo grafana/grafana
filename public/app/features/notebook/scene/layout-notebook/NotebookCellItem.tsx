@@ -5,6 +5,7 @@ import {
   isSceneObject,
   type SceneObjectState,
   SceneObjectBase,
+  type SceneDataProvider,
   SceneReactObject,
   type SceneTimeRangeLike,
   type VizPanel,
@@ -39,6 +40,9 @@ export interface NotebookCellItemState extends SceneObjectState {
   // Absent means sceneGraph.getTimeRange() resolves up to the notebook's own range, same as no
   // override at all.
   $timeRange?: SceneTimeRangeLike;
+  // The frozen annotations of the cell's panel. The panel's query runner finds them by walking up the
+  // scene graph, the same way it finds a dashboard row's layers.
+  $data?: SceneDataProvider;
 }
 
 export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> implements DashboardLayoutItem {
