@@ -25,28 +25,53 @@ import {
   type InlineSecureValues as v0alpha1InlineSecureValues,
 } from '../types';
 
-export function settingsSpecMapper(data: Partial<PluginMeta>): Partial<v0alpha1SettingsSpec> {
-  const result: Partial<v0alpha1SettingsSpec> = {};
+/**
+ * Returns the spec to store when `data` is applied to `stored`, with the semantics of the legacy
+ * `POST /api/plugins/:id/settings` endpoint: an empty or omitted `jsonData` keeps the stored one,
+ * and `pinned` is never stored. An omitted `enabled` keeps the stored value (legacy set `false`).
+ */
+export function settingsSpecMapper(stored: v0alpha1SettingsSpec, data: Partial<PluginMeta>): v0alpha1SettingsSpec {
+  const result: v0alpha1SettingsSpec = { ...stored };
 
   if (data.enabled !== undefined) {
     result.enabled = data.enabled;
   }
 
-  if (data.pinned !== undefined) {
-    result.pinned = data.pinned;
-  }
-
-  if (data.jsonData !== undefined) {
-    result.jsonData = data.jsonData;
+  // Compare what the legacy endpoint receives: the JSON body drops undefined values, so
+  // `{ key: undefined }` is sent as `{}` and keeps the stored jsonData.
+  const jsonData: unknown = data.jsonData === undefined ? undefined : JSON.parse(JSON.stringify(data.jsonData));
+  if (isNonEmptyObject(jsonData)) {
+    result.jsonData = jsonData;
   }
 
   return result;
 }
 
-export function inlineSecureValuesMapper(data: Partial<PluginMeta>): v0alpha1InlineSecureValues {
-  const { secureJsonData = {}, secureJsonFields = {} } = data;
+function isNonEmptyObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value) && Object.keys(value).length > 0;
+}
 
-  const result: v0alpha1InlineSecureValues = {};
+/**
+ * Returns the secure values to store when `data` is applied to `stored`. Keys the caller omits keep
+ * their stored value, as with the legacy endpoint. A non-empty value in `secureJsonData` replaces the
+ * stored one. An empty string (how legacy callers reset a secret) removes a stored key, and so does
+ * `secureJsonFields[key] === false` when no new value is passed.
+ */
+export function inlineSecureValuesMapper(
+  stored: v0alpha1InlineSecureValues | undefined,
+  data: Partial<PluginMeta>
+): v0alpha1InlineSecureValues {
+  const { secureJsonData = {}, secureJsonFields = {} } = data;
+  const result: v0alpha1InlineSecureValues = { ...stored };
+
+  const remove = (key: string) => {
+    // Removing a key the server doesn't have is a no-op, so leave it out of the update.
+    if (stored?.[key]) {
+      result[key] = { remove: true };
+    } else {
+      delete result[key];
+    }
+  };
 
   for (const key of Object.keys(secureJsonData)) {
     const secureValue = secureJsonData[key];
@@ -55,9 +80,8 @@ export function inlineSecureValuesMapper(data: Partial<PluginMeta>): v0alpha1Inl
       continue;
     }
 
-    // Key exists on the server but is marked for deletion, so we delete it in-place by sending `remove: true`.
-    if (secureJsonFields?.[key] === false) {
-      result[key] = { remove: true };
+    if (secureValue === '') {
+      remove(key);
       continue;
     }
 
@@ -67,11 +91,9 @@ export function inlineSecureValuesMapper(data: Partial<PluginMeta>): v0alpha1Inl
   }
 
   for (const key of Object.keys(secureJsonFields)) {
-    const secureValue = secureJsonFields[key];
-
-    // Key exists on the server but is marked for deletion, so we delete it in-place by sending `remove: true`.
-    if (secureValue === false) {
-      result[key] = { remove: true };
+    // A form that resets a secret and then gets a new value still has `false` here.
+    if (secureJsonFields[key] === false && !secureJsonData[key]) {
+      remove(key);
     }
   }
 
