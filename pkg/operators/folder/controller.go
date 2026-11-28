@@ -90,13 +90,8 @@ func build(rt *runner.Runtime) (*runner.Parts, error) {
 			factory.Start(ctx.Done())
 		}
 
-		if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
-			rt.Logger.Error("failed to sync folder informer cache")
-			return context.Cause(ctx)
-		}
-
-		ready()
-		controller.Run(ctx, cascadedelete.DefaultWorkers)
-		return nil
+		return runner.SyncThenRun(ctx, ready, func(ctx context.Context) {
+			controller.Run(ctx, cascadedelete.DefaultWorkers)
+		}, reg.HasSynced)
 	}}, nil
 }

@@ -28,6 +28,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	_ "github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	_ "github.com/grafana/grafana/pkg/router/routertest"
+	_ "github.com/grafana/grafana/pkg/server"
 	_ "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	_ "github.com/grafana/grafana/pkg/services/annotations"
 	_ "github.com/grafana/grafana/pkg/services/anonymous/anontest"
