@@ -1,7 +1,7 @@
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { jsonDiff } from '../settings/version-history/utils';
+import { jsonDiff, omitRenderedPluginVersionDiffs } from '../settings/version-history/utils';
 
 import { type DashboardChangesRequest } from './shared';
 
@@ -28,7 +28,7 @@ export function detectDashboardChanges(
   initialSaveModel: DashboardV2Spec | Dashboard
 ) {
   // Calculate differences using the non-transformed to v2 spec values to be able to compare the initial and changed dashboard values
-  const diff = jsonDiff(initialSaveModel, changedSaveModel);
+  const diff = omitRenderedPluginVersionDiffs(jsonDiff(initialSaveModel, changedSaveModel));
   const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
   const hasMigratedToV2 = isDashboardV2Spec(changedSaveModel) && !isDashboardV2Spec(initialSaveModel);
 
