@@ -10,9 +10,12 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
+import { createErrorNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { buildSceneTimeRange } from 'app/features/dashboard-scene/serialization/shared/timeSettings';
 import { vizPanelToSchemaV2 } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
+import { dispatch } from 'app/store/store';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { NotebookAnalytics } from '../analytics/main';
@@ -875,11 +878,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         NOTEBOOK_AUTOSAVE_FAILED_REASON.BUILD_FAILED,
         this.failedAttempts
       );
-      this.setState({
-        status: 'error',
-        errorMessage: error instanceof Error ? error.message : String(error),
-        isConflict: false,
-      });
+      const message = error instanceof Error ? error.message : String(error);
+      this.setState({ status: 'error', errorMessage: message, isConflict: false });
+      this.notifySaveFailed(message);
       return;
     }
 
@@ -985,6 +986,11 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
           isConflict,
         });
 
+        // A conflict has the overwrite prompt below to say what happened and what to do.
+        if (!isConflict) {
+          this.notifySaveFailed(error instanceof Error ? error.message : String(error));
+        }
+
         // Not once stopped: the scene has deactivated (navigated away, tab closed), and this is the
         // teardown's own flush resolving after the fact. Publishing now would show this on whatever
         // page the user is on instead, with no route change left to come along and clear it.
@@ -1034,6 +1040,11 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
           }
         }
       });
+  }
+
+  /** The inline status only shows the reason in a tooltip, so the failure is also raised as a toast. */
+  private notifySaveFailed(message: string): void {
+    dispatch(notifyApp(createErrorNotification(t('notebooks.autosave.error-title', 'Notebook not saved'), message)));
   }
 
   /**

@@ -14105,7 +14105,8 @@
       "conflict-confirm": "Save and overwrite",
       "conflict-text": "Would you still like to save this notebook?",
       "conflict-title": "Someone else has updated this notebook",
-      "error-conflict": "Someone else saved this notebook first."
+      "error-conflict": "Someone else saved this notebook first.",
+      "error-title": "Notebook not saved"
     },
     "delete": {
       "body": "Are you sure you want to delete \"{{title}}\"?",
