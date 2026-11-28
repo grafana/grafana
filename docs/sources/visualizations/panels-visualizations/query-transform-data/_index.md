@@ -376,7 +376,7 @@ You can limit the number of points to improve query performance or smooth the vi
 The default value is the width (or number of pixels) of the graph, because you can only visualize as many data points as the graph panel has room to display.
 
 Because the default depends on the panel’s pixel width, the same dashboard can show a different visual representation of the data depending on the panel’s size on screen.
-When you open a panel by clicking **View** in the panel menu, or by pressing `v`, the panel expands to fill the window.
+When you open a panel by clicking the **Expand** icon in the actions tooltip, or by pressing `v`, the panel expands to fill the window.
 This doesn’t change the dashboard’s grid layout, but it gives the panel more pixels to render with.
 With more pixels, Grafana can request more data points, which increases the resolution and reduces the step size between points.
 As a result, the same query can return a more detailed series in view mode than in the dashboard grid.

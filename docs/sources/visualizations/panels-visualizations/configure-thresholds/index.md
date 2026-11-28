@@ -177,8 +177,8 @@ Set if and how thresholds are shown with the following options.
 You can add as many thresholds to a visualization as you want. Grafana automatically sorts thresholds values from highest to lowest.
 
 1. Navigate to the panel you want to update.
-1. Hover over any part of the panel you want to work on to display the menu on the top right corner.
-1. Click the menu and select **Edit**.
+1. Hover over any part of the panel you want to work on to display the actions tooltip.
+1. Click the **Edit visualization** icon.
 1. Scroll to the **Thresholds** section or enter `thresholds` in the search bar at the top of the panel edit pane.
 1. Click **+ Add threshold**.
 1. Enter a new threshold value or use the up and down arrows at the right side of the field to increase or decrease the value incrementally.

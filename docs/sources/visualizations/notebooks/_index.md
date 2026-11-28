@@ -216,7 +216,7 @@ However, you don't need to be in edit mode or have permission to edit the dashbo
 To add a panel from a dashboard to a notebook, follow these steps:
 
 1. Navigate to the dashboard that contains the panel you want to add.
-1. Hover your cursor over the panel and click the panel menu icon that appears in the top-right corner.
+1. Hover your cursor over the panel to display the actions tooltip, and click the **More actions** menu icon.
 1. Select **Add to notebook**.
 1. In the **Add panel to notebook** dialog box, configure the options described in [Add panel to notebook options](#add-panel-to-notebook-options).
 1. Click **Add to notebook**.

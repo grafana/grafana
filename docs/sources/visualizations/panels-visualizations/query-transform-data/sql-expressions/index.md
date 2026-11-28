@@ -99,8 +99,8 @@ The following are compatible data sources:
 To create a SQL expression, complete the following steps:
 
 1. Navigate to **Dashboards** in the left-side menu.
-1. Select a dashboard and open a dashboard panel.
-1. Click the ellipsis in the upper right and select **Edit**.
+1. Select a dashboard and hover over a panel to display the actions tooltip.
+1. Click the **Edit visualization** icon.
 1. In the query editor sidebar, click the plus icon next to **Queries & Expressions** and select **Add expression**.
 1. In the editor pane, select **SQL**.
 

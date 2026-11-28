@@ -51,8 +51,8 @@ By default, notification messages include a link to the dashboard panel. Additio
 To streamline alert creation, you can create an alert rule directly from a panel.
 
 1. Navigate to a dashboard in the **Dashboards** section.
-1. Hover over the top-right corner of a panel and click the panel menu icon.
-1. From the dropdown menu, select **More...** > **New alert rule**.
+1. Hover over any part of a panel to display the actions tooltip.
+1. Click the **More actions** menu icon and select **More...** > **New alert rule**.
 1. This opens the **Edit rule** form and pre-fills some values:
    - Sets the annotations to the corresponding dashboard and panel.
    - Sets the alert rule query using the panel query.
@@ -72,8 +72,8 @@ Changes to panel and alert rule queries aren't synchronized. If you change a que
 
 This option is available only in [time series panels](/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/time-series/). To access alert rules associated to a time series panel, complete the following steps.
 
-1. Hover over the top-right corner of the panel and click the panel menu icon.
-1. Click **Edit**.
+1. Hover over any part of the panel to display the actions tooltip.
+1. Click the **Edit visualization** icon.
 1. Click the **Alert** tab to view existing alert rules or create a new one.
 
 {{< admonition type="tip" >}}

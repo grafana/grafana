@@ -18,6 +18,47 @@ description: Learn about the features of the panel
 weight: 15
 aliases:
   - ../../panels-visualizations/panel-overview/ # /docs/grafana/next/panels-visualizations/panel-overview/
+image_maps:
+  - key: panel-overview
+    src: /media/docs/grafana/panels-visualizations/screenshot-panel-overview-ann-v13.4.png
+    alt: Annotated panel with time series visualization
+    points:
+      - x_coord: 6.9
+        y_coord: 23
+        content: |
+          **Panel title**
+
+          You can create your own panel titles or have Grafana create them for you using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
+      - x_coord: 14
+        y_coord: 23
+        content: |
+          **Panel description**
+
+          You can create your own panel descriptions or have Grafana create them for you using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
+      - x_coord: 18
+        y_coord: 23
+        content: |
+          **Links**
+
+          Add [panel links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-dashboard-links/#panel-links) to other dashboards, panels, or external sites.
+      - x_coord: 82
+        y_coord: 7.2
+        content: |
+          **Panel actions tooltip**
+
+          Hover over the panel to display the [actions tooltip](#actions-tooltip), where you can access actions such as **Edit visualization**, **Explore**, **Expand**, and the panel menu.
+      - x_coord: 13
+        y_coord: 93.4
+        content: |
+          **Legend**
+
+          Change series colors, y-axis, and series visibility directly from the [legend](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-legend/).
+      - x_coord: 74.5
+        y_coord: 56.8
+        content: |
+          **Tooltips**
+
+          View [tooltips](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-tooltips/) to get more information about data points.
 ---
 
 # Panel overview
@@ -39,29 +80,56 @@ To get started adding panels, ensure that you have configured a data source:
 
 ## Panel feature overview
 
-The following image and descriptions highlight the panel features:
+The following image and descriptions highlight the panel features.
+Hover your cursor over a number to display information about the panel element.
 
-![Annotated panel with time series visualization](/media/docs/grafana/panels-visualizations/screenshot-panel-overview-ann-v11.0.png)
+{{< image-map key="panel-overview" >}}
 
-1. **Panel title** - You can create your own panel titles or have Grafana create them for you using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
-1. **Panel description** - You can create your own panel descriptions or have Grafana create them for you using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards)
-1. **Links** - Add [panel links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-dashboard-links/#panel-links) to other dashboards, panels, or external sites.
-1. **Panel menu** - In the [panel menu](#panel-menu), access actions such as **View**, **Edit**, **Inspect**, and **Remove**.
-1. **Legend** - Change series colors, y-axis, and series visibility directly from the [legend](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-legend/).
-1. **Tooltips** - View [tooltips](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-tooltips/) to get more information about data points.
+## Actions tooltip
+
+The actions tooltip provides access to the most common panel actions with one click, in both view and edit mode.
+
+To display the actions tooltip, do one of the following:
+
+- Hover your cursor over any part of a panel.
+- Use the `Tab` key to move keyboard focus into a panel.
+
+The tooltip is displayed above the top-right corner of the panel.
+Hover your cursor over an icon to display its name and keyboard shortcut.
+The available actions depend on the dashboard mode:
+
+<!-- prettier-ignore-start -->
+
+| Action | View mode | Edit mode | Description |
+| ------ | --------- | --------- | ----------- |
+| Edit visualization | Yes | Yes | Opens the panel editor. In view mode, this also switches the dashboard to edit mode. Only displayed if you can edit the dashboard. |
+| Explore | Yes | No | Opens the panel query in **Explore**. Because this is a link, you can open it in a new browser tab. |
+| Panel settings | No | Yes | Opens high-level panel options in the sidebar. |
+| Duplicate | No | Yes | Adds a copy of the panel next to the original one. Duplicated panels query data separately from the original panel. |
+| Remove | No | Yes | Removes the panel from the dashboard, after you confirm. |
+| Expand or Restore size | Yes | Yes | Expands the panel to fill the window and opens the [View panel sidebar](#view-mode-panel-controls) for supported visualizations, or returns an expanded panel to its original size. |
+| More actions | Yes | Yes | Opens the [panel menu](#panel-menu). |
+
+<!-- prettier-ignore-end -->
+
+Keep the following actions tooltip behavior in mind:
+
+- **Untitled panels**: In untitled panels, because there's no header in which to display panel information, the tooltip also displays the panel description, links, and alert state. In edit mode, it also displays the drag handle that you use to move the panel.
+- **Repeated panels**: **Edit visualization**, **Duplicate**, and **Remove** are disabled.
+- **Multiple selected panels**: In edit mode, when you hover your cursor over one of several selected panels, the tooltip displays the [bulk actions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#group-and-delete-multiple-panels-with-bulk-actions) instead.
+- **Keyboard navigation**: Press `Escape` to close the tooltip and return focus to the panel.
+- **Public and embedded dashboards**: Public dashboards and embedded dashboards don't display the actions tooltip.
 
 ## Panel menu
 
-To access the panel editor, hover the cursor over the top-right corner of any panel.
-Click the panel menu icon that appears and select **Edit**.
+To open the panel menu, hover your cursor over any part of a panel to display the actions tooltip, and then click the **More actions** menu icon.
 
-The panel menu also gives you access to several actions.
+The panel menu gives you access to more panel actions.
 If an option is only available in view mode or edit mode, that's indicated:
 
-- **View**: View the panel in full screen. Opens the [View panel sidebar](#view-mode-panel-controls) and displays controls for supported visualizations, if enabled.
-- **Edit**: Open the panel editor to edit panel and visualization options.
 - **Share**: Share the panel as a link, embed, or snapshot.
-- **Explore**: Open the panel in **Explore**, where you can focus on your query.
+- **Group by…**: Group the panel data by a key. This option is only available if the dashboard has a [Filter and Group by](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/) control with grouping enabled.
+- **Explore**: Edit mode only. Open the panel in **Explore**, where you can focus on your query. In view mode, click the **Explore** icon in the actions tooltip instead.
 - **Inspect**: Open the **Inspect** drawer, where you can review the panel data, stats, metadata, JSON, and query.
   - **Data**: Open the **Inspect** drawer in the **Data** tab.
   - **Query**: Open the **Inspect** drawer in the **Query** tab.
@@ -72,14 +140,12 @@ If an option is only available in view mode or edit mode, that's indicated:
 - **Metrics drilldown**: Open the panel in the **Drilldown > Metrics** feature for further exploration. For more information, refer to [Metrics drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/simplified-exploration/metrics/).
 - **Extensions**: View mode only. Access other actions provided by installed applications, such as declaring an incident. This option is only available in view mode and only appears if you have app plugins installed that contribute an [extension](https://grafana.com/developers/plugin-tools/key-concepts/ui-extensions) to the panel menu.
 - **More**: Access other panel actions.
-  - **Duplicate**: Edit mode only. Make a copy of the panel. Duplicated panels query data separately from the original panel. You can use the special `Dashboard` data source to [share the same query results across panels](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/share-query/) instead.
-  - **Copy**: Copy the panel to the clipboard.
+  - **Copy**: Copy the panel to the clipboard. For repeated panels, this option is labeled **Copy repeated panel**, and it copies the original panel with its repeat options.
   - **New library panel**: Edit mode only. Create a panel that can be imported into other dashboards.
   - **New alert rule**: Open the alert rule configuration page in **Alerting**, where you can [create a Grafana-managed alert](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#create-alerts-from-panels) based on the panel queries.
   - **Hide/Show legend**: Hide or show the panel legend.
   - **Get help**: Send a snapshot or panel data to Grafana Labs Technical Support.
 - **Add to notebook**: Add a copy of the panel to a new or existing notebook. This option is only available when notebooks are enabled and you have permission to edit or create notebooks. For more information, refer to [Add a panel from a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/notebooks/#add-a-panel-from-a-dashboard).
-- **Remove**: Edit mode only. Remove the panel from the dashboard.
 
 ## View mode panel controls
 

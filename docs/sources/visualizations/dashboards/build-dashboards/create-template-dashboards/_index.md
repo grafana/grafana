@@ -65,9 +65,9 @@ To create a dashboard from a template, follow these steps:
    In Grafana Cloud, you also have the option to [customize the template using Grafana Assistant](#customize-templates-and-suggested-dashboards-with-grafana-assistant).
 
 1. Make any other edits to the dashboard to most effectively display your data.
-1. When you've made all of your changes, hover the cursor over the top-right corner of the banner panel to open the panel edit menu, and then click **Remove** to remove the panel.
+1. When you've made all of your changes, hover your cursor over the banner panel to display the actions tooltip, and then click the **Remove** icon to remove the panel.
 
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-remove-banner-v13.3.png" max-width="750px" alt="Removing the sample data banner panel" >}}
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-remove-banner-v13.4.png" max-width="750px" alt="Removing the sample data banner panel" >}}
 
 1. Click **Save**.
 1. Enter an optional description of your updates, and click **Save**.

@@ -26,7 +26,7 @@ review_date: 2026-08-11
 
 # Azure Monitor query editor
 
-Grafana provides a query editor for the Azure Monitor data source, which is located on the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/). You can also access the Azure Monitor query editor from a dashboard panel. Click the menu in the upper right of the panel and select **Edit**.
+Grafana provides a query editor for the Azure Monitor data source, which is located on the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/). You can also access the Azure Monitor query editor from a dashboard panel. Hover over the panel and click the **Edit visualization** icon in the actions tooltip.
 
 This document explains querying specific to the Azure Monitor data source.
 For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
