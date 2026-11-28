@@ -732,8 +732,8 @@ func shouldTakeImage(state, previousState eval.State, previousImage *models.Imag
 
 // takeImage takes an image for the alert rule. It returns nil if screenshots are disabled or
 // the rule is not associated with a dashboard panel.
-func takeImage(ctx context.Context, s ImageCapturer, r *models.AlertRule) (*models.Image, error) {
-	img, err := s.NewImage(ctx, r)
+func takeImage(ctx context.Context, s ImageCapturer, r *models.AlertRule, variables url.Values) (*models.Image, error) {
+	img, err := s.NewImage(ctx, r, variables)
 	if err != nil {
 		if errors.Is(err, screenshot.ErrScreenshotsUnavailable) ||
 			errors.Is(err, models.ErrNoDashboard) ||
@@ -743,6 +743,33 @@ func takeImage(ctx context.Context, s ImageCapturer, r *models.AlertRule) (*mode
 		return nil, err
 	}
 	return img, nil
+}
+
+// dashboardVariables returns the dashboard variables in the instance's
+// DashboardVariablesAnnotation, a URL query string whose values are expected to
+// be escaped (for example with urlquery). Only var-<name> parameters are kept,
+// so the annotation cannot change other parts of the panel's URL. Parameters
+// that cannot be parsed are skipped; the others are still used.
+func dashboardVariables(annotations map[string]string, logger log.Logger) url.Values {
+	raw := annotations[models.DashboardVariablesAnnotation]
+	if raw == "" {
+		return nil
+	}
+	parsed, err := url.ParseQuery(raw)
+	if err != nil {
+		logger.Warn("Skipping invalid parameters in dashboard variables annotation; escape label values with urlquery",
+			"annotation", models.DashboardVariablesAnnotation, "error", err)
+	}
+	variables := url.Values{}
+	for name, values := range parsed {
+		if strings.HasPrefix(name, "var-") && len(name) > len("var-") {
+			variables[name] = values
+		}
+	}
+	if len(variables) == 0 {
+		return nil
+	}
+	return variables
 }
 
 func FormatStateAndReason(state eval.State, reason string) string {
@@ -884,7 +911,7 @@ func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extr
 	}
 
 	if reason := shouldTakeImage(a.State, oldState, a.Image, newlyResolved); reason != "" {
-		image := takeImageFn(reason)
+		image := takeImageFn(reason, dashboardVariables(a.Annotations, logger))
 		if image != nil {
 			a.Image = image
 		}

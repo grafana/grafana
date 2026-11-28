@@ -1,6 +1,7 @@
 package screenshot
 
 import (
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -111,4 +112,12 @@ func TestScreenshotOptions_Hash(t *testing.T) {
 	// the timeout should not change the sum
 	o.Timeout = DefaultTimeout + 1
 	assert.Equal(t, []byte{0x3b, 0xd1, 0xfb, 0x3f, 0x3, 0x64, 0xba, 0xad}, o.Hash())
+
+	// empty variables keep the hash; variables change it
+	withEmpty := o
+	withEmpty.Variables = url.Values{}
+	assert.Equal(t, o.Hash(), withEmpty.Hash())
+	withVariables := o
+	withVariables.Variables = url.Values{"var-cluster": {"prod"}}
+	assert.NotEqual(t, o.Hash(), withVariables.Hash())
 }

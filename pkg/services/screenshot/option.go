@@ -2,6 +2,7 @@ package screenshot
 
 import (
 	"hash/fnv"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -31,6 +32,9 @@ type ScreenshotOptions struct {
 	Height  int
 	Theme   models.Theme
 	Timeout time.Duration
+
+	// Variables are dashboard variables (var-<name>) added to the panel's URL.
+	Variables url.Values
 }
 
 // SetDefaults sets default values for missing or invalid options.
@@ -62,5 +66,6 @@ func (s ScreenshotOptions) Hash() []byte {
 	_, _ = h.Write([]byte(strconv.FormatInt(int64(s.Width), 10)))
 	_, _ = h.Write([]byte(strconv.FormatInt(int64(s.Height), 10)))
 	_, _ = h.Write([]byte(s.Theme))
+	_, _ = h.Write([]byte(s.Variables.Encode()))
 	return h.Sum(nil)
 }

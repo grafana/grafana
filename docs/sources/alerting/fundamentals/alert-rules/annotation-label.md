@@ -119,6 +119,7 @@ Annotations are displayed in Grafana and are included by default in notification
 - `description`: A detailed description of what happened and what the alert does.
 - `runbook_url`: The runbook page to guide operators managing a potential incident.
 - `__dashboardUid__` and `__panelId__`: [Link the alert to a dashboard and panel](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-panels/) to facilitate alert investigation.
+- `__dashboardVariables__`: Dashboard variables for the [screenshot of the linked panel](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/images-in-notifications/), as a URL query string such as `var-cluster={{ $labels.cluster | urlquery }}`.
 
 {{< /shared >}}
 
