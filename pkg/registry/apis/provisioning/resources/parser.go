@@ -634,6 +634,25 @@ func (f *ParsedResource) forceCreate(ctx context.Context) (done bool, err error)
 
 func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
 	obj := f.Obj.DeepCopy().Object
+	// Existing library panels may still carry user settings in status.missing.
+	// Move them into spec before stripping server-owned status from the Git file.
+	if f.Obj.GroupVersionKind() == dashboard.LibraryPanelResourceInfo.GroupVersionKind() {
+		_, present, err := unstructured.NestedFieldNoCopy(obj, "spec", "additionalProperties")
+		if err != nil {
+			return nil, err
+		}
+		if !present {
+			missing, found, err := unstructured.NestedMap(obj, "status", "missing")
+			if err != nil {
+				return nil, err
+			}
+			if found {
+				if err := unstructured.SetNestedMap(obj, missing, "spec", "additionalProperties"); err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
 	delete(obj, "status")
 	name := f.Obj.GetName()
 	if name == "" {

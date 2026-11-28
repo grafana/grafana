@@ -2645,6 +2645,14 @@
         "type": "object",
         "required": ["type", "options", "fieldConfig"],
         "properties": {
+          "additionalProperties": {
+            "description": "Panel settings without a dedicated spec field. An empty object clears these settings.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unstructured"
+              }
+            ]
+          },
           "datasource": {
             "description": "The default datasource type",
             "allOf": [

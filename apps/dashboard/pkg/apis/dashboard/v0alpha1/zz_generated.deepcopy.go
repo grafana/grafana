@@ -251,6 +251,10 @@ func (in *LibraryPanelSpec) DeepCopyInto(out *LibraryPanelSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.AdditionalProperties != nil {
+		in, out := &in.AdditionalProperties, &out.AdditionalProperties
+		*out = (*in).DeepCopy()
+	}
 	return
 }
 

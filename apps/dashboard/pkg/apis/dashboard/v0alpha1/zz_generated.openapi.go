@@ -993,6 +993,12 @@ func schema_pkg_apis_dashboard_v0alpha1_LibraryPanelSpec(ref common.ReferenceCal
 							},
 						},
 					},
+					"additionalProperties": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Panel settings without a dedicated spec field. An empty object clears these settings.",
+							Ref:         ref(commonv0alpha1.Unstructured{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"type", "options", "fieldConfig"},
 			},

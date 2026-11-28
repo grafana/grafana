@@ -210,6 +210,46 @@ func TestLibraryPanelModelRoundTrip(t *testing.T) {
 	}
 }
 
+func TestLibraryPanelModelRoundTripWithoutStatus(t *testing.T) {
+	legacyModel := json.RawMessage(`{
+		"type":"timeseries", "title":"Panel", "description":"", "options":{}, "fieldConfig":{},
+		"transformations":[{"id":"reduce","options":{"reducers":["mean"]}}],
+		"maxDataPoints":100, "interval":"30s", "timeFrom":"1h", "timeShift":"1d",
+		"hideTimeOverride":false, "repeat":"host", "repeatDirection":"h", "maxPerRow":3,
+		"futureSetting":{"enabled":true}
+	}`)
+	spec, _, err := LegacyModelToLibraryPanel("Library panel", legacyModel)
+	require.NoError(t, err)
+
+	rebuilt, err := LibraryPanelToLegacyModel(&v0alpha1.LibraryPanel{Spec: spec})
+	require.NoError(t, err)
+	require.JSONEq(t, string(legacyModel), string(rebuilt))
+}
+
+func TestLibraryPanelModelAdditionalPropertiesAreAuthoritative(t *testing.T) {
+	for _, properties := range []string{`{"maxDataPoints":200,"type":"stale","transparent":true}`, `{}`} {
+		t.Run(properties, func(t *testing.T) {
+			var panel v0alpha1.LibraryPanel
+			require.NoError(t, json.Unmarshal([]byte(`{
+				"spec":{"type":"text","options":{},"fieldConfig":{},"additionalProperties":`+properties+`},
+				"status":{"missing":{"maxDataPoints":100,"timeFrom":"1h"}}
+			}`), &panel))
+			rebuilt, err := LibraryPanelToLegacyModel(&panel)
+			require.NoError(t, err)
+			var got map[string]any
+			require.NoError(t, json.Unmarshal(rebuilt, &got))
+			require.Equal(t, "text", got["type"])
+			require.NotContains(t, got, "transparent")
+			require.NotContains(t, got, "timeFrom")
+			if properties == `{}` {
+				require.NotContains(t, got, "maxDataPoints")
+			} else {
+				require.Equal(t, float64(200), got["maxDataPoints"])
+			}
+		})
+	}
+}
+
 func TestLibraryPanelRootFolderConversion(t *testing.T) {
 	panel := &v0alpha1.LibraryPanel{ObjectMeta: metav1.ObjectMeta{Name: "panel", Annotations: map[string]string{utils.AnnoKeyFolder: "general"}}}
 	create, err := ToCreateLibraryElementCommand(panel)

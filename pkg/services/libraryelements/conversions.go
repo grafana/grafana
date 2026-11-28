@@ -75,13 +75,17 @@ func toRawMessage(raw runtime.Object) (json.RawMessage, error) {
 // LibraryPanelToLegacyModel rebuilds the legacy `model` JSON blob (the panel body
 // stored in the library_element table) from a k8s LibraryPanel. It is the inverse
 // of LegacyModelToLibraryPanel: properties that have no typed field on
-// LibraryPanelSpec travel in status.missing, so they are used as the base of the
-// model to keep unknown panel keys (e.g. transformations) intact across the
-// k8s <-> legacy round trip.
+// LibraryPanelSpec travel in spec.additionalProperties. Older resources use
+// status.missing, which remains a fallback until they have been rewritten.
 func LibraryPanelToLegacyModel(panel *v0alpha1.LibraryPanel) (json.RawMessage, error) {
 	legacyModel := map[string]any{}
-	if panel.Status != nil {
+	if panel.Spec.AdditionalProperties != nil {
+		maps.Copy(legacyModel, panel.Spec.AdditionalProperties.Object)
+	} else if panel.Status != nil {
 		maps.Copy(legacyModel, panel.Status.Missing.Object)
+	}
+	for _, key := range libraryPanelSpecKeys {
+		delete(legacyModel, key)
 	}
 
 	spec := panel.Spec
@@ -123,12 +127,12 @@ func LibraryPanelToLegacyModel(panel *v0alpha1.LibraryPanel) (json.RawMessage, e
 }
 
 // libraryPanelSpecKeys are the legacy model properties that map to typed fields on
-// LibraryPanelSpec. Everything else is preserved in status.missing.
+// LibraryPanelSpec. Everything else is preserved in spec.additionalProperties.
 var libraryPanelSpecKeys = []string{"type", "pluginVersion", "title", "description", "options", "fieldConfig", "datasource", "targets", "links", "transparent", "libraryPanel", "id", "gridPos"}
 
 // LegacyModelToLibraryPanel builds the spec and status of a k8s LibraryPanel from a
 // legacy `model` JSON blob and the library panel name (the SQL name column). Model
-// properties without a typed spec field are kept in status.missing.
+// properties without a typed spec field are kept in spec.additionalProperties.
 func LegacyModelToLibraryPanel(name string, legacyModel json.RawMessage) (v0alpha1.LibraryPanelSpec, *v0alpha1.LibraryPanelStatus, error) {
 	spec := v0alpha1.LibraryPanelSpec{}
 	status := &v0alpha1.LibraryPanelStatus{}
@@ -148,6 +152,8 @@ func LegacyModelToLibraryPanel(name string, legacyModel json.RawMessage) (v0alph
 	for _, k := range libraryPanelSpecKeys {
 		delete(status.Missing.Object, k)
 	}
+	// Keep status.missing for clients deployed before the spec field was added.
+	spec.AdditionalProperties = status.Missing.DeepCopy()
 
 	return spec, status, nil
 }
