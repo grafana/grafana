@@ -44,12 +44,30 @@ func (b *DataSourceAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 	return validateNoTeamHTTPHeadersOnCreate(ctx, ds, &b.datasourceResourceInfo)
 }
 
-// Mutate preserves stored Team LBAC rules when a datasource PUT omits them.
-// PATCH removal is rejected so an explicit attempt cannot silently erase them.
+// Mutate removes the temporary default-permission annotation and preserves
+// stored Team LBAC rules when a datasource PUT omits them. PATCH removal is
+// rejected so an explicit attempt cannot silently erase them.
 func (b *DataSourceAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
 	isUpdate := a.GetOperation() == admission.Update
 	isDatasourceResource := a.GetResource().Resource == b.datasourceResourceInfo.GetName()
-	if !isUpdate || !isDatasourceResource || !teamHTTPHeadersWriteGuardEnabled(ctx) {
+	if !isDatasourceResource {
+		return nil
+	}
+	if b.permissionClient != nil && (isUpdate || a.GetOperation() == admission.Create) {
+		proposed, ok := a.GetObject().(*datasourceV0.DataSource)
+		if !ok {
+			return apierrors.NewBadRequest(fmt.Sprintf("expected DataSource object, got %T", a.GetObject()))
+		}
+		// Some clients still omit this annotation, so the server temporarily grants
+		// defaults. Removing it prevents UniStore from granting them a second time.
+		// Move defaulting to UniStore once clients opt in, UniStore owns datasource
+		// writes, and IAM serves datasource permissions in all Cloud clusters.
+		if proposed.Annotations[utils.AnnoKeyGrantPermissions] == utils.AnnoGrantPermissionsDefault {
+			proposed.SetAnnotations(maps.Clone(proposed.Annotations))
+			delete(proposed.Annotations, utils.AnnoKeyGrantPermissions)
+		}
+	}
+	if !isUpdate || !teamHTTPHeadersWriteGuardEnabled(ctx) {
 		return nil
 	}
 	// UpdatedObjectInfo runs admission against SQL first, then against the

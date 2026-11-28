@@ -51,6 +51,10 @@ type mockHealthDatasourceProvider struct {
 	instanceSettingsErr error
 }
 
+func (*mockHealthDatasourceProvider) PermissionsOnCreation(context.Context, string) (bool, error) {
+	return false, nil
+}
+
 func (m *mockHealthDatasourceProvider) CreateDataSource(context.Context, *datasourceV0.DataSource) (*datasourceV0.DataSource, error) {
 	return nil, nil
 }

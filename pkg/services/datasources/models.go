@@ -179,9 +179,11 @@ type AddDataSourceCommand struct {
 	// swagger:ignore
 	IsPrunable bool `json:"-"`
 
-	OrgID                   int64             `json:"-"`
-	UserID                  int64             `json:"-"`
-	ReadOnly                bool              `json:"-"`
+	OrgID    int64 `json:"-"`
+	UserID   int64 `json:"-"`
+	ReadOnly bool  `json:"-"`
+	// SkipDefaultPermissions is set by the API adapter when datasource storage owns IAM defaults.
+	SkipDefaultPermissions  bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
 	// BeforeSave runs after a UID is assigned (client-provided or generated)

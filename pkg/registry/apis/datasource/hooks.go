@@ -22,7 +22,7 @@ func (b *DataSourceAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteO
 
 	ctx, cancel := context.WithTimeout(context.Background(), datasources.PermissionsDeleteTimeout)
 	defer cancel()
-	if err := b.permissionsDeleter.DeletePermissions(ctx, meta.GetNamespace(), meta.GetName()); err != nil {
+	if err := b.permissionClient.DeletePermissions(ctx, meta.GetNamespace(), meta.GetName()); err != nil {
 		logging.DefaultLogger.Error("Failed to delete datasource permissions", "error", err)
 	}
 }

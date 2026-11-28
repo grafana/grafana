@@ -615,8 +615,9 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
 	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles)
-	permissionsDeleter := service6.ProvideNilPermissionsDeleter()
-	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, dataSourceRetriever, permissionsDeleter)
+	rpclientClient := datasource.ProvideNilDatasourceResourcePermissions()
+	datasourcePermissionsClient := datasource.ProvideDatasourcePermissionsClient(rpclientClient)
+	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, dataSourceRetriever, datasourcePermissionsClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1013,7 +1014,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	dashboardsAPIBuilder := dashboard.RegisterAPIService(featureToggles, features, apiserverService, dashboardService, service13, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, registerer, sqlStore, tracingService, v5, dualwriteService, quotaService, eventualRestConfigProvider, userimplService, libraryElementService, v6, serviceImpl, dashboardActivityChannel, configProvider, folderimplService, dashboardLifecycleExtras)
 	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service13, cacheServiceImpl, plugincontextProvider, cfg)
 	proxyDependenciesProvider := datasource.ProvideProxyDependencies(cfg, httpclientProvider, oauthtokenService, tracingService, featureToggles)
-	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, decryptService, accessClient, registerer, pluginsourcesService, ossDataSourceRequestValidator, proxyDependenciesProvider, permissionsDeleter)
+	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, decryptService, accessClient, registerer, pluginsourcesService, ossDataSourceRequestValidator, proxyDependenciesProvider, rpclientClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1428,8 +1429,9 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
 	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles)
-	permissionsDeleter := service6.ProvideNilPermissionsDeleter()
-	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, dataSourceRetriever, permissionsDeleter)
+	rpclientClient := datasource.ProvideNilDatasourceResourcePermissions()
+	datasourcePermissionsClient := datasource.ProvideDatasourcePermissionsClient(rpclientClient)
+	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, dataSourceRetriever, datasourcePermissionsClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1828,7 +1830,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	dashboardsAPIBuilder := dashboard.RegisterAPIService(featureToggles, features, apiserverService, dashboardService, service13, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, registerer, sqlStore, tracingService, v5, dualwriteService, quotaService, eventualRestConfigProvider, userimplService, libraryElementService, v6, serviceImpl, dashboardActivityChannel, configProvider, folderimplService, dashboardLifecycleExtras)
 	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service13, cacheServiceImpl, plugincontextProvider, cfg)
 	proxyDependenciesProvider := datasource.ProvideProxyDependencies(cfg, httpclientProvider, oauthtokenService, tracingService, featureToggles)
-	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, decryptService, accessClient, registerer, pluginsourcesService, ossDataSourceRequestValidator, proxyDependenciesProvider, permissionsDeleter)
+	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, decryptService, accessClient, registerer, pluginsourcesService, ossDataSourceRequestValidator, proxyDependenciesProvider, rpclientClient)
 	if err != nil {
 		return nil, err
 	}
@@ -2260,8 +2262,9 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	}
 	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
 	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles)
-	permissionsDeleter := service6.ProvideNilPermissionsDeleter()
-	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, dataSourceRetriever, permissionsDeleter)
+	rpclientClient := datasource.ProvideNilDatasourceResourcePermissions()
+	datasourcePermissionsClient := datasource.ProvideDatasourcePermissionsClient(rpclientClient)
+	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, dataSourceRetriever, datasourcePermissionsClient)
 	if err != nil {
 		return nil, err
 	}

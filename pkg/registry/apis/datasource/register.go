@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission/rpclient"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -77,10 +78,22 @@ type DataSourceAPIBuilder struct {
 	// health), matching the legacy HTTP API behavior.
 	dataSourceRequestValidator validations.DataSourceRequestValidator
 
-	permissionsDeleter datasources.PermissionsDeleter
+	permissionClient *rpclient.Client
 
 	// Legacy or Unified -- depending on config
 	store grafanarest.Storage
+}
+
+func ProvideNilDatasourceResourcePermissions() *rpclient.Client {
+	return nil
+}
+
+func ProvideDatasourcePermissionsClient(client *rpclient.Client) datasources.DatasourcePermissionsClient {
+	// A nil interface keeps SQL permission cleanup enabled.
+	if client == nil {
+		return nil
+	}
+	return client
 }
 
 func RegisterAPIService(
@@ -95,7 +108,7 @@ func RegisterAPIService(
 	pluginSources sources.Registry,
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	proxyDependencies ProxyDependenciesProvider,
-	permissionsDeleter datasources.PermissionsDeleter,
+	permissionClient *rpclient.Client,
 ) (*DataSourceAPIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs) {
@@ -150,14 +163,14 @@ func RegisterAPIService(
 			groupName,
 			plugin.JSONData,
 			client,
-			datasources.GetDatasourceProvider(plugin.JSONData),
+			datasources.GetDatasourceProvider(plugin.JSONData, permissionClient != nil),
 			contextProvider,
 			accessClient,
 			decrypter,
 			flags,
 			dataSourceRequestValidator,
 			proxyDependencies,
-			permissionsDeleter,
+			permissionClient,
 		)
 		if err != nil {
 			return nil, err
@@ -196,7 +209,7 @@ func NewDataSourceAPIBuilder(
 	cfg DataSourceAPIBuilderConfig,
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	proxyDependencies ProxyDependenciesProvider,
-	permissionsDeleter datasources.PermissionsDeleter,
+	permissionClient *rpclient.Client,
 ) (*DataSourceAPIBuilder, error) {
 	registerSubresourceMetrics(prometheus.DefaultRegisterer)
 
@@ -211,7 +224,7 @@ func NewDataSourceAPIBuilder(
 		cfg:                        cfg,
 		dataSourceRequestValidator: dataSourceRequestValidator,
 		proxyDependencies:          proxyDependencies,
-		permissionsDeleter:         permissionsDeleter,
+		permissionClient:           permissionClient,
 	}
 	return builder, nil
 }
@@ -315,12 +328,16 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		if err != nil {
 			return err
 		}
-		if b.permissionsDeleter != nil {
+		var unifiedStore grafanarest.Storage = unified
+		if b.permissionClient != nil {
 			unified.AfterDelete = b.afterDelete
 		}
-		b.store, err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
+		b.store, err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unifiedStore)
 		if err != nil {
 			return err
+		}
+		if b.permissionClient != nil {
+			b.store = newPermissionWrapper(b.store, b.permissionClient, b.datasources.PermissionsOnCreation)
 		}
 		storage[ds.StoragePath()] = b.store
 		storage[ds.StoragePath("access")] = &subAccessREST{
