@@ -1,18 +1,21 @@
 import { css } from '@emotion/css';
-import { useRef, useEffect } from 'react';
+import { type RefObject, useRef, useEffect } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, Modal, useStyles2 } from '@grafana/ui';
 
 type ConfirmModalProps = {
   isOpen: boolean;
+  copyFailed?: boolean;
+  isCopying?: boolean;
   onCancel?: () => void;
   onDiscard?: () => void;
-  onCopy?: () => void;
+  onCopy?: (appendTo: RefObject<HTMLElement | null>) => void;
 };
-export function ConfirmModal({ isOpen, onCancel, onDiscard, onCopy }: ConfirmModalProps) {
+export function ConfirmModal({ isOpen, copyFailed, isCopying, onCancel, onDiscard, onCopy }: ConfirmModalProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const copyContainerRef = useRef<HTMLDivElement>(null);
   const styles = useStyles2(getStyles);
 
   // Moved from grafana/ui
@@ -43,11 +46,22 @@ export function ConfirmModal({ isOpen, onCancel, onDiscard, onCopy }: ConfirmMod
           in builder mode.
         </Trans>
       </p>
-      <p>
-        <Trans i18nKey="grafana-sql.components.confirm-modal.clipboard">
-          Do you want to copy your code to the clipboard?
-        </Trans>
-      </p>
+      <div ref={copyContainerRef}>
+        <p>
+          <Trans i18nKey="grafana-sql.components.confirm-modal.clipboard">
+            Do you want to copy your code to the clipboard?
+          </Trans>
+        </p>
+      </div>
+      {copyFailed && (
+        <Alert
+          severity="error"
+          title={t(
+            'grafana-sql.components.confirm-modal.copy-failed',
+            'Could not copy SQL to the clipboard. Your code has not been changed.'
+          )}
+        />
+      )}
       <Modal.ButtonRow>
         <Button type="button" variant="secondary" onClick={onCancel} fill="outline">
           <Trans i18nKey="grafana-sql.components.confirm-modal.cancel">Cancel</Trans>
@@ -55,7 +69,7 @@ export function ConfirmModal({ isOpen, onCancel, onDiscard, onCopy }: ConfirmMod
         <Button variant="destructive" type="button" onClick={onDiscard} ref={buttonRef}>
           <Trans i18nKey="grafana-sql.components.confirm-modal.discard-code-and-switch">Discard code and switch</Trans>
         </Button>
-        <Button variant="primary" onClick={onCopy}>
+        <Button variant="primary" onClick={() => onCopy?.(copyContainerRef)} disabled={isCopying}>
           <Trans i18nKey="grafana-sql.components.confirm-modal.copy-code-and-switch">Copy code and switch</Trans>
         </Button>
       </Modal.ButtonRow>
