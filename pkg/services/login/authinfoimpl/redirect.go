@@ -58,6 +58,13 @@ func (s *redirectStore) GetUserAuthModules(ctx context.Context, userID int64) ([
 	return s.legacyStore.GetUserAuthModules(ctx, userID)
 }
 
+func (s *redirectStore) GetUsersAuthModules(ctx context.Context, userIDs []int64) (map[int64][]string, error) {
+	if s.isKubernetesAuthInfoRedirectEnabled(ctx) {
+		return s.k8sStore.GetUsersAuthModules(s.k8sCtx(ctx), userIDs)
+	}
+	return s.legacyStore.GetUsersAuthModules(ctx, userIDs)
+}
+
 func (s *redirectStore) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
 	if s.isKubernetesAuthInfoRedirectEnabled(ctx) {
 		return s.k8sStore.SetAuthInfo(s.k8sCtx(ctx), cmd)

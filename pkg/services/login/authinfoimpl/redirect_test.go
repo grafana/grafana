@@ -55,6 +55,16 @@ func TestRedirectStore(t *testing.T) {
 			},
 		},
 		{
+			name: "GetUsersAuthModules",
+			call: func(s login.Store) error {
+				_, err := s.GetUsersAuthModules(context.Background(), []int64{1, 2})
+				return err
+			},
+			on: func(m *authinfotest.MockAuthInfoStore) {
+				m.On("GetUsersAuthModules", mock.Anything, []int64{1, 2}).Return(map[int64][]string{1: {"ldap"}}, nil).Once()
+			},
+		},
+		{
 			name: "SetAuthInfo",
 			call: func(s login.Store) error { return s.SetAuthInfo(context.Background(), setAuthInfoCmd) },
 			on: func(m *authinfotest.MockAuthInfoStore) {
