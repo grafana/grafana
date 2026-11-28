@@ -19,6 +19,7 @@ import { type BackendSrv, type BackendSrvRequest, type FetchResponse } from '../
 
 import {
   DataSourceWithBackend,
+  getDatasourceHealthUrl,
   type HealthCheckResult,
   HealthStatus,
   standardStreamOptionsProvider,
@@ -1115,3 +1116,62 @@ function createMockDatasource(settingsOverrides: Partial<DataSourceInstanceSetti
   const ds = new MyDataSource(settings);
   return { ds, mock: mockDatasourceRequest.mock };
 }
+
+describe('getDatasourceHealthUrl', () => {
+  const settings = {
+    uid: 'abc',
+    type: 'alias',
+    meta: { id: 'canonical-id' } as DataSourcePluginMeta,
+    jsonData: {},
+  } as DataSourceInstanceSettings;
+
+  function allowHealth(health: string[]) {
+    mockGetObjectValue.mockImplementation((key, defaultValue) =>
+      key === 'datasources.apiserver.fe-allowed-types' ? { health, resources: [] } : defaultValue
+    );
+  }
+
+  beforeEach(() => {
+    mockGetDataSourceInstanceSettings.mockReset().mockResolvedValue(settings);
+  });
+
+  afterEach(() => {
+    mockGetObjectValue.mockReturnValue({ types: ['prometheus'] });
+    mockGetDataSourceInstanceSettings.mockReset().mockImplementation(defaultInstanceSettings);
+  });
+
+  test('uses the legacy URL when the plugin is not in the health list', async () => {
+    allowHealth([]);
+
+    await expect(getDatasourceHealthUrl('abc')).resolves.toBe('/api/datasources/uid/abc/health');
+    expect(mockGetDataSourceInstanceSettings).toHaveBeenCalledWith('abc');
+  });
+
+  test('uses the datasource API server URL, by plugin id, when the plugin is in the health list', async () => {
+    allowHealth(['canonical-id']);
+
+    await expect(getDatasourceHealthUrl('abc')).resolves.toBe(
+      `/apis/canonical-id.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/abc/health`
+    );
+  });
+
+  test('keeps OAuth pass-through datasources on the legacy URL', async () => {
+    allowHealth(['canonical-id']);
+    mockGetDataSourceInstanceSettings.mockResolvedValue({
+      ...settings,
+      jsonData: { oauthPassThru: true },
+    } as DataSourceInstanceSettings);
+
+    await expect(getDatasourceHealthUrl('abc')).resolves.toBe('/api/datasources/uid/abc/health');
+  });
+
+  test.each([
+    ['fails', () => mockGetDataSourceInstanceSettings.mockRejectedValue(new Error('unavailable'))],
+    ['finds nothing', () => mockGetDataSourceInstanceSettings.mockResolvedValue(undefined)],
+  ])('falls back to the legacy URL when the settings lookup %s', async (_, arrange) => {
+    allowHealth(['canonical-id']);
+    arrange();
+
+    await expect(getDatasourceHealthUrl('a/b')).resolves.toBe('/api/datasources/uid/a%2Fb/health');
+  });
+});

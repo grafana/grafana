@@ -123,6 +123,57 @@ function toHealthCheckResult(v: DatasourcesV0HealthCheckResult): HealthCheckResu
   };
 }
 
+/**
+ * Whether `endpoint` calls for this datasource go to the datasource API server (`/apis/...`) instead of the
+ * legacy `/api/datasources/uid/...` routes. Reads only instance settings, so callers can decide without loading
+ * the plugin.
+ */
+function supportsDatasourceApi(endpoint: 'resources' | 'health', settings: DataSourceInstanceSettings): boolean {
+  // @ts-expect-error featuremgmt/registry.go does not support object feature flags yet
+  const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.apiserver.fe-allowed-types', {
+    resources: [],
+    health: [],
+  });
+  if (!allowedTypes || typeof allowedTypes !== 'object' || Array.isArray(allowedTypes)) {
+    return false;
+  }
+  const pluginIds = allowedTypes[endpoint];
+  return (
+    Array.isArray(pluginIds) &&
+    (pluginIds.includes('*') || pluginIds.includes(settings.meta?.id ?? settings.type)) &&
+    isDatasourceAuthCompatible(settings)
+  );
+}
+
+function datasourceApiBaseUrl(settings: DataSourceInstanceSettings): string {
+  return `/apis/${settings.meta?.id ?? settings.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${settings.uid}`;
+}
+
+function buildHealthCheckUrl(settings: DataSourceInstanceSettings): string {
+  return supportsDatasourceApi('health', settings)
+    ? `${datasourceApiBaseUrl(settings)}/health`
+    : `/api/datasources/uid/${settings.uid}/health`;
+}
+
+/**
+ * A failed or empty lookup reads as no settings, so the URL getters below fall back to the legacy routes. On stacks
+ * that load datasource settings from the API server this fetches, so callers should bound it with their own deadline.
+ */
+async function lookupInstanceSettings(uid: string): Promise<DataSourceInstanceSettings | undefined> {
+  return getDataSourceInstanceSettings(uid).catch(() => undefined);
+}
+
+/**
+ * Health check URL for the datasource `uid`, on the route the datasource API rollout selects. Needs only the uid, so
+ * callers do not have to load the plugin.
+ *
+ * @alpha
+ */
+export async function getDatasourceHealthUrl(uid: string): Promise<string> {
+  const settings = await lookupInstanceSettings(uid);
+  return settings ? buildHealthCheckUrl(settings) : `/api/datasources/uid/${encodeURIComponent(uid)}/health`;
+}
+
 interface PreparedQuery {
   query: DataQuery;
   /** Absent for expression queries, which are not backed by a data source instance. */
@@ -422,7 +473,7 @@ class DataSourceWithBackend<
    */
   buildResourcesDatasourceUrl(rawPath: string): string {
     const path = rawPath.replace(/^\/+/, '');
-    if (this.supportsDatasourceApi('resources')) {
+    if (supportsDatasourceApi('resources', this.datasourceInstanceSettings)) {
       // example:
       // /apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/stacks-1/datasources/local-prometheus/resources/api/v1/labels
       const apiVersion = 'v0alpha1';
@@ -431,31 +482,12 @@ class DataSourceWithBackend<
     return `/api/datasources/uid/${this.uid}/resources/${path}`;
   }
 
-  private supportsDatasourceApi(endpoint: 'resources' | 'health'): boolean {
-    // @ts-expect-error featuremgmt/registry.go does not support object feature flags yet
-    const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.apiserver.fe-allowed-types', {
-      resources: [],
-      health: [],
-    });
-    if (!allowedTypes || typeof allowedTypes !== 'object' || Array.isArray(allowedTypes)) {
-      return false;
-    }
-    const pluginIds = allowedTypes[endpoint];
-    return (
-      Array.isArray(pluginIds) &&
-      (pluginIds.includes('*') || pluginIds.includes(this.meta?.id ?? this.type)) &&
-      isDatasourceAuthCompatible(this.datasourceInstanceSettings)
-    );
-  }
-
   /**
    * Run the datasource healthcheck
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
-    const useNewApi = this.supportsDatasourceApi('health');
-    const healthCheckURL = useNewApi
-      ? `/apis/${this.meta?.id ?? this.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${this.uid}/health`
-      : `/api/datasources/uid/${this.uid}/health`;
+    const useNewApi = supportsDatasourceApi('health', this.datasourceInstanceSettings);
+    const healthCheckURL = buildHealthCheckUrl(this.datasourceInstanceSettings);
 
     if (useNewApi) {
       return lastValueFrom(

@@ -7,6 +7,7 @@ import {
   getBackendSrv,
   getDataSourceInstance,
   getDataSourceInstanceList,
+  getDatasourceHealthUrl,
   getDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
@@ -33,6 +34,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: jest.fn(),
   getDataSourceInstance: jest.fn(),
   getDataSourceInstanceList: jest.fn(),
+  getDatasourceHealthUrl: jest.fn(),
   getDefaultDataSourceInstanceListItem: jest.fn(),
 }));
 const getDataSourceInstanceListMock = jest.mocked(getDataSourceInstanceList);
@@ -329,6 +331,10 @@ describe('isDatasourceHealthy', () => {
     resetProbeHealth();
     healthGetMock.mockReset();
     jest.mocked(getBackendSrv).mockReturnValue({ get: healthGetMock } as unknown as BackendSrv);
+    jest
+      .mocked(getDatasourceHealthUrl)
+      .mockReset()
+      .mockImplementation(async (uid) => `/api/datasources/uid/${uid}/health`);
   });
 
   it('reports a datasource whose health check answers OK as healthy', async () => {
@@ -339,6 +345,23 @@ describe('isDatasourceHealthy', () => {
       showErrorAlert: false,
       abortSignal: expect.any(AbortSignal),
     });
+  });
+
+  it('checks health on the route the datasource API rollout selects for the datasource', async () => {
+    jest.mocked(getDatasourceHealthUrl).mockResolvedValue('/apis/loki.datasource.grafana.app/rolled-out/health');
+    healthGetMock.mockResolvedValue({ status: 'OK' });
+
+    await expect(isDatasourceHealthy('rolled-out')).resolves.toBe(true);
+    expect(getDatasourceHealthUrl).toHaveBeenCalledWith('rolled-out');
+    expect(healthGetMock).toHaveBeenCalledWith(
+      '/apis/loki.datasource.grafana.app/rolled-out/health',
+      undefined,
+      undefined,
+      {
+        showErrorAlert: false,
+        abortSignal: expect.any(AbortSignal),
+      }
+    );
   });
 
   it('reports a non-OK status as unhealthy', async () => {

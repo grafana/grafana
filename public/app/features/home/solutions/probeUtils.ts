@@ -8,6 +8,7 @@ import {
   getBackendSrv,
   getDataSourceInstance,
   getDataSourceInstanceList,
+  getDatasourceHealthUrl,
   getDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
@@ -223,8 +224,7 @@ const healthCache = new Map<string, TtlCachedPromise<boolean>>();
  * health check owns its cutoff, which cancels the request.
  */
 export function isDatasourceHealthy(uid: string): Promise<boolean> {
-  // /api/datasources/.../health is legacy-only; on a multi-tenant stack the probe query (which has its own
-  // deadline) decides on its own. The gate goes once this uses DataSourceWithBackend.callHealthCheck().
+  // The multi-tenant homepage skips the health probe: the probe query (which has its own deadline) decides on its own.
   if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantHomepage, false)) {
     return Promise.resolve(true);
   }
@@ -232,13 +232,12 @@ export function isDatasourceHealthy(uid: string): Promise<boolean> {
   if (!cache) {
     cache = createTtlCachedPromise(
       () =>
-        withDeadline(HEALTH_CHECK_TIMEOUT_MS, undefined, (signal) =>
-          getBackendSrv().get<{ status?: string }>(
-            `/api/datasources/uid/${encodeURIComponent(uid)}/health`,
-            undefined,
-            undefined,
-            { showErrorAlert: false, abortSignal: signal }
-          )
+        // The URL lookup can fetch datasource settings, so it shares the health check's cutoff.
+        withDeadline(HEALTH_CHECK_TIMEOUT_MS, undefined, async (signal) =>
+          getBackendSrv().get<{ status?: string }>(await getDatasourceHealthUrl(uid), undefined, undefined, {
+            showErrorAlert: false,
+            abortSignal: signal,
+          })
         )
           .then((res) => res?.status === 'OK')
           .catch(() => false),
