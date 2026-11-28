@@ -33,6 +33,64 @@ type recordingHandler struct {
 	published  []string
 }
 
+type readyCallbackHandler struct {
+	onReady func()
+}
+
+func (h *readyCallbackHandler) GetHandlerForPath(string) (model.ChannelHandler, error) { return h, nil }
+
+func (h *readyCallbackHandler) OnSubscribe(_ context.Context, _ identity.Requester, _ model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
+	return model.SubscribeReply{Presence: true, OnSubscriptionReady: h.onReady}, backend.SubscribeStreamStatusOK, nil
+}
+
+func (h *readyCallbackHandler) OnPublish(_ context.Context, _ identity.Requester, _ model.PublishEvent) (model.PublishReply, backend.PublishStreamStatus, error) {
+	return model.PublishReply{}, backend.PublishStreamStatusOK, nil
+}
+
+func TestDispatcherOnSubscriptionReady(t *testing.T) {
+	readyCalled := make(chan struct{})
+	handler := &readyCallbackHandler{onReady: func() { close(readyCalled) }}
+	d, node := newTestDispatcher(t, Options{
+		Scopes: map[string]ScopeHandler{
+			live.ScopeDatasource: ScopeHandlerFunc(func(_ context.Context, _ identity.Requester, _ string) (model.ChannelHandlerFactory, error) {
+				return handler, nil
+			}),
+		},
+	})
+	client, _, err := centrifuge.NewClient(context.Background(), node, newDummyTransport("test"))
+	require.NoError(t, err)
+	ctx := identity.WithRequester(context.Background(),
+		&identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", Namespace: "stacks-1"})
+
+	reply, err := d.OnSubscribe(ctx, client, centrifuge.SubscribeEvent{Channel: "stacks-1/ds/some-uid/search"})
+	require.NoError(t, err)
+	require.NotNil(t, reply.SubscriptionReady, "handler asking for the ready callback must get a SubscriptionReady channel")
+
+	// centrifuge closes SubscriptionReady once the subscribe reply is written.
+	close(reply.SubscriptionReady)
+	select {
+	case <-readyCalled:
+	case <-time.After(5 * time.Second):
+		t.Fatal("OnSubscriptionReady was not called after SubscriptionReady was closed")
+	}
+}
+
+func TestDispatcherNoSubscriptionReadyWithoutCallback(t *testing.T) {
+	d, node := newTestDispatcher(t, Options{
+		Scopes: map[string]ScopeHandler{
+			live.ScopeGrafana: Features{"dashboard": &recordingHandler{}},
+		},
+	})
+	client, _, err := centrifuge.NewClient(context.Background(), node, newDummyTransport("test"))
+	require.NoError(t, err)
+	ctx := identity.WithRequester(context.Background(),
+		&identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", Namespace: "stacks-1"})
+
+	reply, err := d.OnSubscribe(ctx, client, centrifuge.SubscribeEvent{Channel: "stacks-1/grafana/dashboard/uid/abc"})
+	require.NoError(t, err)
+	require.Nil(t, reply.SubscriptionReady, "handlers without the ready callback must not get a SubscriptionReady channel")
+}
+
 func (h *recordingHandler) GetHandlerForPath(string) (model.ChannelHandler, error) { return h, nil }
 
 func (h *recordingHandler) OnSubscribe(_ context.Context, _ identity.Requester, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {

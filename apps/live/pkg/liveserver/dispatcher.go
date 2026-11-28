@@ -444,7 +444,7 @@ func (d *Dispatcher) OnSubscribe(ctx context.Context, client *centrifuge.Client,
 		return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
 	}
 	logger.Debug("Client subscribed", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
-	return centrifuge.SubscribeReply{
+	subscribeReply := centrifuge.SubscribeReply{
 		Options: centrifuge.SubscribeOptions{
 			EmitPresence:   reply.Presence,
 			EmitJoinLeave:  reply.JoinLeave,
@@ -452,7 +452,27 @@ func (d *Dispatcher) OnSubscribe(ctx context.Context, client *centrifuge.Client,
 			EnableRecovery: reply.Recover,
 			Data:           reply.Data,
 		},
-	}, nil
+	}
+	if reply.OnSubscriptionReady != nil {
+		// SubscriptionReady is closed by centrifuge once the subscribe reply
+		// has been written to the connection. Running the callback only after
+		// that guarantees the client is subscribed before the first
+		// publication reaches it. Note: the centrifuge field is marked
+		// experimental.
+		ready := make(chan struct{})
+		subscribeReply.SubscriptionReady = ready
+		go func() {
+			select {
+			case <-ready:
+				reply.OnSubscriptionReady()
+			case <-client.Context().Done():
+				// The client disconnected, or subscription setup failed before
+				// the reply was written; ready is never closed in that case, so
+				// stop waiting instead of leaking the goroutine.
+			}
+		}()
+	}
+	return subscribeReply, nil
 }
 
 // OnPublish authorizes and answers a client publication.

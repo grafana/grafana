@@ -88,22 +88,31 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user identity.Reques
 		return model.SubscribeReply{}, resp.Status, nil
 	}
 
-	submitResult, err := r.runStreamManager.SubmitStream(ctx, user, orgchannel.PrependK8sNamespace(user.GetNamespace(), e.Channel), r.path, e.Data, pCtx, r.handler, false)
-	if err != nil {
-		logger.Error("Error submitting stream to manager", "error", err, "path", r.path)
-		return model.SubscribeReply{}, 0, centrifuge.ErrorInternal
-	}
-	if submitResult.StreamExists {
-		logger.Debug("Skip running new stream (already exists)", "path", r.path)
-	} else {
-		logger.Debug("Running a new unidirectional stream", "path", r.path)
-	}
-
 	reply := model.SubscribeReply{
 		Presence: true,
 	}
 	if resp.InitialData != nil {
 		reply.Data = resp.InitialData.Data()
+	}
+	// Start the stream only after the subscribe reply has been written to the
+	// client connection. Starting it earlier lets fast streams (e.g. a
+	// finished search pushing its whole result at once) publish before the
+	// client is subscribed, and such publications are dropped - the client
+	// then waits for data that never comes.
+	reply.OnSubscriptionReady = func() {
+		// The websocket request context is done by this point, so use a fresh
+		// one. If the subscription ultimately failed, the stream finds no
+		// subscribers and the manager stops it after a few presence checks.
+		submitResult, err := r.runStreamManager.SubmitStream(context.Background(), user, orgchannel.PrependK8sNamespace(user.GetNamespace(), e.Channel), r.path, e.Data, pCtx, r.handler, false)
+		if err != nil {
+			logger.Error("Error submitting stream to manager", "error", err, "path", r.path)
+			return
+		}
+		if submitResult.StreamExists {
+			logger.Debug("Skip running new stream (already exists)", "path", r.path)
+		} else {
+			logger.Debug("Running a new unidirectional stream", "path", r.path)
+		}
 	}
 	return reply, backend.SubscribeStreamStatusOK, nil
 }

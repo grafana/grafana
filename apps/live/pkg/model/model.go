@@ -29,6 +29,15 @@ type SubscribeReply struct {
 	JoinLeave bool
 	Recover   bool
 	Data      json.RawMessage
+	// OnSubscriptionReady, when set, is invoked after the subscribe reply has
+	// been written to the client connection. Handlers which start publishing
+	// right after a subscribe must defer their first publication to this
+	// callback: publications sent before the client processed the subscribe
+	// reply are lost - the client drops publications received while its
+	// subscription is still in the subscribing state, and offsetless
+	// publications published during subscription setup are dropped
+	// server-side as well.
+	OnSubscriptionReady func()
 }
 
 // PublishEvent contains publication data.
