@@ -106,7 +106,7 @@ func TestPublicSnapshotDashboardBlob(t *testing.T) {
 	getter.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*snap}}, nil)
 	rest, err := NewDashboardREST(getter, store)
 	require.NoError(t, err)
-	ctx := k8srequest.WithNamespace(context.Background(), namespace)
+	ctx := k8srequest.WithNamespace(t.Context(), namespace)
 	_, err = rest.(*dashboardREST).Connect(ctx, "snap-1", nil, nil)
 	require.NoError(t, err)
 	require.Equal(t, namespace, store.get.Resource.Namespace)
@@ -139,7 +139,7 @@ func TestPublicSnapshotDashboardBlob(t *testing.T) {
 
 	t.Run("anonymous public lookup through the default namespace", func(t *testing.T) {
 		store.get = nil
-		ctx := k8srequest.WithNamespace(context.Background(), "default")
+		ctx := k8srequest.WithNamespace(t.Context(), "default")
 		ctx = identity.WithRequester(ctx, &identity.StaticRequester{Type: authlib.TypeAnonymous})
 		responder := &capturingResponder{}
 		handler, err := rest.(*dashboardREST).Connect(ctx, "snap-1", nil, responder)
@@ -159,7 +159,7 @@ func TestPublicSnapshotDashboardBlob(t *testing.T) {
 		getter.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*inline}}, nil)
 		r, err := NewDashboardREST(getter, nil)
 		require.NoError(t, err)
-		ctx := k8srequest.WithNamespace(context.Background(), "default")
+		ctx := k8srequest.WithNamespace(t.Context(), "default")
 		ctx = identity.WithRequester(ctx, &identity.StaticRequester{Type: authlib.TypeAnonymous})
 		responder := &capturingResponder{}
 		handler, err := r.(*dashboardREST).Connect(ctx, "snap-1", nil, responder)
@@ -178,7 +178,7 @@ func TestPublicSnapshotDashboardBlob(t *testing.T) {
 }
 
 func TestLoadDashboardContent(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("reads the blob referenced by blobs.dashboard", func(t *testing.T) {
 		store := &fakeBlobStore{value: []byte(`{"title":"CPU","panels":[]}`)}

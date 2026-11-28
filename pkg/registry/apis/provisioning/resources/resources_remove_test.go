@@ -76,7 +76,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 		mockClient.On("Delete", mock.Anything, "my-dashboard", metav1.DeleteOptions{}, mock.Anything).Return(nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, folderName, gvk, _, err := mgr.RemoveResourceFromFile(context.Background(), "dashboards/my-dashboard.json", "abc123")
+		name, folderName, gvk, _, err := mgr.RemoveResourceFromFile(t.Context(), "dashboards/my-dashboard.json", "abc123")
 
 		require.NoError(t, err)
 		require.Equal(t, "my-dashboard", name)
@@ -95,7 +95,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 			Return(nil, NewResourceValidationError(errors.New("cannot declare folders through files")))
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, _, _, _, err := mgr.RemoveResourceFromFile(context.Background(), "folders/my-folder.json", "abc123")
+		_, _, _, _, err := mgr.RemoveResourceFromFile(t.Context(), "folders/my-folder.json", "abc123")
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "cannot declare folders through files")
@@ -115,7 +115,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 			Return(nil, NewResourceValidationError(fmt.Errorf("file does not contain a valid resource")))
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, _, _, _, err := mgr.RemoveResourceFromFile(context.Background(), "config/settings.json", "abc123")
+		_, _, _, _, err := mgr.RemoveResourceFromFile(t.Context(), "config/settings.json", "abc123")
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "file does not contain a valid resource")
@@ -132,7 +132,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 			Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, _, _, _, err := mgr.RemoveResourceFromFile(context.Background(), "dashboards/missing.json", "abc123")
+		_, _, _, _, err := mgr.RemoveResourceFromFile(t.Context(), "dashboards/missing.json", "abc123")
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to read file")
@@ -162,7 +162,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "deleted-dashboard"))
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, gvk, _, err := mgr.RemoveResourceFromFile(context.Background(), "dashboards/deleted.json", "abc123")
+		name, _, gvk, _, err := mgr.RemoveResourceFromFile(t.Context(), "dashboards/deleted.json", "abc123")
 
 		require.NoError(t, err)
 		require.Equal(t, "deleted-dashboard", name)
@@ -197,7 +197,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 			Return(fmt.Errorf("Folder cannot be deleted: folder is not empty"))
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, folderName, gvk, _, err := mgr.RemoveResourceFromFile(context.Background(), "dashboards/fail.json", "abc123")
+		name, folderName, gvk, _, err := mgr.RemoveResourceFromFile(t.Context(), "dashboards/fail.json", "abc123")
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to delete")
@@ -276,7 +276,7 @@ func TestRenameResourceFile(t *testing.T) {
 		mockClient.On("Get", mock.Anything, "same-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, folderName, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
+		_, folderName, _, _, err := mgr.RenameResourceFile(t.Context(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
 
 		require.Error(t, err, "write step is expected to fail (no client)")
 		require.Contains(t, err.Error(), "failed to write resource")
@@ -325,7 +325,7 @@ func TestRenameResourceFile(t *testing.T) {
 		}, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
+		_, _, _, _, err := mgr.RenameResourceFile(t.Context(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "cannot be created or removed from a github repository")
@@ -379,7 +379,7 @@ func TestRenameResourceFile(t *testing.T) {
 		mockClient.On("Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything).Return(nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, folderName, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
+		_, folderName, _, _, err := mgr.RenameResourceFile(t.Context(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
 
 		require.Error(t, err, "write step fails (no client)")
 		require.Contains(t, err.Error(), "failed to write resource")
@@ -414,7 +414,7 @@ func TestRenameResourceFile(t *testing.T) {
 			Return(nil, fmt.Errorf("invalid json"))
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
+		_, _, _, _, err := mgr.RenameResourceFile(t.Context(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to parse new file")
@@ -430,7 +430,7 @@ func TestRenameResourceFile(t *testing.T) {
 			Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
+		_, _, _, _, err := mgr.RenameResourceFile(t.Context(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to read previous file")
@@ -473,7 +473,7 @@ func TestRenameResourceFile(t *testing.T) {
 			Return(nil, fmt.Errorf("permission denied"))
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, folderName, _, _, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
+		_, folderName, _, _, err := mgr.RenameResourceFile(t.Context(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
 
 		require.Error(t, err, "write step is expected to fail")
 		require.Contains(t, err.Error(), "failed to write resource",
@@ -517,7 +517,7 @@ func TestRenameResourceFile(t *testing.T) {
 
 		hook := &createHook{}
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
+		name, _, _, _, err := mgr.RenameResourceFile(t.Context(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
 
 		require.NoError(t, err, "the found object is updated in place -- nothing left to clean up")
 		require.Equal(t, "new-uid", name)
@@ -565,7 +565,7 @@ func TestRenameResourceFile(t *testing.T) {
 
 		hook := &createHook{}
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
+		name, _, _, _, err := mgr.RenameResourceFile(t.Context(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
 
 		require.NoError(t, err, "the old path was never parseable, so nothing is left to clean up and the rename succeeded")
 		require.Equal(t, "brand-new-uid", name)
@@ -596,7 +596,7 @@ func TestRenameResourceFile(t *testing.T) {
 		}, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, folderName, _, _, err := mgr.RenameResourceFile(context.Background(), "old/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
+		_, folderName, _, _, err := mgr.RenameResourceFile(t.Context(), "old/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to parse previous file")
@@ -642,7 +642,7 @@ func TestRenameResourceFile(t *testing.T) {
 
 		hook := &createHook{}
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
+		name, _, _, _, err := mgr.RenameResourceFile(t.Context(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
 
 		require.NoError(t, err, "never having existed means nothing was orphaned")
 		mockClient.AssertNumberOfCalls(t, "Get", 1)
@@ -686,7 +686,7 @@ func TestRenameResourceFile(t *testing.T) {
 
 		hook := &createHook{err: errors.New("create refused")}
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, _, _, _, err = mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
+		_, _, _, _, err = mgr.RenameResourceFile(t.Context(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
 
 		require.ErrorIs(t, err, hook.err, "the hook's refusal is returned as it is")
 		require.Equal(t, 1, hook.called)
@@ -738,7 +738,7 @@ func TestRenameResourceFile(t *testing.T) {
 		// given back once it turns out to be an update instead.
 		hook := &createHook{}
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
+		name, _, _, _, err := mgr.RenameResourceFile(t.Context(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
 
 		require.NoError(t, err)
 		require.Equal(t, "raced-uid", name)
@@ -782,7 +782,7 @@ func TestRenameResourceFile(t *testing.T) {
 
 		hook := &createHook{}
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, _, _, _, err = mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
+		_, _, _, _, err = mgr.RenameResourceFile(t.Context(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
 
 		require.Error(t, err)
 		require.Equal(t, 1, hook.called)
@@ -832,7 +832,7 @@ func TestRenameResourceFile(t *testing.T) {
 
 		hook := &createHook{}
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, _, _, _, err = mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
+		_, _, _, _, err = mgr.RenameResourceFile(t.Context(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", hook.fn())
 
 		require.Error(t, err)
 		require.Zero(t, hook.called, "stays fatal before anyone is asked to create")
@@ -879,7 +879,7 @@ func TestRenameResourceFile(t *testing.T) {
 			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "dash-uid"))
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, folderName, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
+		_, folderName, _, _, err := mgr.RenameResourceFile(t.Context(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
 
 		require.Error(t, err, "write step fails (no client on newParsed)")
 		require.Contains(t, err.Error(), "failed to write resource")
@@ -943,7 +943,7 @@ func TestRenameResourceFile(t *testing.T) {
 		expectMissingFolderMetadata(&repo.Mock)
 
 		mgr := NewResourcesManager(repo, folderMgr, mockParser, authTestClients(t))
-		name, folderName, gvk, _, err := mgr.RenameResourceFile(context.Background(), "team/old-dash.json", "old-ref", "team/new-dash.json", "new-ref", nil)
+		name, folderName, gvk, _, err := mgr.RenameResourceFile(t.Context(), "team/old-dash.json", "old-ref", "team/new-dash.json", "new-ref", nil)
 
 		require.NoError(t, err)
 		require.Equal(t, "dash-uid", name)
@@ -1008,7 +1008,7 @@ func TestRenameResourceFile(t *testing.T) {
 		expectMissingFolderMetadata(&repo.Mock)
 
 		mgr := NewResourcesManager(repo, folderMgr, mockParser, authTestClients(t))
-		name, folderName, gvk, _, err := mgr.RenameResourceFile(context.Background(), "a-team/dash.json", "old-ref", "b-team/dash.json", "new-ref", nil)
+		name, folderName, gvk, _, err := mgr.RenameResourceFile(t.Context(), "a-team/dash.json", "old-ref", "b-team/dash.json", "new-ref", nil)
 
 		require.NoError(t, err)
 		require.Equal(t, "dash-uid", name)
@@ -1074,7 +1074,7 @@ func TestRenameResourceFile(t *testing.T) {
 			Return(newObj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref", nil)
+		name, _, _, _, err := mgr.RenameResourceFile(t.Context(), "old/x.json", "old-ref", "new/x.json", "new-ref", nil)
 
 		require.NoError(t, err)
 		require.Equal(t, "same-name", name)
@@ -1088,7 +1088,7 @@ func TestRenameResourceFile(t *testing.T) {
 			Return(newObj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref", nil)
+		name, _, _, _, err := mgr.RenameResourceFile(t.Context(), "old/x.json", "old-ref", "new/x.json", "new-ref", nil)
 
 		require.NoError(t, err)
 		require.Equal(t, "same-name", name)
@@ -1104,7 +1104,7 @@ func TestRenameResourceFile(t *testing.T) {
 			Return(newObj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref", nil)
+		name, _, _, _, err := mgr.RenameResourceFile(t.Context(), "old/x.json", "old-ref", "new/x.json", "new-ref", nil)
 
 		require.NoError(t, err)
 		require.Equal(t, "same-name", name)
@@ -1156,7 +1156,7 @@ func TestWriteResourceFromFile_ExistingHashSkipsValidation(t *testing.T) {
 			Return(obj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref", WithExistingHash("content-hash"))
+		name, _, _, err := mgr.WriteResourceFromFile(t.Context(), "folder/resource.json", "ref", WithExistingHash("content-hash"))
 
 		require.NoError(t, err)
 		require.Equal(t, "my-resource", name)
@@ -1169,7 +1169,7 @@ func TestWriteResourceFromFile_ExistingHashSkipsValidation(t *testing.T) {
 			Return(obj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref", WithExistingHash("old-hash"))
+		name, _, _, err := mgr.WriteResourceFromFile(t.Context(), "folder/resource.json", "ref", WithExistingHash("old-hash"))
 
 		require.NoError(t, err)
 		require.Equal(t, "my-resource", name)
@@ -1182,7 +1182,7 @@ func TestWriteResourceFromFile_ExistingHashSkipsValidation(t *testing.T) {
 			Return(obj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref")
+		name, _, _, err := mgr.WriteResourceFromFile(t.Context(), "folder/resource.json", "ref")
 
 		require.NoError(t, err)
 		require.Equal(t, "my-resource", name)
@@ -1195,7 +1195,7 @@ func TestWriteResourceFromFile_ExistingHashSkipsValidation(t *testing.T) {
 			Return(obj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref", WithExistingHash(""))
+		name, _, _, err := mgr.WriteResourceFromFile(t.Context(), "folder/resource.json", "ref", WithExistingHash(""))
 
 		require.NoError(t, err)
 		require.Equal(t, "my-resource", name)
@@ -1261,7 +1261,7 @@ func TestReplaceResourceFromFileByRef_HashComparison(t *testing.T) {
 			Return(newObj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "resource.json", "new-ref", "old-ref")
+		name, _, _, err := mgr.ReplaceResourceFromFileByRef(t.Context(), "resource.json", "new-ref", "old-ref")
 
 		require.NoError(t, err)
 		require.Equal(t, "my-resource", name)
@@ -1274,7 +1274,7 @@ func TestReplaceResourceFromFileByRef_HashComparison(t *testing.T) {
 			Return(newObj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "resource.json", "new-ref", "old-ref")
+		name, _, _, err := mgr.ReplaceResourceFromFileByRef(t.Context(), "resource.json", "new-ref", "old-ref")
 
 		require.NoError(t, err)
 		require.Equal(t, "my-resource", name)
@@ -1287,7 +1287,7 @@ func TestReplaceResourceFromFileByRef_HashComparison(t *testing.T) {
 			Return(newObj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "resource.json", "new-ref", "old-ref")
+		name, _, _, err := mgr.ReplaceResourceFromFileByRef(t.Context(), "resource.json", "new-ref", "old-ref")
 
 		require.NoError(t, err)
 		require.Equal(t, "my-resource", name)
@@ -1330,7 +1330,7 @@ func TestReplaceResourceFromFile_PassesExistingHash(t *testing.T) {
 		Return(obj, nil)
 
 	mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-	name, _, _, err := mgr.ReplaceResourceFromFile(context.Background(), "resource.json", "ref", "my-resource", fakeGVR, WithExistingHash("matching-hash"))
+	name, _, _, err := mgr.ReplaceResourceFromFile(t.Context(), "resource.json", "ref", "my-resource", fakeGVR, WithExistingHash("matching-hash"))
 
 	require.NoError(t, err)
 	require.Equal(t, "my-resource", name)

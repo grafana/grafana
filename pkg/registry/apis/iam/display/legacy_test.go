@@ -31,7 +31,7 @@ func (f *fakeLegacyIdentityStore) ListDisplay(_ context.Context, ns authlib.Name
 }
 
 func TestLegacyDisplayProvider_GetDisplayList(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	ns := authlib.NamespaceInfo{Value: "default", OrgID: 7}
 
 	t.Run("empty input returns an empty list and queries the store with no keys", func(t *testing.T) {

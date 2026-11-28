@@ -24,7 +24,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 		)}
 		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService())
 
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "default"})
+		ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Namespace: "default"})
 		responder := &mockResponder{}
 
 		h, err := handler.Connect(ctx, "team1", nil, responder)
@@ -50,7 +50,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 		g := &mockGetter{err: errors.New("boom")}
 		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService())
 
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "default"})
+		ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Namespace: "default"})
 		responder := &mockResponder{}
 
 		h, _ := handler.Connect(ctx, "team1", nil, responder)
@@ -69,7 +69,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 		)}
 		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService())
 
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "default"})
+		ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Namespace: "default"})
 		responder := &mockResponder{}
 
 		h, _ := handler.Connect(ctx, "team1", nil, responder)
@@ -91,7 +91,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 		)}
 		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService())
 
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "default"})
+		ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Namespace: "default"})
 		responder := &mockResponder{}
 
 		h, _ := handler.Connect(ctx, "team1", nil, responder)
@@ -111,7 +111,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 		)}
 		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService())
 
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "default"})
+		ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Namespace: "default"})
 		responder := &mockResponder{}
 
 		h, _ := handler.Connect(ctx, "team1", nil, responder)
@@ -133,7 +133,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 		)}
 		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService())
 
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "default"})
+		ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Namespace: "default"})
 		responder := &mockResponder{}
 
 		h, _ := handler.Connect(ctx, "team1", nil, responder)
@@ -152,7 +152,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 		g := &mockGetter{team: teamWithMembers("team1")}
 		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService())
 
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "default"})
+		ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Namespace: "default"})
 		h, _ := handler.Connect(ctx, "team1", nil, &mockResponder{})
 		w := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/members?limit=999999", nil).WithContext(ctx)

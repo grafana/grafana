@@ -71,7 +71,7 @@ func TestResourcePermissions_AfterGet(t *testing.T) {
 			accessClient := &fakeAccessClient{checkFunc: checkFunc}
 			fakeParentProvider := &fakeParentProvider{hasParent: true, getParentFunc: getParentFunc}
 			resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider)
-			ctx := types.WithAuthInfo(context.Background(), user)
+			ctx := types.WithAuthInfo(t.Context(), user)
 
 			err := resPermAuthz.AfterGet(ctx, fold1)
 			if tt.shouldAllow {
@@ -104,7 +104,7 @@ func TestResourcePermissions_AfterGet_WithUsersPermissionsRead(t *testing.T) {
 	accessClient := &fakeAccessClient{checkFunc: checkFunc}
 	fakeParentProvider := &fakeParentProvider{hasParent: true, getParentFunc: getParentFunc}
 	resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider)
-	ctx := types.WithAuthInfo(context.Background(), user)
+	ctx := types.WithAuthInfo(t.Context(), user)
 
 	err := resPermAuthz.AfterGet(ctx, fold1)
 	require.NoError(t, err)
@@ -155,7 +155,7 @@ func TestResourcePermissions_FilterList(t *testing.T) {
 	accessClient := &fakeAccessClient{checkFunc: checkFunc, batchCheckFunc: batchCheckFunc}
 	fakeParentProvider := &fakeParentProvider{hasParent: true, getParentFunc: getParentFunc}
 	resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider)
-	ctx := types.WithAuthInfo(context.Background(), user)
+	ctx := types.WithAuthInfo(t.Context(), user)
 
 	obj, err := resPermAuthz.FilterList(ctx, list)
 	require.NoError(t, err)
@@ -192,7 +192,7 @@ func TestResourcePermissions_FilterList_WithUsersPermissionsRead(t *testing.T) {
 	accessClient := &fakeAccessClient{checkFunc: checkFunc}
 	fakeParentProvider := &fakeParentProvider{hasParent: true, getParentFunc: getParentFunc}
 	resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider)
-	ctx := types.WithAuthInfo(context.Background(), user)
+	ctx := types.WithAuthInfo(t.Context(), user)
 
 	obj, err := resPermAuthz.FilterList(ctx, list)
 	require.NoError(t, err)
@@ -248,7 +248,7 @@ func TestResourcePermissions_beforeWrite(t *testing.T) {
 			accessClient := &fakeAccessClient{checkFunc: checkFunc}
 			fakeParentProvider := &fakeParentProvider{hasParent: true, getParentFunc: getParentFunc}
 			resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider)
-			ctx := types.WithAuthInfo(context.Background(), user)
+			ctx := types.WithAuthInfo(t.Context(), user)
 
 			err := resPermAuthz.beforeWrite(ctx, fold1)
 			if tt.shouldAllow {

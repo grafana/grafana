@@ -46,7 +46,7 @@ func TestValidateLibraryPanelDeleteSearchErrors(t *testing.T) {
 				return tc.response, tc.err
 			}}
 			builder := &DashboardsAPIBuilder{unified: client}
-			err := builder.validateLibraryPanelDelete(context.Background(), "panel-a", "stacks-1")
+			err := builder.validateLibraryPanelDelete(t.Context(), "panel-a", "stacks-1")
 			if tc.want == nil {
 				require.ErrorIs(t, err, transportErr)
 				return

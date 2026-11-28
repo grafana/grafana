@@ -134,7 +134,7 @@ func TestRepositoryControllerService_Run(t *testing.T) {
 		builder.publishLoopbackConfig(&clientrest.Config{Host: server.URL})
 		svc := newTestRepositoryControllerService(builder, &BootstrapService{done: closedChan()})
 		runErr := make(chan error, 1)
-		go func() { runErr <- svc.Run(context.Background()) }()
+		go func() { runErr <- svc.Run(t.Context()) }()
 		t.Cleanup(svc.StopAsync)
 
 		receive(t, listed, runErr)

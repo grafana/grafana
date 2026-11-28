@@ -1,7 +1,6 @@
 package sync
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -22,7 +21,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		}
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, &provisioning.ResourceList{})
+		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, &provisioning.ResourceList{})
 
 		require.NoError(t, err)
 		require.Equal(t, diff, filteredDiff)
@@ -37,7 +36,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataReadTimes(repo, "myfolder/", "new-ref", "stable-uid", 1)
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, &provisioning.ResourceList{
+		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, &provisioning.ResourceList{
 			Items: []provisioning.ResourceListItem{
 				{
 					Name:     "hash-uid",
@@ -92,7 +91,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataReadTimes(repo, "myfolder/", "new-ref", "stable-uid", 1)
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, &provisioning.ResourceList{
+		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, &provisioning.ResourceList{
 			Items: []provisioning.ResourceListItem{
 				{
 					Name:     "stable-uid",
@@ -143,7 +142,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataReadTimes(repo, "myfolder/", "new-ref", "new-stable-uid", 1)
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, &provisioning.ResourceList{
+		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, &provisioning.ResourceList{
 			Items: []provisioning.ResourceListItem{
 				{
 					Name:     "old-stable-uid",
@@ -200,7 +199,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		}, nil).Once()
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, &provisioning.ResourceList{
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, &provisioning.ResourceList{
 			Items: []provisioning.ResourceListItem{
 				{
 					Name:     "stable-uid",
@@ -240,7 +239,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		}, nil).Once()
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, &provisioning.ResourceList{})
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, &provisioning.ResourceList{})
 
 		require.NoError(t, err)
 		require.Equal(t, []repository.VersionedFileChange{
@@ -261,7 +260,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataReadTimes(repo, "myfolder/", "new-ref", "stable-uid", 1)
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, &provisioning.ResourceList{
+		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, &provisioning.ResourceList{
 			Items: []provisioning.ResourceListItem{
 				{
 					Name:     "hash-uid",
@@ -300,7 +299,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataReadTimes(repo, "myfolder/", "new-ref", "stable-uid", 1)
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, &provisioning.ResourceList{
+		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, &provisioning.ResourceList{
 			Items: []provisioning.ResourceListItem{
 				{
 					Name:     "hash-uid",
@@ -351,7 +350,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataReadTimes(repo, "parent/", "new-ref", "stable-uid", 1)
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, &provisioning.ResourceList{
+		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, &provisioning.ResourceList{
 			Items: []provisioning.ResourceListItem{
 				{
 					Name:     "hash-uid",
@@ -417,7 +416,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataReadTimes(repo, "myfolder/", "new-ref", "new-folder-uid", 1)
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, &provisioning.ResourceList{})
+		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, &provisioning.ResourceList{})
 
 		require.NoError(t, err)
 		require.Equal(t, []repository.VersionedFileChange{
@@ -435,7 +434,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		repo.MockReader.On("Read", mock.Anything, "myfolder/", "new-ref").Return(&repository.FileInfo{Path: "myfolder/"}, nil).Once()
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, &provisioning.ResourceList{
+		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, &provisioning.ResourceList{
 			Items: []provisioning.ResourceListItem{
 				{
 					Name:     "stable-uid",
@@ -491,7 +490,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 			Return((*repository.FileInfo)(nil), repository.ErrFileNotFound).Once()
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, &provisioning.ResourceList{
+		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, &provisioning.ResourceList{
 			Items: []provisioning.ResourceListItem{
 				{
 					Name:     "stable-uid",
@@ -521,7 +520,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		repo.MockReader.On("Read", mock.Anything, "myfolder/", "new-ref").Return(&repository.FileInfo{Path: "myfolder/"}, nil).Once()
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, &provisioning.ResourceList{
+		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, &provisioning.ResourceList{
 			Items: []provisioning.ResourceListItem{
 				{
 					Name:     hashUID,
@@ -554,7 +553,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataReadTimes(repo, "renamed/", "new-ref", "stable-uid", 1)
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, &provisioning.ResourceList{})
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, &provisioning.ResourceList{})
 
 		require.NoError(t, err)
 		require.Equal(t, []repository.VersionedFileChange{
@@ -585,7 +584,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataRead(repo, "new/", "new-ref", "new-uid")
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, resourcesList)
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, resourcesList)
 
 		require.NoError(t, err)
 		require.Empty(t, invalidFolderMetadata)
@@ -628,7 +627,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataRead(repo, "new/", "new-ref", "new-uid")
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, resourcesList)
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, resourcesList)
 
 		require.NoError(t, err)
 		require.Empty(t, invalidFolderMetadata)
@@ -674,7 +673,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataRead(repo, "new/", "new-ref", "new-uid")
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, resourcesList)
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, resourcesList)
 
 		require.NoError(t, err)
 		require.Empty(t, invalidFolderMetadata)
@@ -723,7 +722,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataRead(repo, "new/", "new-ref", "new-parent-uid")
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, resourcesList)
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, resourcesList)
 
 		require.NoError(t, err)
 		require.Empty(t, invalidFolderMetadata)
@@ -762,7 +761,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataRead(repo, "team/", "new-ref", "team-uid")
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, resourcesList)
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, resourcesList)
 
 		require.NoError(t, err)
 		require.Empty(t, invalidFolderMetadata)
@@ -793,7 +792,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataRead(repo, "new/", "new-ref", "stable-uid")
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, relocations, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, resourcesList)
+		filteredDiff, relocations, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, resourcesList)
 
 		require.NoError(t, err)
 		require.Empty(t, invalidFolderMetadata)
@@ -831,7 +830,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataRead(repo, "thief/", "new-ref", "moving-uid")
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		_, relocations, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, resourcesList)
+		_, relocations, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, resourcesList)
 
 		require.NoError(t, err)
 		require.Equal(t, map[string][]string{"dst/": {"moving-uid"}}, relocations,
@@ -852,7 +851,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		}, nil).Once()
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, &provisioning.ResourceList{
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, &provisioning.ResourceList{
 			Items: []provisioning.ResourceListItem{
 				{
 					Name:     "old-uid",
@@ -884,7 +883,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataReadTimes(repo, "parent/", "new-ref", "parent-stable-uid", 1)
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, &provisioning.ResourceList{
+		filteredDiff, _, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, &provisioning.ResourceList{
 			Items: []provisioning.ResourceListItem{
 				{
 					Name:     "parent-hash-uid",
@@ -978,7 +977,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataRead(repo, "myfolder/", "new-ref", "stable-uid")
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, resourcesList)
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, resourcesList)
 
 		require.NoError(t, err)
 		require.Empty(t, invalidFolderMetadata)
@@ -1022,7 +1021,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataRead(repo, "myfolder/", "new-ref", "stable-uid")
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, resourcesList)
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, resourcesList)
 
 		require.NoError(t, err)
 		require.Empty(t, invalidFolderMetadata)
@@ -1066,7 +1065,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 			Return(&repository.FileInfo{Path: "myfolder/"}, nil).Once()
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, resourcesList)
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, resourcesList)
 
 		require.NoError(t, err)
 		require.Empty(t, invalidFolderMetadata)
@@ -1111,7 +1110,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 			Return((*repository.FileInfo)(nil), repository.ErrFileNotFound).Once()
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, resourcesList)
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, resourcesList)
 
 		require.NoError(t, err)
 		require.Empty(t, invalidFolderMetadata)
@@ -1154,7 +1153,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 			Return(&repository.FileInfo{Path: "myfolder/"}, nil).Once()
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, resourcesList)
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, resourcesList)
 
 		require.NoError(t, err)
 		require.Empty(t, invalidFolderMetadata)
@@ -1184,7 +1183,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 			Return((*repository.FileInfo)(nil), repository.ErrFileNotFound).Once()
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, &provisioning.ResourceList{
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, &provisioning.ResourceList{
 			Items: []provisioning.ResourceListItem{
 				{
 					Name:     "old-uid",
@@ -1213,7 +1212,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 			}
 
 			diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-			filteredDiff, relocations, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, rootFolderResourceList(repo.Config().Name))
+			filteredDiff, relocations, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, rootFolderResourceList(repo.Config().Name))
 
 			require.NoError(t, err)
 			require.Empty(t, filteredDiff)
@@ -1230,7 +1229,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		}
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, rootFolderResourceList(repo.Config().Name))
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, rootFolderResourceList(repo.Config().Name))
 
 		require.NoError(t, err)
 		require.Empty(t, filteredDiff)
@@ -1246,7 +1245,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataRead(repo, "alpha/", "new-ref", "alpha-stable-uid")
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, rootFolderResourceList(repo.Config().Name))
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, rootFolderResourceList(repo.Config().Name))
 
 		require.NoError(t, err)
 		require.Empty(t, invalidFolderMetadata)
@@ -1269,7 +1268,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		repo.MockReader.On("Read", mock.Anything, "alpha/", "new-ref").Return(&repository.FileInfo{Path: "alpha/"}, nil).Once()
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, rootFolderResourceList(repo.Config().Name))
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(t.Context(), "new-ref", diff, rootFolderResourceList(repo.Config().Name))
 
 		require.NoError(t, err)
 		require.Empty(t, invalidFolderMetadata)

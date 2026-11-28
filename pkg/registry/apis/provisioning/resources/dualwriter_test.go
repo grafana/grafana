@@ -352,7 +352,7 @@ func newSyncEnabledConfig(name string) *provisioning.Repository {
 // TestEnsureFolderPathExist_UsesStableUID verifies that EnsureFolderPathExist uses
 // the stable UID from _folder.json instead of the hash-derived UID when the file exists.
 func TestEnsureFolderPathExist_UsesStableUID(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	stableUID := "my-stable-uid"
 
 	// Prepare _folder.json content with the stable UID
@@ -676,7 +676,7 @@ func TestCreateFolder(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dw, opts := tt.setup(t)
-			result, err := dw.CreateFolder(context.Background(), opts)
+			result, err := dw.CreateFolder(t.Context(), opts)
 			if tt.wantErr {
 				require.Error(t, err)
 				if tt.errContains != "" {
@@ -824,7 +824,7 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dw, opts := tt.setup(t)
-			result, err := dw.moveDirectory(context.Background(), opts)
+			result, err := dw.moveDirectory(t.Context(), opts)
 			if tt.wantErr {
 				require.Error(t, err)
 				if tt.errContains != "" {
@@ -909,7 +909,7 @@ func TestCreateFolder_Nested_FolderMetadata(t *testing.T) {
 
 		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
 		dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm), folders: fm}
-		result, err := dw.CreateFolder(context.Background(), DualWriteOptions{Path: "parent/child/"})
+		result, err := dw.CreateFolder(t.Context(), DualWriteOptions{Path: "parent/child/"})
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -945,7 +945,7 @@ func TestCreateFolder_Nested_FolderMetadata(t *testing.T) {
 
 			fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
 			dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm), folders: fm}
-			result, err := dw.CreateFolder(context.Background(), DualWriteOptions{Path: "parent/child/"})
+			result, err := dw.CreateFolder(t.Context(), DualWriteOptions{Path: "parent/child/"})
 
 			require.NoError(t, err)
 			require.NotNil(t, result)
@@ -1468,7 +1468,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dw, opts := tt.setup(t)
-			result, err := dw.UpdateFolderMetadata(context.Background(), opts)
+			result, err := dw.UpdateFolderMetadata(t.Context(), opts)
 			if tt.wantErr {
 				require.Error(t, err)
 				if tt.errContains != "" {
@@ -1501,7 +1501,7 @@ func TestWriteNewFoldersMetadata(t *testing.T) {
 
 		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
 		dw := &DualReadWriter{repo: rw, folders: fm}
-		err := dw.writeNewFoldersMetadata(context.Background(), rw, "new-folder/dashboard.json", "test-ref", "msg")
+		err := dw.writeNewFoldersMetadata(t.Context(), rw, "new-folder/dashboard.json", "test-ref", "msg")
 
 		require.NoError(t, err)
 		rw.AssertCalled(t, "Create", mock.Anything, "new-folder/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "msg")
@@ -1522,7 +1522,7 @@ func TestWriteNewFoldersMetadata(t *testing.T) {
 
 		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
 		dw := &DualReadWriter{repo: rw, folders: fm}
-		err := dw.writeNewFoldersMetadata(context.Background(), rw, "existing-folder/dashboard.json", "test-ref", "msg")
+		err := dw.writeNewFoldersMetadata(t.Context(), rw, "existing-folder/dashboard.json", "test-ref", "msg")
 
 		require.NoError(t, err)
 		rw.AssertNotCalled(t, "Create", mock.Anything, "existing-folder/_folder.json", mock.Anything, mock.Anything, mock.Anything)
@@ -1541,7 +1541,7 @@ func TestWriteNewFoldersMetadata(t *testing.T) {
 
 		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
 		dw := &DualReadWriter{repo: rw, folders: fm}
-		err := dw.writeNewFoldersMetadata(context.Background(), rw, "a/b/dashboard.json", "test-ref", "msg")
+		err := dw.writeNewFoldersMetadata(t.Context(), rw, "a/b/dashboard.json", "test-ref", "msg")
 
 		require.NoError(t, err)
 		rw.AssertCalled(t, "Create", mock.Anything, "a/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "msg")
@@ -1553,7 +1553,7 @@ func TestWriteNewFoldersMetadata(t *testing.T) {
 
 		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
 		dw := &DualReadWriter{repo: rw, folders: fm}
-		err := dw.writeNewFoldersMetadata(context.Background(), rw, "dashboard.json", "test-ref", "msg")
+		err := dw.writeNewFoldersMetadata(t.Context(), rw, "dashboard.json", "test-ref", "msg")
 
 		require.NoError(t, err)
 		rw.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
@@ -1581,7 +1581,7 @@ func TestMoveResourceAndCreateNewFolderMetadata(t *testing.T) {
 			Message:      "msg",
 			Data:         []byte("new content"),
 		}
-		err := dw.moveResourceAndCreateNewFolderMetadata(context.Background(), opts, data)(rw, false)
+		err := dw.moveResourceAndCreateNewFolderMetadata(t.Context(), opts, data)(rw, false)
 
 		require.NoError(t, err)
 		rw.AssertCalled(t, "Create", mock.Anything, "new-folder/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "msg")
@@ -1606,7 +1606,7 @@ func TestMoveResourceAndCreateNewFolderMetadata(t *testing.T) {
 			Ref:          "test-ref",
 			Message:      "msg",
 		}
-		err := dw.moveResourceAndCreateNewFolderMetadata(context.Background(), opts, data)(rw, false)
+		err := dw.moveResourceAndCreateNewFolderMetadata(t.Context(), opts, data)(rw, false)
 
 		require.NoError(t, err)
 		rw.AssertCalled(t, "Create", mock.Anything, "new-folder/_folder.json", "test-ref", mock.AnythingOfType("[]uint8"), "msg")
@@ -1627,7 +1627,7 @@ func TestMoveResourceAndCreateNewFolderMetadata(t *testing.T) {
 			Ref:          "test-ref",
 			Message:      "msg",
 		}
-		err := dw.moveResourceAndCreateNewFolderMetadata(context.Background(), opts, data)(rw, false)
+		err := dw.moveResourceAndCreateNewFolderMetadata(t.Context(), opts, data)(rw, false)
 
 		require.NoError(t, err)
 		rw.AssertNotCalled(t, "Create", mock.Anything, "existing-folder/_folder.json", mock.Anything, mock.Anything, mock.Anything)
@@ -1721,7 +1721,7 @@ func TestDualReadWriter_FolderScopeGuard(t *testing.T) {
 	t.Run("org-scoped resource is written without a folder annotation", func(t *testing.T) {
 		dw, parsed, rw := setup(t, false)
 
-		_, err := dw.UpdateResource(context.Background(), DualWriteOptions{
+		_, err := dw.UpdateResource(t.Context(), DualWriteOptions{
 			Path:       subPath,
 			Message:    "msg",
 			SkipDryRun: true,
@@ -1736,7 +1736,7 @@ func TestDualReadWriter_FolderScopeGuard(t *testing.T) {
 	t.Run("folder-scoped resource is written with the resolved folder annotation", func(t *testing.T) {
 		dw, parsed, _ := setup(t, true)
 
-		_, err := dw.UpdateResource(context.Background(), DualWriteOptions{
+		_, err := dw.UpdateResource(t.Context(), DualWriteOptions{
 			Path:       subPath,
 			Message:    "msg",
 			SkipDryRun: true,
@@ -1920,7 +1920,7 @@ func TestDualReadWriter_UpdateResourceKeepsCommittedSecureValues(t *testing.T) {
 	parser.On("Parse", mock.Anything, mock.Anything).Return(parsed, nil)
 
 	dw := NewDualReadWriter(rw, parser, NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind), stubAuthorizer{}, 0)
-	_, err = dw.UpdateResource(context.Background(), DualWriteOptions{
+	_, err = dw.UpdateResource(t.Context(), DualWriteOptions{
 		Path:    path,
 		Message: "msg",
 	})
@@ -1967,7 +1967,7 @@ func TestKeepCommittedSecureValues_ReadFallback(t *testing.T) {
 
 		parsed := newParsed()
 		dw := &DualReadWriter{repo: rw}
-		require.NoError(t, dw.keepCommittedSecureValues(context.Background(), parsed, path, "feature"))
+		require.NoError(t, dw.keepCommittedSecureValues(t.Context(), parsed, path, "feature"))
 		require.Equal(t,
 			map[string]any{"password": map[string]any{"create": "hunter2"}},
 			parsed.Obj.Object["secure"])
@@ -1979,7 +1979,7 @@ func TestKeepCommittedSecureValues_ReadFallback(t *testing.T) {
 
 		parsed := newParsed()
 		dw := &DualReadWriter{repo: rw}
-		require.NoError(t, dw.keepCommittedSecureValues(context.Background(), parsed, path, ""))
+		require.NoError(t, dw.keepCommittedSecureValues(t.Context(), parsed, path, ""))
 		require.NotContains(t, parsed.Obj.Object, "secure")
 	})
 
@@ -1990,7 +1990,7 @@ func TestKeepCommittedSecureValues_ReadFallback(t *testing.T) {
 
 		parsed := newParsed()
 		dw := &DualReadWriter{repo: rw}
-		require.NoError(t, dw.keepCommittedSecureValues(context.Background(), parsed, path, ""),
+		require.NoError(t, dw.keepCommittedSecureValues(t.Context(), parsed, path, ""),
 			"a file too large to read must not block the smaller replacement")
 		require.NotContains(t, parsed.Obj.Object, "secure")
 	})
@@ -2000,7 +2000,7 @@ func TestKeepCommittedSecureValues_ReadFallback(t *testing.T) {
 		rw.On("Read", mock.Anything, path, "").Return(nil, assert.AnError)
 
 		dw := &DualReadWriter{repo: rw}
-		require.ErrorIs(t, dw.keepCommittedSecureValues(context.Background(), newParsed(), path, ""), assert.AnError)
+		require.ErrorIs(t, dw.keepCommittedSecureValues(t.Context(), newParsed(), path, ""), assert.AnError)
 	})
 }
 
@@ -2086,7 +2086,7 @@ func TestMoveFile_SecureValues(t *testing.T) {
 		}).Return(newParsed(t, poisoned, mockClient), nil)
 
 		dw := newDualWriter(t, config, rw, mockParser)
-		_, err := dw.MoveResource(context.Background(), DualWriteOptions{
+		_, err := dw.MoveResource(t.Context(), DualWriteOptions{
 			OriginalPath: "old/dash.json",
 			Path:         "new/dash.json",
 			Message:      "move",
@@ -2148,7 +2148,7 @@ func TestMoveFile_SecureValues(t *testing.T) {
 			Run(func(args mock.Arguments) { written = args.Get(3).([]byte) })
 
 		dw := newDualWriter(t, config, rw, mockParser)
-		_, err := dw.MoveResource(context.Background(), DualWriteOptions{
+		_, err := dw.MoveResource(t.Context(), DualWriteOptions{
 			OriginalPath: "old/dash.json",
 			Path:         "new/dash.json",
 			Data:         newContent,
@@ -2179,7 +2179,7 @@ func TestMoveFile_SecureValues(t *testing.T) {
 			Return(nil, assert.AnError).Maybe()
 
 		dw := newDualWriter(t, config, rw, mockParser)
-		_, err := dw.MoveResource(context.Background(), DualWriteOptions{
+		_, err := dw.MoveResource(t.Context(), DualWriteOptions{
 			OriginalPath: "old/dash.json",
 			Path:         "new/dash.json",
 			Ref:          "feature",
@@ -2212,7 +2212,7 @@ func TestKeepCommittedSecureValues_RepositoryTypeGate(t *testing.T) {
 
 		dw := &DualReadWriter{repo: rw}
 		parsed := parsedFor(provisioning.GitHubRepositoryType)
-		require.NoError(t, dw.keepCommittedSecureValues(context.Background(), parsed, path, ""))
+		require.NoError(t, dw.keepCommittedSecureValues(t.Context(), parsed, path, ""))
 		require.NotContains(t, parsed.Obj.Object, "secure")
 		rw.AssertNotCalled(t, "Read", mock.Anything, mock.Anything, mock.Anything)
 	})
@@ -2229,7 +2229,7 @@ func TestKeepCommittedSecureValues_RepositoryTypeGate(t *testing.T) {
 
 		dw := &DualReadWriter{repo: rw}
 		parsed := parsedFor(provisioning.LocalRepositoryType)
-		require.NoError(t, dw.keepCommittedSecureValues(context.Background(), parsed, path, ""))
+		require.NoError(t, dw.keepCommittedSecureValues(t.Context(), parsed, path, ""))
 		require.Equal(t,
 			map[string]any{"password": map[string]any{"create": "hunter2"}},
 			parsed.Obj.Object["secure"])
@@ -2283,7 +2283,7 @@ func TestDualReadWriter_FileSizeLimit(t *testing.T) {
 
 		// Small enough that the restored secure value alone cannot fit.
 		dw := NewDualReadWriter(rw, parser, NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind), stubAuthorizer{}, 32)
-		_, err := dw.UpdateResource(context.Background(), DualWriteOptions{
+		_, err := dw.UpdateResource(t.Context(), DualWriteOptions{
 			Path:       path,
 			Message:    "msg",
 			SkipDryRun: true,
@@ -2311,7 +2311,7 @@ func TestDualReadWriter_FileSizeLimit(t *testing.T) {
 
 		// Smaller than the serialized form, so an unscoped check would reject the rename.
 		dw := NewDualReadWriter(rw, parser, NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind), stubAuthorizer{}, 32)
-		_, err := dw.MoveResource(context.Background(), DualWriteOptions{
+		_, err := dw.MoveResource(t.Context(), DualWriteOptions{
 			OriginalPath: originalPath,
 			Path:         path,
 			Message:      "msg",

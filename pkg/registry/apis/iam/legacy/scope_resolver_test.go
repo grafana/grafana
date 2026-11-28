@@ -179,7 +179,7 @@ func TestResolveUIDScopeForWrite(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ResolveUIDScopeForWrite(context.Background(), store, ns, tt.scope)
+			got, err := ResolveUIDScopeForWrite(t.Context(), store, ns, tt.scope)
 			if tt.wantErrIs != nil {
 				require.Error(t, err)
 				assert.ErrorIs(t, err, tt.wantErrIs)
@@ -205,7 +205,7 @@ func TestResolveUIDScopesForWrite(t *testing.T) {
 			{Action: "users:write", Scope: "users:uid:alice"},
 			{Action: "serviceaccounts:write", Scope: "serviceaccounts:uid:robot"},
 		}
-		got, err := ResolveUIDScopesForWrite(context.Background(), store, ns, input)
+		got, err := ResolveUIDScopesForWrite(t.Context(), store, ns, input)
 		require.NoError(t, err)
 		require.Len(t, got, 3)
 
@@ -216,14 +216,14 @@ func TestResolveUIDScopesForWrite(t *testing.T) {
 
 	t.Run("input slice is not mutated", func(t *testing.T) {
 		input := []accesscontrol.Permission{{Action: "users:write", Scope: "users:uid:alice"}}
-		_, err := ResolveUIDScopesForWrite(context.Background(), store, ns, input)
+		_, err := ResolveUIDScopesForWrite(t.Context(), store, ns, input)
 		require.NoError(t, err)
 		assert.Equal(t, "users:uid:alice", input[0].Scope, "input must not be mutated")
 	})
 
 	t.Run("missing entity errors out", func(t *testing.T) {
 		input := []accesscontrol.Permission{{Action: "users:write", Scope: "users:uid:ghost"}}
-		_, err := ResolveUIDScopesForWrite(context.Background(), store, ns, input)
+		_, err := ResolveUIDScopesForWrite(t.Context(), store, ns, input)
 		require.Error(t, err)
 		assert.ErrorIs(t, err, user.ErrUserNotFound)
 	})
@@ -246,7 +246,7 @@ func TestResolveUIDScopesForRead(t *testing.T) {
 			{Action: "serviceaccounts:read", Scope: "serviceaccounts:uid:ghost"}, // dropped
 			{Action: "folders:read", Scope: "folders:uid:abc"},                   // unchanged
 		}
-		got, err := ResolveUIDScopesForRead(context.Background(), store, ns, input, logger)
+		got, err := ResolveUIDScopesForRead(t.Context(), store, ns, input, logger)
 		require.NoError(t, err)
 		require.Len(t, got, 3)
 		assert.Equal(t, accesscontrol.Permission{Action: "users:read", Scope: "users:id:1", Kind: "users", Attribute: "id", Identifier: "1"}, got[0])
@@ -257,7 +257,7 @@ func TestResolveUIDScopesForRead(t *testing.T) {
 	t.Run("non-not-found errors propagate", func(t *testing.T) {
 		store.usersUIDFails["broken"] = errors.New("db boom")
 		input := []accesscontrol.Permission{{Action: "users:read", Scope: "users:uid:broken"}}
-		_, err := ResolveUIDScopesForRead(context.Background(), store, ns, input, logger)
+		_, err := ResolveUIDScopesForRead(t.Context(), store, ns, input, logger)
 		require.Error(t, err)
 		assert.NotErrorIs(t, err, user.ErrUserNotFound)
 	})
@@ -292,7 +292,7 @@ func TestResolveIDScopeToUIDName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ResolveIDScopeToUIDName(context.Background(), store, ns, tt.scope)
+			got, err := ResolveIDScopeToUIDName(t.Context(), store, ns, tt.scope)
 			switch {
 			case tt.wantErrIs != nil:
 				require.Error(t, err)
@@ -341,7 +341,7 @@ func TestResolveIDScopeToUID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, drop, err := ResolveIDScopeToUID(context.Background(), store, ns, tt.scope, logger)
+			got, drop, err := ResolveIDScopeToUID(t.Context(), store, ns, tt.scope, logger)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
@@ -373,7 +373,7 @@ func TestResolveIDScopesToUID_DropsOrphans(t *testing.T) {
 		{Action: "serviceaccounts:read", Scope: "serviceaccounts:id:404"}, // orphan, dropped
 		{Action: "folders:read", Scope: "folders:uid:abc"},                // unchanged
 	}
-	got, err := ResolveIDScopesToUID(context.Background(), store, ns, input, logger)
+	got, err := ResolveIDScopesToUID(t.Context(), store, ns, input, logger)
 	require.NoError(t, err)
 	require.Len(t, got, 3)
 
@@ -398,7 +398,7 @@ func TestResolveIDScopesToUIDStrict_RejectsOrphans(t *testing.T) {
 
 	t.Run("happy path passes through", func(t *testing.T) {
 		input := []accesscontrol.Permission{{Action: "users:write", Scope: "users:id:1"}}
-		got, err := ResolveIDScopesToUIDStrict(context.Background(), store, ns, input, logger)
+		got, err := ResolveIDScopesToUIDStrict(t.Context(), store, ns, input, logger)
 		require.NoError(t, err)
 		require.Len(t, got, 1)
 		assert.Equal(t, "users:uid:alice", got[0].Scope)
@@ -406,7 +406,7 @@ func TestResolveIDScopesToUIDStrict_RejectsOrphans(t *testing.T) {
 
 	t.Run("orphan errors out instead of dropping", func(t *testing.T) {
 		input := []accesscontrol.Permission{{Action: "users:write", Scope: "users:id:404"}}
-		_, err := ResolveIDScopesToUIDStrict(context.Background(), store, ns, input, logger)
+		_, err := ResolveIDScopesToUIDStrict(t.Context(), store, ns, input, logger)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "users:id:404")
 	})

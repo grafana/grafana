@@ -71,7 +71,7 @@ func TestCreateSanitizesBackendServerErrors(t *testing.T) {
 			store := grafanarest.NewMockStorage(t)
 			store.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, tc.err).Once()
 			fs := folderStorage{store: store}
-			_, err := fs.Create(context.Background(), ancestryTestFolder("child", ""), nil, &metav1.CreateOptions{})
+			_, err := fs.Create(t.Context(), ancestryTestFolder("child", ""), nil, &metav1.CreateOptions{})
 			requireSanitizedBackendResponse(t, err, tc.code, tc.retry)
 		})
 	}
@@ -92,7 +92,7 @@ func TestBackendServerTimeoutRetainsRetryClassification(t *testing.T) {
 				if boundary == "create" {
 					store.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, original).Once()
 					fs := folderStorage{store: store}
-					_, err = fs.Create(context.Background(), ancestryTestFolder("child", ""), nil, &metav1.CreateOptions{})
+					_, err = fs.Create(t.Context(), ancestryTestFolder("child", ""), nil, &metav1.CreateOptions{})
 				} else {
 					store.On("Get", mock.Anything, "new-parent", mock.Anything).Return(nil, original).Once()
 					b := &FolderAPIBuilder{storage: store, parents: newParentsGetter(store), maxNestedFolderDepth: 5}
@@ -184,7 +184,7 @@ func captureFolderLogs(t *testing.T) *capturingFolderLogger {
 func TestBackendFailureRetainsDiagnosticsInLogs(t *testing.T) {
 	logger := captureFolderLogs(t)
 	original := apierrors.NewServiceUnavailable(backendDiagnostic)
-	err := sanitizedBackendError(context.Background(), "moveTargetLookup", original)
+	err := sanitizedBackendError(t.Context(), "moveTargetLookup", original)
 	requireSanitizedBackendResponse(t, err, 503, "")
 	require.Equal(t, 1, logger.ErrorLogs.Calls)
 	require.Equal(t, []any{"operation", "moveTargetLookup", "error", original}, logger.ErrorLogs.Ctx)
@@ -207,7 +207,7 @@ func TestParentFailuresAreLogged(t *testing.T) {
 		} {
 			t.Run(fmt.Sprintf("%s/create=%t", tc.name, forCreate), func(t *testing.T) {
 				logger := captureFolderLogs(t)
-				ctx := context.Background()
+				ctx := t.Context()
 				store := grafanarest.NewMockStorage(t)
 				store.On("Get", mock.Anything, "parent", mock.Anything).Return(tc.obj, tc.err).Once()
 				_, _ = newParentsGetterWithPolicy(store, forCreate)(ctx, ancestryTestFolder("child", "parent"))
@@ -258,7 +258,7 @@ func TestExpectedParentFailuresDoNotMarkTraceAsFailed(t *testing.T) {
 func TestDetachedParentHidesBackendDiagnostics(t *testing.T) {
 	store := grafanarest.NewMockStorage(t)
 	store.On("Get", mock.Anything, "parent", mock.Anything).Return(nil, errors.New(backendDiagnostic)).Once()
-	info, err := newParentsGetter(store)(context.Background(), ancestryTestFolder("child", "parent"))
+	info, err := newParentsGetter(store)(t.Context(), ancestryTestFolder("child", "parent"))
 	require.NoError(t, err)
 	require.Len(t, info.Items, 2)
 	require.Equal(t, "parent", info.Items[0].Name)
@@ -278,7 +278,7 @@ func TestMalformedSubtreeSearchHidesDiagnostics(t *testing.T) {
 			Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"one", "two"}}},
 		}},
 	}}
-	err := checkSubtreeDepth(context.Background(), search, "org-42", "child", 2, 5)
+	err := checkSubtreeDepth(t.Context(), search, "org-42", "child", 2, 5)
 	requireSanitizedBackendResponse(t, err, 500, "")
 	require.Equal(t, 1, logger.ErrorLogs.Calls)
 	require.Equal(t, "subtreeSearchDecode", logger.ErrorLogs.Ctx[1])
@@ -292,7 +292,7 @@ func TestBackendLoggerPreservesContext(t *testing.T) {
 	previous := backendLogger
 	backendLogger = logger
 	t.Cleanup(func() { backendLogger = previous })
-	ctx := log.WithContextualAttributes(context.Background(), []any{"requestId", "test-request"})
+	ctx := log.WithContextualAttributes(t.Context(), []any{"requestId", "test-request"})
 	err := sanitizedBackendError(ctx, "moveTargetLookup", apierrors.NewServiceUnavailable(backendDiagnostic))
 	requireSanitizedBackendResponse(t, err, 503, "")
 	var record map[string]any
@@ -329,7 +329,7 @@ func TestSubtreeSearchHidesBackendDiagnostics(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			search := &capturingSearchClient{resp: tc.resp, err: tc.err}
-			err := checkSubtreeDepth(context.Background(), search, "org-42", "child", 2, 5)
+			err := checkSubtreeDepth(t.Context(), search, "org-42", "child", 2, 5)
 			requireSanitizedBackendResponse(t, err, tc.code, tc.retry)
 		})
 	}

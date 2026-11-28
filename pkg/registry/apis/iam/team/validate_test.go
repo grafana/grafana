@@ -121,7 +121,7 @@ func TestValidateOnCreate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ctx := identity.WithRequester(context.Background(), test.requester)
+			ctx := identity.WithRequester(t.Context(), test.requester)
 			err := ValidateOnCreate(ctx, selectorForBackend(&fakeSearchBackend{}), test.obj, legacy.NoopExternalGroupReconciler{})
 			assert.Equal(t, test.want, err)
 		})
@@ -331,7 +331,7 @@ func TestValidateOnUpdate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ctx := identity.WithRequester(context.Background(), test.requester)
+			ctx := identity.WithRequester(t.Context(), test.requester)
 			err := ValidateOnUpdate(ctx, selectorForBackend(&fakeSearchBackend{}), test.obj, test.old, legacy.NoopExternalGroupReconciler{})
 			assert.Equal(t, test.want, err)
 		})

@@ -61,7 +61,7 @@ func TestHistorySubresource_RefValidation(t *testing.T) {
 			h := &historySubresource{repoGetter: &fakeRepoGetter{repo: fakeRepo}}
 			responder := &fakeResponder{}
 
-			handler, err := h.Connect(context.Background(), "test-repo", nil, responder)
+			handler, err := h.Connect(t.Context(), "test-repo", nil, responder)
 			require.NoError(t, err)
 
 			req := httptest.NewRequest(http.MethodGet, "/test-repo/history/dashboard.json", nil)

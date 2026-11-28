@@ -237,7 +237,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 					name = ""
 				}
 
-				ctx := context.Background()
+				ctx := t.Context()
 				if tt.caller != nil {
 					ctx = identity.WithRequester(ctx, tt.caller)
 				}
@@ -394,7 +394,7 @@ func TestDashboardAPIBuilder_ValidateCreateInRootFolder(t *testing.T) {
 				}
 			}
 
-			err := b.Validate(identity.WithRequester(context.Background(), requester), admission.NewAttributesRecord(
+			err := b.Validate(identity.WithRequester(t.Context(), requester), admission.NewAttributesRecord(
 				tt.obj, nil, tt.gvk, "default", "", tt.gvr, "", admission.Create, &metav1.CreateOptions{}, tt.dryRun, nil,
 			), nil)
 
@@ -508,7 +508,7 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelAdmissionEnforcesAccess(t *te
 			default:
 				object = panel
 			}
-			ctx := identity.WithRequester(context.Background(), requester)
+			ctx := identity.WithRequester(t.Context(), requester)
 			err := admissionPlugin.Validate(ctx, admission.NewAttributesRecord(
 				object,
 				oldObject,
@@ -679,7 +679,7 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelMoveRequiresSourceAndDestinat
 	}}
 	updatedPanel := oldPanel.DeepCopy()
 	updatedPanel.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "destination-folder"})
-	ctx := identity.WithRequester(context.Background(), requester)
+	ctx := identity.WithRequester(t.Context(), requester)
 	err := admissionPlugin.Validate(ctx, admission.NewAttributesRecord(
 		updatedPanel,
 		oldPanel,
@@ -728,7 +728,7 @@ func TestValidateLibraryPanelDeleteChecksUnifiedReferences(t *testing.T) {
 			}}
 			builder := &DashboardsAPIBuilder{unified: client}
 
-			err := builder.validateLibraryPanelDelete(context.Background(), "panel-a", "stacks-1")
+			err := builder.validateLibraryPanelDelete(t.Context(), "panel-a", "stacks-1")
 			if tt.forbidden {
 				require.True(t, apierrors.IsForbidden(err))
 			} else {
@@ -954,13 +954,13 @@ func TestSnapshotBlobEligibilityWithLegacyOnlyStore(t *testing.T) {
 	}
 
 	// Even if another instance finishes migration, this instance retains its legacy-only store.
-	enabled, err := b.snapshotReadFromUnified(context.Background())
+	enabled, err := b.snapshotReadFromUnified(t.Context())
 	require.NoError(t, err)
 	require.False(t, enabled)
 
 	b.snapshotStorage = grafanarest.NewMockStorage(t)
-	mode.On("ReadFromUnified", context.Background(), dashv0.SnapshotResourceInfo.GroupResource()).Return(true, nil)
-	enabled, err = b.snapshotReadFromUnified(context.Background())
+	mode.On("ReadFromUnified", t.Context(), dashv0.SnapshotResourceInfo.GroupResource()).Return(true, nil)
+	enabled, err = b.snapshotReadFromUnified(t.Context())
 	require.NoError(t, err)
 	require.True(t, enabled)
 }
@@ -1086,7 +1086,7 @@ func TestSnapshotRegistrationFiltersEveryServedVersion(t *testing.T) {
 			lister, ok := snapStorage.(rest.Lister)
 			require.True(t, ok, "registered snapshot storage must support List")
 
-			ctx := k8srequest.WithNamespace(context.Background(), authlib.OrgNamespaceFormatter(1))
+			ctx := k8srequest.WithNamespace(t.Context(), authlib.OrgNamespaceFormatter(1))
 
 			// GET omits deleteKey and dashboard payload.
 			getObj, err := getter.Get(identity.WithRequester(ctx, &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "alice"}), "mine", &metav1.GetOptions{})

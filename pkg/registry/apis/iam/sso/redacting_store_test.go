@@ -40,7 +40,7 @@ func TestRedactingStore_CreateRedactsResponse(t *testing.T) {
 	store, err := NewRedactingStore(inner, nil)
 	require.NoError(t, err)
 
-	out, err := store.(rest.Creater).Create(context.Background(), ssoObj("generic_oauth", map[string]any{}), nil, &metav1.CreateOptions{})
+	out, err := store.(rest.Creater).Create(t.Context(), ssoObj("generic_oauth", map[string]any{}), nil, &metav1.CreateOptions{})
 	require.NoError(t, err)
 	sso, ok := out.(*iamv0.SSOSetting)
 	require.True(t, ok)
@@ -61,7 +61,7 @@ func TestRedactingStore_ListRedactsResponse(t *testing.T) {
 	store, err := NewRedactingStore(&fakeInner{listed: list}, nil)
 	require.NoError(t, err)
 
-	out, err := store.(rest.Lister).List(context.Background(), nil)
+	out, err := store.(rest.Lister).List(t.Context(), nil)
 	require.NoError(t, err)
 	got, ok := out.(*iamv0.SSOSettingList)
 	require.True(t, ok)
@@ -79,7 +79,7 @@ func TestRedactingStore_ListRedactsResponse(t *testing.T) {
 func TestRedactingStore_ListPropagatesError(t *testing.T) {
 	store, err := NewRedactingStore(&fakeInner{listErr: errors.New("boom")}, nil)
 	require.NoError(t, err)
-	_, err = store.(rest.Lister).List(context.Background(), nil)
+	_, err = store.(rest.Lister).List(t.Context(), nil)
 	require.Error(t, err)
 }
 

@@ -44,7 +44,7 @@ func newPermissionsClient(namespace string, names ...string) *dynamicfake.FakeDy
 func permissionExists(t *testing.T, client dynamic.Interface, namespace, name string) bool {
 	t.Helper()
 	_, err := client.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace).
-		Get(context.Background(), Name(testGR, name), metav1.GetOptions{})
+		Get(t.Context(), Name(testGR, name), metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		return false
 	}
@@ -104,14 +104,14 @@ func TestFromRestConfig(t *testing.T) {
 		return &clientrest.Config{Host: "http://localhost"}, nil
 	}))
 
-	_, err := provider(context.Background())
+	_, err := provider(t.Context())
 	require.Error(t, err)
 
-	client, err := provider(context.Background())
+	client, err := provider(t.Context())
 	require.NoError(t, err)
 	require.NotNil(t, client)
 
-	_, err = provider(context.Background())
+	_, err = provider(t.Context())
 	require.NoError(t, err)
 	require.Equal(t, 2, calls, "the client is built once the rest config is available, then reused")
 }
@@ -124,8 +124,8 @@ func TestClient_DeletePermissions(t *testing.T) {
 		other := newPermissionsClient("stacks-1", "uid")
 		p := New(staticClient(client), testGR)
 
-		require.NoError(t, p.DeletePermissions(context.Background(), namespace, "uid"))
-		require.NoError(t, p.DeletePermissions(context.Background(), "stacks-3", "uid"))
+		require.NoError(t, p.DeletePermissions(t.Context(), namespace, "uid"))
+		require.NoError(t, p.DeletePermissions(t.Context(), "stacks-3", "uid"))
 
 		require.False(t, permissionExists(t, client, namespace, "uid"))
 		require.True(t, permissionExists(t, client, namespace, "other"))
@@ -136,7 +136,7 @@ func TestClient_DeletePermissions(t *testing.T) {
 		client := newPermissionsClient(namespace)
 		p := New(staticClient(client), testGR)
 
-		require.NoError(t, p.DeletePermissions(context.Background(), namespace, "gone"))
+		require.NoError(t, p.DeletePermissions(t.Context(), namespace, "gone"))
 		require.Len(t, client.Actions(), 1)
 	})
 
@@ -155,7 +155,7 @@ func TestClient_DeletePermissions(t *testing.T) {
 		for name, provider := range providers {
 			t.Run(name, func(t *testing.T) {
 				p := New(provider, testGR)
-				require.Error(t, p.DeletePermissions(context.Background(), namespace, "uid"))
+				require.Error(t, p.DeletePermissions(t.Context(), namespace, "uid"))
 			})
 		}
 		require.True(t, permissionExists(t, client, namespace, "uid"))
@@ -174,13 +174,13 @@ func TestClient_SetDefault(t *testing.T) {
 		client := newPermissionsClient(namespace)
 		recording := &recordingNamespaceableClient{NamespaceableResourceInterface: client.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource())}
 		p := New(Static(recording), testGR)
-		require.NoError(t, p.SetDefault(context.Background(), namespace, "thing-1", defaults))
+		require.NoError(t, p.SetDefault(t.Context(), namespace, "thing-1", defaults))
 		require.True(t, identity.IsServiceIdentity(recording.ctx))
 		requester, err := identity.GetRequester(recording.ctx)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), requester.GetOrgID())
 		created, err := client.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace).
-			Get(context.Background(), Name(testGR, "thing-1"), metav1.GetOptions{})
+			Get(t.Context(), Name(testGR, "thing-1"), metav1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t, Name(testGR, "thing-1"), created.GetName())
 		require.Equal(t, namespace, created.GetNamespace())
@@ -200,7 +200,7 @@ func TestClient_SetDefault(t *testing.T) {
 	t.Run("replaces spec and preserves desired metadata", func(t *testing.T) {
 		client := newPermissionsClient(namespace, "thing-1")
 		stored, err := client.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace).
-			Get(context.Background(), Name(testGR, "thing-1"), metav1.GetOptions{})
+			Get(t.Context(), Name(testGR, "thing-1"), metav1.GetOptions{})
 		require.NoError(t, err)
 		stored.SetResourceVersion("17")
 		stored.SetUID("object-uid")
@@ -215,12 +215,12 @@ func TestClient_SetDefault(t *testing.T) {
 			"unexpected":  "stale",
 		}
 		_, err = client.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace).
-			Update(context.Background(), stored, metav1.UpdateOptions{})
+			Update(t.Context(), stored, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		p := New(staticClient(client), testGR)
-		require.NoError(t, p.SetDefault(context.Background(), namespace, "thing-1", defaults))
+		require.NoError(t, p.SetDefault(t.Context(), namespace, "thing-1", defaults))
 		updated, err := client.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace).
-			Get(context.Background(), Name(testGR, "thing-1"), metav1.GetOptions{})
+			Get(t.Context(), Name(testGR, "thing-1"), metav1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t, "17", updated.GetResourceVersion())
 		require.Equal(t, "object-uid", string(updated.GetUID()))
@@ -238,24 +238,24 @@ func TestClient_SetDefault(t *testing.T) {
 	t.Run("rejects a terminating resource permission without writing", func(t *testing.T) {
 		client := newPermissionsClient(namespace, "thing-1")
 		stored, err := client.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace).
-			Get(context.Background(), Name(testGR, "thing-1"), metav1.GetOptions{})
+			Get(t.Context(), Name(testGR, "thing-1"), metav1.GetOptions{})
 		require.NoError(t, err)
 		deletionTimestamp := metav1.NewTime(time.Date(2025, 1, 2, 3, 4, 5, 0, time.UTC))
 		stored.SetDeletionTimestamp(&deletionTimestamp)
 		stored.SetFinalizers([]string{"protect-cleanup"})
 		_, err = client.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace).
-			Update(context.Background(), stored, metav1.UpdateOptions{})
+			Update(t.Context(), stored, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		client.ClearActions()
 
 		p := New(staticClient(client), testGR)
-		err = p.SetDefault(context.Background(), namespace, "thing-1", defaults)
+		err = p.SetDefault(t.Context(), namespace, "thing-1", defaults)
 		require.EqualError(t, err, "resource permission stacks-2/test.grafana.app-things-thing-1 is terminating")
 		actions := client.Actions()
 		require.Len(t, actions, 1)
 		require.Equal(t, "get", actions[0].GetVerb())
 		unchanged, err := client.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace).
-			Get(context.Background(), Name(testGR, "thing-1"), metav1.GetOptions{})
+			Get(t.Context(), Name(testGR, "thing-1"), metav1.GetOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, unchanged.GetDeletionTimestamp())
 		require.True(t, deletionTimestamp.Time.Equal(unchanged.GetDeletionTimestamp().Time))
@@ -268,7 +268,7 @@ func TestClient_SetDefault(t *testing.T) {
 			return true, nil, errors.New("IAM unavailable")
 		})
 		p := New(staticClient(client), testGR)
-		require.Error(t, p.SetDefault(context.Background(), namespace, "thing-1", defaults))
+		require.Error(t, p.SetDefault(t.Context(), namespace, "thing-1", defaults))
 		require.Len(t, client.Actions(), 1)
 		require.Equal(t, "get", client.Actions()[0].GetVerb())
 	})
@@ -279,7 +279,7 @@ func TestClient_SetDefault(t *testing.T) {
 			return true, nil, errors.New("write failed")
 		})
 		p := New(staticClient(client), testGR)
-		require.Error(t, p.SetDefault(context.Background(), namespace, "thing-1", defaults))
+		require.Error(t, p.SetDefault(t.Context(), namespace, "thing-1", defaults))
 	})
 	t.Run("update failure is returned", func(t *testing.T) {
 		client := newPermissionsClient(namespace, "thing-1")
@@ -287,6 +287,6 @@ func TestClient_SetDefault(t *testing.T) {
 			return true, nil, errors.New("write failed")
 		})
 		p := New(staticClient(client), testGR)
-		require.Error(t, p.SetDefault(context.Background(), namespace, "thing-1", defaults))
+		require.Error(t, p.SetDefault(t.Context(), namespace, "thing-1", defaults))
 	})
 }

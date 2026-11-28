@@ -1169,7 +1169,7 @@ func TestSnapshotAuthorizer(t *testing.T) {
 		auth := NewSnapshotAuthorizer(acmock.New())
 
 		// No user in context
-		decision, _, _ := auth.Authorize(context.Background(), &testAttributes{
+		decision, _, _ := auth.Authorize(t.Context(), &testAttributes{
 			isResource: true,
 			resource:   "snapshots",
 			verb:       "create",
@@ -1180,7 +1180,7 @@ func TestSnapshotAuthorizer(t *testing.T) {
 	t.Run("allows anonymous get", func(t *testing.T) {
 		auth := NewSnapshotAuthorizer(acmock.New())
 
-		decision, _, err := auth.Authorize(context.Background(), &testAttributes{
+		decision, _, err := auth.Authorize(t.Context(), &testAttributes{
 			isResource: true,
 			resource:   "snapshots",
 			verb:       "get",
@@ -1192,7 +1192,7 @@ func TestSnapshotAuthorizer(t *testing.T) {
 	t.Run("allows anonymous get dashboard subresource", func(t *testing.T) {
 		auth := NewSnapshotAuthorizer(acmock.New())
 
-		decision, _, err := auth.Authorize(context.Background(), &testAttributes{
+		decision, _, err := auth.Authorize(t.Context(), &testAttributes{
 			isResource:  true,
 			resource:    "snapshots",
 			verb:        "get",
@@ -1205,7 +1205,7 @@ func TestSnapshotAuthorizer(t *testing.T) {
 	t.Run("denies anonymous create", func(t *testing.T) {
 		auth := NewSnapshotAuthorizer(acmock.New())
 
-		decision, _, _ := auth.Authorize(context.Background(), &testAttributes{
+		decision, _, _ := auth.Authorize(t.Context(), &testAttributes{
 			isResource: true,
 			resource:   "snapshots",
 			verb:       "create",
@@ -1218,7 +1218,7 @@ func TestSnapshotAuthorizer(t *testing.T) {
 			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 		)
 
-		ctx := identity.WithRequester(context.Background(), testUser)
+		ctx := identity.WithRequester(t.Context(), testUser)
 		decision, _, err := auth.Authorize(ctx, &testAttributes{
 			isResource: true,
 			resource:   "snapshots",
@@ -1233,7 +1233,7 @@ func TestSnapshotAuthorizer(t *testing.T) {
 			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsDelete}}),
 		)
 
-		ctx := identity.WithRequester(context.Background(), testUser)
+		ctx := identity.WithRequester(t.Context(), testUser)
 		// K8s parses snapshots/delete/{deleteKey} as name="delete", subresource="{deleteKey}"
 		decision, _, err := auth.Authorize(ctx, &testAttributes{
 			isResource:  true,
@@ -1249,7 +1249,7 @@ func TestSnapshotAuthorizer(t *testing.T) {
 	t.Run("denies anonymous delete/{deleteKey}", func(t *testing.T) {
 		auth := NewSnapshotAuthorizer(acmock.New())
 
-		decision, _, _ := auth.Authorize(context.Background(), &testAttributes{
+		decision, _, _ := auth.Authorize(t.Context(), &testAttributes{
 			isResource:  true,
 			resource:    "snapshots",
 			verb:        "delete",
@@ -1264,7 +1264,7 @@ func TestSnapshotAuthorizer(t *testing.T) {
 			acmock.New().WithPermissions([]accesscontrol.Permission{}),
 		)
 
-		ctx := identity.WithRequester(context.Background(), testUser)
+		ctx := identity.WithRequester(t.Context(), testUser)
 		decision, _, _ := auth.Authorize(ctx, &testAttributes{
 			isResource: true,
 			resource:   "snapshots",

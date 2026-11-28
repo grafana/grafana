@@ -1,7 +1,6 @@
 package migrate
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -47,7 +46,7 @@ func TestMigrationWorker_IsSupported(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := worker.IsSupported(context.Background(), tt.job)
+			got := worker.IsSupported(t.Context(), tt.job)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -68,7 +67,7 @@ func TestMigrationWorker_ProcessNotReaderWriter(t *testing.T) {
 
 	repo := repository.NewMockReader(t)
 	repo.On("Config").Return(&provisioning.Repository{})
-	err := worker.Process(context.Background(), repo, job, progressRecorder)
+	err := worker.Process(t.Context(), repo, job, progressRecorder)
 	require.EqualError(t, err, "migration job submitted targeting repository that is not a ReaderWriter")
 }
 
@@ -132,7 +131,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 			if tt.setupRepo != nil {
 				tt.setupRepo(rw)
 			}
-			err := worker.Process(context.Background(), rw, tt.job, progressRecorder)
+			err := worker.Process(t.Context(), rw, tt.job, progressRecorder)
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
@@ -206,7 +205,7 @@ func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 			progress.On("StrictMaxErrors", 1).Maybe()
 
 			// Process the job
-			err := worker.Process(context.Background(), mockRepo, job, progress)
+			err := worker.Process(t.Context(), mockRepo, job, progress)
 
 			// Verify results
 			if tt.wantErr {

@@ -1,7 +1,6 @@
 package folders
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -31,7 +30,7 @@ func TestFolderStatusStrategy_PrepareForUpdate(t *testing.T) {
 		}},
 	}
 
-	strategy.PrepareForUpdate(context.Background(), updated, old)
+	strategy.PrepareForUpdate(t.Context(), updated, old)
 
 	require.Equal(t, old.Spec, updated.Spec)
 	require.Equal(t, old.Labels, updated.Labels)

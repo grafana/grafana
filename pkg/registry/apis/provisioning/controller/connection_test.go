@@ -1455,7 +1455,7 @@ func TestConnectionController_generateConnectionToken_ReturnsExpiry(t *testing.T
 	mockConn.EXPECT().GenerateConnectionToken(mock.Anything).
 		Return(&connection.ExpirableSecureValue{Token: "tok", ExpiresAt: exp}, nil)
 
-	token, expiresAt, ops, err := cc.generateConnectionToken(context.Background(), mockConn)
+	token, expiresAt, ops, err := cc.generateConnectionToken(t.Context(), mockConn)
 	require.NoError(t, err)
 	assert.Equal(t, resource.RawSecureValue("tok"), token)
 	assert.True(t, exp.Equal(expiresAt))
@@ -1495,7 +1495,7 @@ func TestConnectionController_shouldGenerateToken_ExpiredCounter(t *testing.T) {
 				},
 			}
 
-			cc.shouldGenerateToken(context.Background(), obj, nil)
+			cc.shouldGenerateToken(t.Context(), obj, nil)
 
 			assert.Equal(t, tt.wantExpired, counterValue(t, reg, "grafana_provisioning_connection_tokens_expired_total"))
 		})
@@ -1522,7 +1522,7 @@ func TestConnectionController_shouldGenerateToken_BackfillsExpiredFromLiveExpiry
 	mockConn := connection.NewMockTokenConnection(t)
 	mockConn.EXPECT().ValidateToken().Return(time.Now().Add(-time.Minute), nil)
 
-	cc.shouldGenerateToken(context.Background(), obj, mockConn)
+	cc.shouldGenerateToken(t.Context(), obj, mockConn)
 
 	assert.Equal(t, 1.0, counterValue(t, reg, "grafana_provisioning_connection_tokens_expired_total"))
 }
@@ -1538,8 +1538,8 @@ func TestConnectionController_shouldGenerateToken_SkipsUnauthorizedOAuthConnecti
 		*connection.MockOAuthConnection
 	}{connection.NewMockTokenConnection(t), connection.NewMockOAuthConnection(t)}
 
-	assert.False(t, cc.shouldGenerateToken(context.Background(), unauthorized, oauthConn), "an OAuth connection waiting for authorization has no token to generate")
-	assert.True(t, cc.shouldGenerateToken(context.Background(), unauthorized, connection.NewMockTokenConnection(t)), "other token connections generate a missing token")
+	assert.False(t, cc.shouldGenerateToken(t.Context(), unauthorized, oauthConn), "an OAuth connection waiting for authorization has no token to generate")
+	assert.True(t, cc.shouldGenerateToken(t.Context(), unauthorized, connection.NewMockTokenConnection(t)), "other token connections generate a missing token")
 }
 
 func newConnectionControllerForQueueTest(t *testing.T) (*ConnectionController, *prometheus.Registry) {
@@ -1847,7 +1847,7 @@ func TestConnectionController_Run_DrainWaitsForInFlight(t *testing.T) {
 
 	cc.queue.Add("test/conn")
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	runDone := make(chan struct{})
 	go func() {
 		cc.Run(ctx, 1, func() {}, func() {})
@@ -1902,7 +1902,7 @@ func TestConnectionController_Run_DrainTimeoutForcesShutdown(t *testing.T) {
 
 	cc.queue.Add("test/stuck")
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	runDone := make(chan struct{})
 	go func() {
 		cc.Run(ctx, 1, func() {}, func() {})
@@ -1948,7 +1948,7 @@ func TestConnectionController_Run_OnShutdownCalledBeforeDrain(t *testing.T) {
 
 	cc.queue.Add("test/ordering")
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	runDone := make(chan struct{})
 	go func() {
 		cc.Run(ctx, 1, func() {}, func() {
@@ -2061,7 +2061,7 @@ func TestConnectionController_RecordsProcessingByTrigger(t *testing.T) {
 
 			tt.feed(cc.EventHandler())
 
-			ctx, cancel := context.WithCancel(context.Background())
+			ctx, cancel := context.WithCancel(t.Context())
 			runDone := make(chan struct{})
 			go func() {
 				cc.Run(ctx, 1, func() {}, func() {})

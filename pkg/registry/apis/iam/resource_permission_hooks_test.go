@@ -278,12 +278,12 @@ func TestBeginResourcePermissionUpdate(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{mutateCallback: testFolderWrite}
 
 		// Call BeginUpdate which does all the work
-		finishFunc, err := b.BeginResourcePermissionUpdate(context.Background(), &newFolderPerm, &oldFolderPerm, nil)
+		finishFunc, err := b.BeginResourcePermissionUpdate(t.Context(), &newFolderPerm, &oldFolderPerm, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finishFunc)
 
 		// Call the finish function with success=true to trigger the zanzana write
-		finishFunc(context.Background(), true)
+		finishFunc(t.Context(), true)
 	})
 
 	wg.Wait()
@@ -365,12 +365,12 @@ func TestBeginResourcePermissionUpdate(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{mutateCallback: testDashWrite}
 
 		// Call BeginUpdate which does all the work
-		finishFunc, err := b.BeginResourcePermissionUpdate(context.Background(), &newDashPerm, &oldDashPerm, nil)
+		finishFunc, err := b.BeginResourcePermissionUpdate(t.Context(), &newDashPerm, &oldDashPerm, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finishFunc)
 
 		// Call the finish function with success=true to trigger the zanzana write
-		finishFunc(context.Background(), true)
+		finishFunc(t.Context(), true)
 		wg.Wait()
 	})
 }

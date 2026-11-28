@@ -49,7 +49,7 @@ func TestGenerateComment_EscapesTitle(t *testing.T) {
 	repo, client := newPullRequestRepo(t)
 
 	var captured string
-	client.On("CreatePullRequestComment", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
+	client.On("CreatePullRequestComment", t.Context(), 1, mock.MatchedBy(func(comment string) bool {
 		captured = comment
 		return true
 	})).Return(nil)
@@ -72,17 +72,17 @@ func TestGenerateComment_EscapesTitle(t *testing.T) {
 	}
 
 	commenter := NewCommenter(false, URLProvider{})
-	require.NoError(t, commenter.Comment(context.Background(), repo, 1, info))
+	require.NoError(t, commenter.Comment(t.Context(), repo, 1, info))
 	require.Contains(t, captured, "Pipes \\| Brackets \\[x\\] newline")
 	require.NotContains(t, captured, "Brackets [x]")
 }
 
 func TestCommenter_Comment_FailedToComment(t *testing.T) {
 	repo, client := newPullRequestRepo(t)
-	client.On("CreatePullRequestComment", context.Background(), 1, mock.Anything).Return(errors.New("failed"))
+	client.On("CreatePullRequestComment", t.Context(), 1, mock.Anything).Return(errors.New("failed"))
 
 	commenter := NewCommenter(false, URLProvider{})
-	err := commenter.Comment(context.Background(), repo, 1, changeInfo{})
+	err := commenter.Comment(t.Context(), repo, 1, changeInfo{})
 	require.Error(t, err)
 }
 
@@ -392,10 +392,10 @@ func TestGenerateComment(t *testing.T) {
 			// nolint:gosec
 			expect, err := os.ReadFile(fpath)
 			require.NoError(t, err)
-			client.On("CreatePullRequestComment", context.Background(), 1, string(expect)).Return(nil)
+			client.On("CreatePullRequestComment", t.Context(), 1, string(expect)).Return(nil)
 
 			commenter := NewCommenter(false, URLProvider{})
-			err = commenter.Comment(context.Background(), repo, 1, tc.Input)
+			err = commenter.Comment(t.Context(), repo, 1, tc.Input)
 			require.NoError(t, err)
 		})
 	}
@@ -405,7 +405,7 @@ func TestGenerateComment_NilParsedDeletedInTableTemplate(t *testing.T) {
 	repo, client := newPullRequestRepo(t)
 
 	var capturedComment string
-	client.On("CreatePullRequestComment", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
+	client.On("CreatePullRequestComment", t.Context(), 1, mock.MatchedBy(func(comment string) bool {
 		capturedComment = comment
 		return true
 	})).Return(nil)
@@ -434,7 +434,7 @@ func TestGenerateComment_NilParsedDeletedInTableTemplate(t *testing.T) {
 	}
 
 	commenter := NewCommenter(false, URLProvider{})
-	err := commenter.Comment(context.Background(), repo, 1, info)
+	err := commenter.Comment(t.Context(), repo, 1, info)
 	require.NoError(t, err)
 	require.Contains(t, capturedComment, "**2** resource changes")
 	require.Contains(t, capturedComment, "🗑️ Deleted")
@@ -450,7 +450,7 @@ func TestGenerateComment_ParsedDeletedWithoutResourceAction(t *testing.T) {
 	repo, client := newPullRequestRepo(t)
 
 	var capturedComment string
-	client.On("CreatePullRequestComment", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
+	client.On("CreatePullRequestComment", t.Context(), 1, mock.MatchedBy(func(comment string) bool {
 		capturedComment = comment
 		return true
 	})).Return(nil)
@@ -488,7 +488,7 @@ func TestGenerateComment_ParsedDeletedWithoutResourceAction(t *testing.T) {
 	}
 
 	commenter := NewCommenter(false, URLProvider{})
-	err := commenter.Comment(context.Background(), repo, 1, info)
+	err := commenter.Comment(t.Context(), repo, 1, info)
 	require.NoError(t, err)
 	require.Contains(t, capturedComment, "🗑️ Deleted")
 }
@@ -497,7 +497,7 @@ func TestGenerateComment_SingleChangeNilParsed(t *testing.T) {
 	repo, client := newPullRequestRepo(t)
 
 	var capturedComment string
-	client.On("CreatePullRequestComment", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
+	client.On("CreatePullRequestComment", t.Context(), 1, mock.MatchedBy(func(comment string) bool {
 		capturedComment = comment
 		return true
 	})).Return(nil)
@@ -516,7 +516,7 @@ func TestGenerateComment_SingleChangeNilParsed(t *testing.T) {
 	}
 
 	commenter := NewCommenter(false, URLProvider{})
-	err := commenter.Comment(context.Background(), repo, 1, info)
+	err := commenter.Comment(t.Context(), repo, 1, info)
 	require.NoError(t, err)
 	require.Contains(t, capturedComment, "**1** resource change")
 	require.Contains(t, capturedComment, "➕ Added")
@@ -526,7 +526,7 @@ func TestGenerateComment_ParseFailureErrorSurfaced(t *testing.T) {
 	repo, client := newPullRequestRepo(t)
 
 	var capturedComment string
-	client.On("CreatePullRequestComment", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
+	client.On("CreatePullRequestComment", t.Context(), 1, mock.MatchedBy(func(comment string) bool {
 		capturedComment = comment
 		return true
 	})).Return(nil)
@@ -556,7 +556,7 @@ func TestGenerateComment_ParseFailureErrorSurfaced(t *testing.T) {
 	}
 
 	commenter := NewCommenter(false, URLProvider{})
-	err := commenter.Comment(context.Background(), repo, 1, info)
+	err := commenter.Comment(t.Context(), repo, 1, info)
 	require.NoError(t, err)
 	require.Contains(t, capturedComment, "**2** resource changes")
 	require.Contains(t, capturedComment, "1 needs attention")
@@ -590,13 +590,13 @@ func TestCommenter_ShowImageRendererNote(t *testing.T) {
 		}
 
 		var capturedComment string
-		client.On("CreatePullRequestComment", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
+		client.On("CreatePullRequestComment", t.Context(), 1, mock.MatchedBy(func(comment string) bool {
 			capturedComment = comment
 			return true
 		})).Return(nil)
 
 		commenter := NewCommenter(true, URLProvider{})
-		err := commenter.Comment(context.Background(), repo, 1, info)
+		err := commenter.Comment(t.Context(), repo, 1, info)
 		require.NoError(t, err)
 		require.Contains(t, capturedComment, "💡 **Tip:** To enable dashboard previews")
 		require.Contains(t, capturedComment, "https://grafana.com/docs/grafana/latest/observability-as-code/provision-resources/git-sync-setup/#configure-webhooks-and-image-rendering")
@@ -626,13 +626,13 @@ func TestCommenter_ShowImageRendererNote(t *testing.T) {
 		}
 
 		var capturedComment string
-		client.On("CreatePullRequestComment", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
+		client.On("CreatePullRequestComment", t.Context(), 1, mock.MatchedBy(func(comment string) bool {
 			capturedComment = comment
 			return true
 		})).Return(nil)
 
 		commenter := NewCommenter(false, URLProvider{})
-		err := commenter.Comment(context.Background(), repo, 1, info)
+		err := commenter.Comment(t.Context(), repo, 1, info)
 		require.NoError(t, err)
 		require.NotContains(t, capturedComment, "💡 **Tip:** To enable dashboard previews")
 	})

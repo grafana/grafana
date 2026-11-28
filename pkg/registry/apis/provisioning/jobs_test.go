@@ -161,7 +161,7 @@ func TestPullRequestJobRejected(t *testing.T) {
 			},
 		}
 
-		err := c.authorizeJob(context.Background(), nil, cfg, spec)
+		err := c.authorizeJob(t.Context(), nil, cfg, spec)
 		require.Error(t, err)
 		assert.True(t, apierrors.IsBadRequest(err))
 		assert.Contains(t, err.Error(), "pull request jobs cannot be created via the API")
@@ -173,7 +173,7 @@ func TestPullRequestJobRejected(t *testing.T) {
 			Pull:   &provisioning.SyncJobOptions{},
 		}
 
-		err := c.authorizeJob(context.Background(), nil, cfg, spec)
+		err := c.authorizeJob(t.Context(), nil, cfg, spec)
 		require.NoError(t, err)
 	})
 }
@@ -187,13 +187,13 @@ func TestFixFolderMetadataJobAllowed(t *testing.T) {
 			Action: provisioning.JobActionFixFolderMetadata,
 		}
 
-		err := c.authorizeJob(context.Background(), nil, cfg, spec)
+		err := c.authorizeJob(t.Context(), nil, cfg, spec)
 		require.NoError(t, err)
 	})
 }
 
 func TestExportFeatureGate(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	cfg := newTestRepo("my-repo", "default")
 
 	t.Run("push rejected when disabled", func(t *testing.T) {
@@ -399,7 +399,7 @@ func TestValidateWriteAccess_Migrate(t *testing.T) {
 }
 
 func TestAuthorizeResourceJob(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	cfg := newTestRepo("my-repo", "default")
 
 	t.Run("migrate - authorized", func(t *testing.T) {
@@ -550,7 +550,7 @@ func TestAuthorizeResourceJob(t *testing.T) {
 }
 
 func TestAuthorizePushJob(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	cfg := newTestRepo("my-repo", "default")
 
 	// A push job only exports (reads) resources, so it checks read on all
@@ -598,7 +598,7 @@ func TestAuthorizePushJob(t *testing.T) {
 }
 
 func TestAuthorizeMigrateJob(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	dashGVR := resources.DashboardResource
 	forbidden := apierrors.NewForbidden(schema.GroupResource{}, "", nil)
 
@@ -754,7 +754,7 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 }
 
 func TestAuthorizeDeleteJob(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	cfg := newTestRepo("my-repo", "default")
 	dashGVR := resources.DashboardResource
 	forbidden := apierrors.NewForbidden(schema.GroupResource{Group: "test", Resource: "test"}, "test", fmt.Errorf("forbidden"))
@@ -887,7 +887,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 }
 
 func TestAuthorizeMoveJob(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	cfg := newTestRepo("my-repo", "default")
 	dashGVR := resources.DashboardResource
 	forbidden := apierrors.NewForbidden(schema.GroupResource{Group: "test", Resource: "test"}, "test", fmt.Errorf("forbidden"))
@@ -1091,7 +1091,7 @@ func TestHandleOrphanCleanupJob_RepoNotFound_AdminAllowed(t *testing.T) {
 		provisioning.JobActionDeleteResources,
 	} {
 		t.Run(string(action), func(t *testing.T) {
-			ctx := request.WithNamespace(context.Background(), "default")
+			ctx := request.WithNamespace(t.Context(), "default")
 
 			notFound := apierrors.NewNotFound(
 				schema.GroupResource{Group: provisioning.GROUP, Resource: "repositories"},
@@ -1132,7 +1132,7 @@ func TestHandleOrphanCleanupJob_RepoNotFound_AdminAllowed(t *testing.T) {
 }
 
 func TestHandleOrphanCleanupJob_RepoTerminating_Allowed(t *testing.T) {
-	ctx := request.WithNamespace(context.Background(), "default")
+	ctx := request.WithNamespace(t.Context(), "default")
 
 	now := metav1.Now()
 	repoCfg := &provisioning.Repository{
@@ -1176,7 +1176,7 @@ func TestHandleOrphanCleanupJob_RepoTerminating_Allowed(t *testing.T) {
 }
 
 func TestHandleOrphanCleanupJob_HealthyRepo_Rejected(t *testing.T) {
-	ctx := request.WithNamespace(context.Background(), "default")
+	ctx := request.WithNamespace(t.Context(), "default")
 
 	repoCfg := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1203,7 +1203,7 @@ func TestHandleOrphanCleanupJob_HealthyRepo_Rejected(t *testing.T) {
 }
 
 func TestHandleOrphanCleanupJob_NonAdminForbidden(t *testing.T) {
-	ctx := request.WithNamespace(context.Background(), "default")
+	ctx := request.WithNamespace(t.Context(), "default")
 
 	notFound := apierrors.NewNotFound(
 		schema.GroupResource{Group: provisioning.GROUP, Resource: "repositories"},
@@ -1234,7 +1234,7 @@ func TestHandleOrphanCleanupJob_NonAdminForbidden(t *testing.T) {
 }
 
 func TestHandleOrphanCleanupJob_MissingNamespace(t *testing.T) {
-	ctx := context.Background() // no namespace
+	ctx := t.Context() // no namespace
 
 	c := &jobsConnector{}
 
@@ -1251,7 +1251,7 @@ func TestHandleOrphanCleanupJob_MissingNamespace(t *testing.T) {
 }
 
 func TestHandleOrphanCleanupJob_GetRepoUnexpectedError(t *testing.T) {
-	ctx := request.WithNamespace(context.Background(), "default")
+	ctx := request.WithNamespace(t.Context(), "default")
 
 	repoGetter := &fakeRepoGetter{err: fmt.Errorf("database connection lost")}
 
@@ -1269,7 +1269,7 @@ func TestHandleOrphanCleanupJob_GetRepoUnexpectedError(t *testing.T) {
 }
 
 func TestHandleOrphanCleanupJob_InsertError(t *testing.T) {
-	ctx := request.WithNamespace(context.Background(), "default")
+	ctx := request.WithNamespace(t.Context(), "default")
 
 	notFound := apierrors.NewNotFound(
 		schema.GroupResource{Group: provisioning.GROUP, Resource: "repositories"},
@@ -1354,7 +1354,7 @@ func TestJobsConnector_BodySizeLimit(t *testing.T) {
 }
 
 func TestAuthorizeAdminJob(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	cfg := newTestRepo("my-repo", "default")
 
 	t.Run("admin is authorized", func(t *testing.T) {
@@ -1393,7 +1393,7 @@ func TestAuthorizeAdminJob(t *testing.T) {
 }
 
 func TestJobsConnector_AuthorizeJobCreate(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	cfg := newTestRepo("my-repo", "default")
 	job := &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: "job-1", Namespace: "default"},

@@ -1,7 +1,6 @@
 package serviceaccount
 
 import (
-	"context"
 	"testing"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -10,7 +9,7 @@ import (
 )
 
 func TestMutateOnCreateAndUpdate(t *testing.T) {
-	ctx := request.WithNamespace(context.Background(), "default")
+	ctx := request.WithNamespace(t.Context(), "default")
 
 	testCases := []struct {
 		name         string

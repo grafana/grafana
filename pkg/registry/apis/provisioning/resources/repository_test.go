@@ -332,7 +332,7 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 			}
 
 			// Execute the method
-			result, err := repositoryResources.FindResourcePath(context.Background(), tt.resourceName, tt.gvk)
+			result, err := repositoryResources.FindResourcePath(t.Context(), tt.resourceName, tt.gvk)
 
 			// Assert results
 			if tt.expectedError != "" {
@@ -694,7 +694,7 @@ func TestRepositoryResources_FindResourcePath_SourcePathSafety(t *testing.T) {
 			mockClients.On("ForKind", mock.Anything, gvk).Return(mockClient, gvr, nil)
 			mockClient.On("Get", mock.Anything, "test-resource", metav1.GetOptions{}, mock.Anything).Return(resourceObj, nil)
 
-			result, err := repositoryResources.FindResourcePath(context.Background(), "test-resource", gvk)
+			result, err := repositoryResources.FindResourcePath(t.Context(), "test-resource", gvk)
 
 			if tt.wantErr {
 				require.Error(t, err, "expected sourcePath %q to be rejected, got result %q", tt.sourcePath, result)

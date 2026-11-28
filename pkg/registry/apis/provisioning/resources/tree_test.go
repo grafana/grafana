@@ -298,7 +298,7 @@ func TestFolderTree(t *testing.T) {
 		}
 
 		visited := make(map[string]string)
-		err := tree.Walk(context.Background(), func(ctx context.Context, folder Folder, parent string) error {
+		err := tree.Walk(t.Context(), func(ctx context.Context, folder Folder, parent string) error {
 			visited[folder.ID] = parent
 			return nil
 		})

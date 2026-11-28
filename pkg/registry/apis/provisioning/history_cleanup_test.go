@@ -98,7 +98,7 @@ func TestHistoryJobCleanupService_Run(t *testing.T) {
 // and a cancel func. Cancel is also registered as a cleanup, so a failing test
 // still stops the service before the fake API server is closed.
 func runCleanupService(t *testing.T, builder *APIBuilder) (<-chan error, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	t.Cleanup(cancel)
 	done := make(chan error, 1)
 	go func() {

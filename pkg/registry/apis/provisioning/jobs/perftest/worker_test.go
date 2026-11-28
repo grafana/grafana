@@ -32,16 +32,16 @@ func testJob(d time.Duration, progressUpdates int) provisioning.Job {
 
 func TestWorker_IsSupported(t *testing.T) {
 	t.Run("supported when enabled and action is test", func(t *testing.T) {
-		require.True(t, NewWorker(enabledFunc(true)).IsSupported(context.Background(), testJob(time.Second, 0)))
+		require.True(t, NewWorker(enabledFunc(true)).IsSupported(t.Context(), testJob(time.Second, 0)))
 	})
 
 	t.Run("not supported when disabled", func(t *testing.T) {
-		require.False(t, NewWorker(enabledFunc(false)).IsSupported(context.Background(), testJob(time.Second, 0)))
+		require.False(t, NewWorker(enabledFunc(false)).IsSupported(t.Context(), testJob(time.Second, 0)))
 	})
 
 	t.Run("not supported for other actions", func(t *testing.T) {
 		job := provisioning.Job{Spec: provisioning.JobSpec{Action: provisioning.JobActionPull}}
-		require.False(t, NewWorker(enabledFunc(true)).IsSupported(context.Background(), job))
+		require.False(t, NewWorker(enabledFunc(true)).IsSupported(t.Context(), job))
 	})
 }
 
@@ -113,13 +113,13 @@ func TestWorker_Process(t *testing.T) {
 	t.Run("missing test options", func(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
 		job := provisioning.Job{Spec: provisioning.JobSpec{Action: provisioning.JobActionTest}}
-		err := NewWorker(enabledFunc(true)).Process(context.Background(), nil, job, progress)
+		err := NewWorker(enabledFunc(true)).Process(t.Context(), nil, job, progress)
 		require.Error(t, err)
 	})
 
 	t.Run("non-positive duration", func(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
-		err := NewWorker(enabledFunc(true)).Process(context.Background(), nil, testJob(0, 0), progress)
+		err := NewWorker(enabledFunc(true)).Process(t.Context(), nil, testJob(0, 0), progress)
 		require.Error(t, err)
 	})
 

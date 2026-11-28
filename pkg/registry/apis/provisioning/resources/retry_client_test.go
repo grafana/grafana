@@ -176,7 +176,7 @@ func TestRetryResourceInterface_Create(t *testing.T) {
 
 			retryClient := newRetryResourceInterface(mockClient, tt.backoff)
 			obj := &unstructured.Unstructured{}
-			_, err := retryClient.Create(context.Background(), obj, metav1.CreateOptions{})
+			_, err := retryClient.Create(t.Context(), obj, metav1.CreateOptions{})
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -204,7 +204,7 @@ func TestRetryResourceInterface_Update(t *testing.T) {
 	})
 
 	obj := &unstructured.Unstructured{}
-	result, err := retryClient.Update(context.Background(), obj, metav1.UpdateOptions{})
+	result, err := retryClient.Update(t.Context(), obj, metav1.UpdateOptions{})
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -226,7 +226,7 @@ func TestRetryResourceInterface_Get(t *testing.T) {
 		Cap:      100 * time.Millisecond,
 	})
 
-	result, err := retryClient.Get(context.Background(), "test-resource", metav1.GetOptions{})
+	result, err := retryClient.Get(t.Context(), "test-resource", metav1.GetOptions{})
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -248,7 +248,7 @@ func TestRetryResourceInterface_Delete(t *testing.T) {
 		Cap:      100 * time.Millisecond,
 	})
 
-	err := retryClient.Delete(context.Background(), "test-resource", metav1.DeleteOptions{})
+	err := retryClient.Delete(t.Context(), "test-resource", metav1.DeleteOptions{})
 
 	assert.NoError(t, err)
 	mockClient.AssertNumberOfCalls(t, "Delete", 2)
@@ -269,7 +269,7 @@ func TestRetryResourceInterface_List(t *testing.T) {
 		Cap:      100 * time.Millisecond,
 	})
 
-	result, err := retryClient.List(context.Background(), metav1.ListOptions{})
+	result, err := retryClient.List(t.Context(), metav1.ListOptions{})
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -291,7 +291,7 @@ func TestRetryResourceInterface_Patch(t *testing.T) {
 		Cap:      100 * time.Millisecond,
 	})
 
-	result, err := retryClient.Patch(context.Background(), "test-resource", types.MergePatchType, []byte(`{}`), metav1.PatchOptions{})
+	result, err := retryClient.Patch(t.Context(), "test-resource", types.MergePatchType, []byte(`{}`), metav1.PatchOptions{})
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -314,7 +314,7 @@ func TestRetryResourceInterface_Apply(t *testing.T) {
 	})
 
 	obj := &unstructured.Unstructured{}
-	result, err := retryClient.Apply(context.Background(), "test-resource", obj, metav1.ApplyOptions{})
+	result, err := retryClient.Apply(t.Context(), "test-resource", obj, metav1.ApplyOptions{})
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -337,7 +337,7 @@ func TestRetryResourceInterface_UpdateStatus(t *testing.T) {
 	})
 
 	obj := &unstructured.Unstructured{}
-	result, err := retryClient.UpdateStatus(context.Background(), obj, metav1.UpdateOptions{})
+	result, err := retryClient.UpdateStatus(t.Context(), obj, metav1.UpdateOptions{})
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -360,7 +360,7 @@ func TestRetryResourceInterface_ApplyStatus(t *testing.T) {
 	})
 
 	obj := &unstructured.Unstructured{}
-	result, err := retryClient.ApplyStatus(context.Background(), "test-resource", obj, metav1.ApplyOptions{})
+	result, err := retryClient.ApplyStatus(t.Context(), "test-resource", obj, metav1.ApplyOptions{})
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -382,7 +382,7 @@ func TestRetryResourceInterface_DeleteCollection(t *testing.T) {
 		Cap:      100 * time.Millisecond,
 	})
 
-	err := retryClient.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
+	err := retryClient.DeleteCollection(t.Context(), metav1.DeleteOptions{}, metav1.ListOptions{})
 
 	assert.NoError(t, err)
 	mockClient.AssertNumberOfCalls(t, "DeleteCollection", 2)
@@ -395,7 +395,7 @@ func TestRetryResourceInterface_Watch(t *testing.T) {
 
 	retryClient := newRetryResourceInterface(mockClient, defaultRetryBackoff())
 
-	watch, err := retryClient.Watch(context.Background(), metav1.ListOptions{})
+	watch, err := retryClient.Watch(t.Context(), metav1.ListOptions{})
 
 	assert.NoError(t, err)
 	assert.Equal(t, mockWatch, watch)
@@ -416,7 +416,7 @@ func TestRetryResourceInterface_ContextCancellation(t *testing.T) {
 		Cap:      1 * time.Second,
 	})
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	cancel() // Cancel immediately
 
 	obj := &unstructured.Unstructured{}
@@ -454,7 +454,7 @@ func TestRetryResourceInterface_ExponentialBackoff(t *testing.T) {
 	})
 
 	obj := &unstructured.Unstructured{}
-	_, err := retryClient.Create(context.Background(), obj, metav1.CreateOptions{})
+	_, err := retryClient.Create(t.Context(), obj, metav1.CreateOptions{})
 
 	duration := time.Since(start)
 
@@ -488,7 +488,7 @@ func TestRetryResourceInterface_MaxDelayRespected(t *testing.T) {
 
 	start := time.Now()
 	obj := &unstructured.Unstructured{}
-	_, err := retryClient.Create(context.Background(), obj, metav1.CreateOptions{})
+	_, err := retryClient.Create(t.Context(), obj, metav1.CreateOptions{})
 	duration := time.Since(start)
 
 	assert.Error(t, err)

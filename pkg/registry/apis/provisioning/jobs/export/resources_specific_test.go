@@ -149,7 +149,7 @@ func TestExportSpecificResources_Success(t *testing.T) {
 		},
 	}
 
-	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
+	err := ExportSpecificResources(t.Context(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
 	require.NoError(t, err)
 }
 
@@ -182,7 +182,7 @@ func TestExportSpecificResources_ManagedDashboardError(t *testing.T) {
 		Resources: []provisioningV0.ResourceRef{{Name: "managed-dash", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
-	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
+	err := ExportSpecificResources(t.Context(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
 	require.NoError(t, err)
 	repoResources.AssertNotCalled(t, "WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything)
 }
@@ -212,7 +212,7 @@ func TestExportSpecificResources_NotFoundRecordsError(t *testing.T) {
 		Resources: []provisioningV0.ResourceRef{{Name: "missing", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
-	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
+	err := ExportSpecificResources(t.Context(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
 	require.NoError(t, err)
 	repoResources.AssertNotCalled(t, "WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything)
 }
@@ -240,7 +240,7 @@ func TestExportSpecificResources_GetErrorRecordsError(t *testing.T) {
 		Resources: []provisioningV0.ResourceRef{{Name: "boom", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
-	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
+	err := ExportSpecificResources(t.Context(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
 	require.NoError(t, err)
 }
 
@@ -269,7 +269,7 @@ func TestExportSpecificResources_NewUIDsSetsRandomName(t *testing.T) {
 		Resources: []provisioningV0.ResourceRef{{Name: "original-uid", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
-	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, true)
+	err := ExportSpecificResources(t.Context(), options, emptyFolderClient(), resourceClients, repoResources, progress, true)
 	require.NoError(t, err)
 	require.NotEmpty(t, writtenName)
 	require.NotEqual(t, "original-uid", writtenName, "generateNewUIDs=true should have rewritten the object name")
@@ -317,7 +317,7 @@ func TestExportSpecificResources_FolderKindIsExported(t *testing.T) {
 		Resources: []provisioningV0.ResourceRef{{Name: "child", Kind: resources.FolderKind.Kind, Group: resources.FolderResource.Group}},
 	}
 
-	err := ExportSpecificResources(context.Background(), options, folderClient, resourceClients, repoResources, progress, false)
+	err := ExportSpecificResources(t.Context(), options, folderClient, resourceClients, repoResources, progress, false)
 	require.NoError(t, err)
 	repoResources.AssertNotCalled(t, "WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything)
 }
@@ -367,7 +367,7 @@ func TestExportSpecificResources_GeneratesFolderForDashboard(t *testing.T) {
 		Resources: []provisioningV0.ResourceRef{{Name: "dash-1", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
-	err := ExportSpecificResources(context.Background(), options, folderClient, resourceClients, repoResources, progress, false)
+	err := ExportSpecificResources(t.Context(), options, folderClient, resourceClients, repoResources, progress, false)
 	require.NoError(t, err)
 }
 
@@ -416,7 +416,7 @@ func TestExportSpecificResources_ManagedFolderAncestryIsSkipped(t *testing.T) {
 		Resources: []provisioningV0.ResourceRef{{Name: "dash-1", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
-	err := ExportSpecificResources(context.Background(), options, folderClient, resourceClients, repoResources, progress, false)
+	err := ExportSpecificResources(t.Context(), options, folderClient, resourceClients, repoResources, progress, false)
 	require.NoError(t, err)
 }
 
@@ -456,7 +456,7 @@ func TestExportSpecificResources_NonDashboardKindIsExported(t *testing.T) {
 		Resources: []provisioningV0.ResourceRef{{Name: "playlist-1", Kind: "Playlist", Group: "playlist.grafana.app"}},
 	}
 
-	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
+	err := ExportSpecificResources(t.Context(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
 	require.NoError(t, err)
 }
 
@@ -483,7 +483,7 @@ func TestExportSpecificResources_UnresolvableKindRecordsError(t *testing.T) {
 		Resources: []provisioningV0.ResourceRef{{Name: "mystery-1", Kind: "Mystery", Group: "unknown.grafana.app"}},
 	}
 
-	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
+	err := ExportSpecificResources(t.Context(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
 	require.NoError(t, err)
 	repoResources.AssertNotCalled(t, "WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything)
 }

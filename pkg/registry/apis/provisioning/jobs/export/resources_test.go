@@ -1,7 +1,6 @@
 package export
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -70,7 +69,7 @@ func runExportTest(t *testing.T, mockItems []unstructured.Unstructured, setupPro
 		Branch: "feature/branch",
 	}
 
-	err := ExportResources(context.Background(), options, resourceClients, repoResources, mockProgress, false)
+	err := ExportResources(t.Context(), options, resourceClients, repoResources, mockProgress, false)
 
 	mockProgress.AssertExpectations(t)
 	repoResources.AssertExpectations(t)
@@ -671,7 +670,7 @@ func TestExportResources_GenerateNewUIDs(t *testing.T) {
 		Branch: "feature/branch",
 	}
 
-	err := ExportResources(context.Background(), options, resourceClients, repoResources, mockProgress, true)
+	err := ExportResources(t.Context(), options, resourceClients, repoResources, mockProgress, true)
 	require.NoError(t, err)
 
 	mockProgress.AssertExpectations(t)
@@ -710,7 +709,7 @@ func TestExportResources_GenerateNewUIDs_UniquePerResource(t *testing.T) {
 		Branch: "feature/branch",
 	}
 
-	err := ExportResources(context.Background(), options, resourceClients, repoResources, mockProgress, true)
+	err := ExportResources(t.Context(), options, resourceClients, repoResources, mockProgress, true)
 	require.NoError(t, err)
 
 	require.Len(t, generatedNames, 2, "should have written 2 resources")

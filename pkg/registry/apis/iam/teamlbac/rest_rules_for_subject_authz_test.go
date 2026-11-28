@@ -42,7 +42,7 @@ func TestRulesForSubjectRESTListsTeamsWithInternalServiceIdentity(t *testing.T) 
 					Rest: authn.AccessTokenClaims{Permissions: []string{"iam.grafana.app/teamlbacrules:get"}},
 				},
 			}
-			ctx := identity.WithRequester(context.Background(), caller)
+			ctx := identity.WithRequester(t.Context(), caller)
 			ctx = k8srequest.WithNamespace(ctx, namespace)
 			conn := &unexpectedAuthzConnection{t: t}
 			accessClient := authz.NewClient(conn)
@@ -66,7 +66,7 @@ func TestRulesForSubjectRESTListsTeamsWithInternalServiceIdentity(t *testing.T) 
 			})
 			handler := NewRulesForSubjectREST(ruleGetter, teamStore, tracer, prometheus.NewRegistry())
 			responder := &testResponder{}
-			httpHandler, err := handler.Connect(context.Background(), "prometheus.datasource-a", nil, responder)
+			httpHandler, err := handler.Connect(t.Context(), "prometheus.datasource-a", nil, responder)
 			require.NoError(t, err)
 			ctx = k8srequest.WithRequestInfo(ctx, &k8srequest.RequestInfo{Parts: subjectRequestParts("user", "user-a")})
 			httpHandler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx))

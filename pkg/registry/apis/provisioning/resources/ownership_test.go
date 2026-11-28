@@ -1,7 +1,6 @@
 package resources
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -177,7 +176,7 @@ func TestCheckResourceOwnership(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := CheckResourceOwnership(context.Background(), tt.existingResource, "test-resource", tt.requestingManager)
+			err := CheckResourceOwnership(t.Context(), tt.existingResource, "test-resource", tt.requestingManager)
 
 			if tt.expectError {
 				require.Error(t, err)
@@ -207,7 +206,7 @@ func TestCheckResourceOwnership_TakeoverAllowlist(t *testing.T) {
 	}
 
 	t.Run("unmanaged resource rejected without allowlist", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		err := CheckResourceOwnership(ctx, unmanagedResource, "dash-abc", requestingManager)
 		require.Error(t, err)
 
@@ -219,7 +218,7 @@ func TestCheckResourceOwnership_TakeoverAllowlist(t *testing.T) {
 		allowlist := NewTakeoverAllowlist(map[ResourceIdentifier]struct{}{
 			{Name: "dash-abc", Group: "dashboard.grafana.app", Kind: "Dashboard"}: {},
 		})
-		ctx := WithTakeoverAllowlist(context.Background(), allowlist)
+		ctx := WithTakeoverAllowlist(t.Context(), allowlist)
 
 		err := CheckResourceOwnership(ctx, unmanagedResource, "dash-abc", requestingManager)
 		require.NoError(t, err)
@@ -229,7 +228,7 @@ func TestCheckResourceOwnership_TakeoverAllowlist(t *testing.T) {
 		allowlist := NewTakeoverAllowlist(map[ResourceIdentifier]struct{}{
 			{Name: "other-dash", Group: "dashboard.grafana.app", Kind: "Dashboard"}: {},
 		})
-		ctx := WithTakeoverAllowlist(context.Background(), allowlist)
+		ctx := WithTakeoverAllowlist(t.Context(), allowlist)
 
 		err := CheckResourceOwnership(ctx, unmanagedResource, "dash-abc", requestingManager)
 		require.Error(t, err)
@@ -240,14 +239,14 @@ func TestCheckResourceOwnership_TakeoverAllowlist(t *testing.T) {
 
 	t.Run("empty allowlist still rejects unmanaged resource", func(t *testing.T) {
 		allowlist := NewTakeoverAllowlist(map[ResourceIdentifier]struct{}{})
-		ctx := WithTakeoverAllowlist(context.Background(), allowlist)
+		ctx := WithTakeoverAllowlist(t.Context(), allowlist)
 
 		err := CheckResourceOwnership(ctx, unmanagedResource, "dash-abc", requestingManager)
 		require.Error(t, err)
 	})
 
 	t.Run("nil existing resource always allowed regardless of allowlist", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		err := CheckResourceOwnership(ctx, nil, "dash-abc", requestingManager)
 		require.NoError(t, err)
 	})

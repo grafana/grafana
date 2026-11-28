@@ -357,7 +357,7 @@ func TestRecordFailure(t *testing.T) {
 					})
 			}
 
-			err := hc.RecordFailure(context.Background(), tt.failureType, tt.err, repo)
+			err := hc.RecordFailure(t.Context(), tt.failureType, tt.err, repo)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -583,7 +583,7 @@ func TestRefreshHealth(t *testing.T) {
 				}
 			}
 
-			testResult, healthStatus, err := hc.RefreshHealth(context.Background(), mockRepo)
+			testResult, healthStatus, err := hc.RefreshHealth(t.Context(), mockRepo)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -719,7 +719,7 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 			hc := NewRepositoryHealthChecker(nil, repository.NewTester(validator), mockMetricsRecorder)
 
 			// Call RefreshHealthWithPatchOps
-			result, err := hc.RefreshHealthWithPatchOps(context.Background(), mockRepo)
+			result, err := hc.RefreshHealthWithPatchOps(t.Context(), mockRepo)
 
 			// Verify error
 			if tt.expectError {

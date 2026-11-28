@@ -1,7 +1,6 @@
 package resourcepermission
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -181,7 +180,7 @@ func TestMappersRegistry_SharedDatasourceGroup(t *testing.T) {
 	parsed, err := m.ParseScope("datasources:uid:ds1")
 	require.NoError(t, err)
 	assert.Equal(t, &groupResourceName{Group: gr.Group, Resource: gr.Resource, Name: "ds1"}, parsed)
-	parsedCtx, err := m.ParseScopeCtx(context.Background(), types.NamespaceInfo{}, nil, "datasources:uid:ds1")
+	parsedCtx, err := m.ParseScopeCtx(t.Context(), types.NamespaceInfo{}, nil, "datasources:uid:ds1")
 	require.NoError(t, err)
 	assert.Equal(t, parsed, parsedCtx)
 }

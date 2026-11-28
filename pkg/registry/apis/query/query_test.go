@@ -191,7 +191,7 @@ func TestQueryAPI(t *testing.T) {
 				reportStatus:           func(context.Context, int) {},
 			}
 
-			reqCtx := claims.WithAuthInfo(identity.WithRequester(context.Background(), mockUser{}), &mockAuthInfo{})
+			reqCtx := claims.WithAuthInfo(identity.WithRequester(t.Context(), mockUser{}), &mockAuthInfo{})
 
 			req := httptest.NewRequestWithContext(reqCtx, http.MethodPost, "/some-path", bytes.NewReader([]byte(tc.queryJSON)))
 			req.Header.Set("Content-Type", "application/json")

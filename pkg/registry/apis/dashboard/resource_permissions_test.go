@@ -1,7 +1,6 @@
 package dashboard
 
 import (
-	"context"
 	"testing"
 
 	"github.com/grafana/authlib/types"
@@ -41,8 +40,8 @@ func TestDashboardDefaultResourcePermissionsUseRPClient(t *testing.T) {
 		b := &DashboardsAPIBuilder{resourcePermissions: rpclient.New(rpclient.Static(resourceClient), gr)}
 		_, meta := newDashboard("dashboard-uid", "")
 		id := &identity.StaticRequester{Type: types.TypeUser, UserUID: "user-123"}
-		require.NoError(t, b.setDefaultDashboardPermissions(context.Background(), nil, id, meta))
-		rp, err := resourceClient.Namespace("org-7").Get(context.Background(), rpclient.Name(gr, "dashboard-uid"), metav1.GetOptions{})
+		require.NoError(t, b.setDefaultDashboardPermissions(t.Context(), nil, id, meta))
+		rp, err := resourceClient.Namespace("org-7").Get(t.Context(), rpclient.Name(gr, "dashboard-uid"), metav1.GetOptions{})
 		require.NoError(t, err)
 		permissions, found, err := unstructured.NestedSlice(rp.Object, "spec", "permissions")
 		require.NoError(t, err)
@@ -59,17 +58,17 @@ func TestDashboardDefaultResourcePermissionsUseRPClient(t *testing.T) {
 		resourceClient := dyn.Resource(gvr)
 		b := &DashboardsAPIBuilder{resourcePermissions: rpclient.New(rpclient.Static(resourceClient), gr)}
 		_, meta := newDashboard("dashboard-uid", "parent-folder")
-		require.NoError(t, b.setDefaultDashboardPermissions(context.Background(), nil, &identity.StaticRequester{Type: types.TypeUser, UserUID: "user-123"}, meta))
+		require.NoError(t, b.setDefaultDashboardPermissions(t.Context(), nil, &identity.StaticRequester{Type: types.TypeUser, UserUID: "user-123"}, meta))
 		require.Empty(t, dyn.Actions())
 		_, rootMeta := newDashboard("dashboard-uid", "")
-		require.NoError(t, (&DashboardsAPIBuilder{}).setDefaultDashboardPermissions(context.Background(), nil, &identity.StaticRequester{}, rootMeta))
+		require.NoError(t, (&DashboardsAPIBuilder{}).setDefaultDashboardPermissions(t.Context(), nil, &identity.StaticRequester{}, rootMeta))
 		require.Empty(t, dyn.Actions())
 	})
 
 	t.Run("after delete removes matching permissions", func(t *testing.T) {
 		rpName := rpclient.Name(gr, "dashboard-uid")
 		dyn := newClient()
-		_, err := dyn.Resource(gvr).Namespace("org-7").Create(context.Background(), &unstructured.Unstructured{Object: map[string]any{
+		_, err := dyn.Resource(gvr).Namespace("org-7").Create(t.Context(), &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": iamv0.ResourcePermissionInfo.GroupVersion().String(), "kind": "ResourcePermission",
 			"metadata": map[string]any{"name": rpName, "namespace": "org-7"},
 		}}, metav1.CreateOptions{})
@@ -78,7 +77,7 @@ func TestDashboardDefaultResourcePermissionsUseRPClient(t *testing.T) {
 		b := &DashboardsAPIBuilder{resourcePermissions: rpclient.New(rpclient.Static(resourceClient), gr)}
 		obj, _ := newDashboard("dashboard-uid", "")
 		b.afterDelete(obj, &metav1.DeleteOptions{})
-		_, err = resourceClient.Namespace("org-7").Get(context.Background(), rpName, metav1.GetOptions{})
+		_, err = resourceClient.Namespace("org-7").Get(t.Context(), rpName, metav1.GetOptions{})
 		require.True(t, apierrors.IsNotFound(err))
 	})
 }

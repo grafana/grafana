@@ -85,13 +85,13 @@ func TestWorker_IsSupported(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			job := provisioning.Job{Spec: provisioning.JobSpec{Action: tt.action}}
-			require.Equal(t, tt.expected, w.IsSupported(context.Background(), job))
+			require.Equal(t, tt.expected, w.IsSupported(t.Context(), job))
 		})
 	}
 }
 
 func TestWorker_Process(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	lister := resources.NewMockResourceLister(t)
 	clientFactory := resources.NewMockClientFactory(t)
 	mockClients := resources.NewMockResourceClients(t)
@@ -132,7 +132,7 @@ func TestWorker_Process(t *testing.T) {
 }
 
 func TestWorker_Process_EmptyResourceList(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	lister := resources.NewMockResourceLister(t)
 	w := NewWorker(lister, nil, 1)
 
@@ -155,7 +155,7 @@ func TestWorker_Process_EmptyResourceList(t *testing.T) {
 }
 
 func TestWorker_Process_ListError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	lister := resources.NewMockResourceLister(t)
 	w := NewWorker(lister, nil, 1)
 
@@ -194,13 +194,13 @@ func TestWorker_Process_HealthyRepoRejected(t *testing.T) {
 
 	progress := jobs.NewMockJobProgressRecorder(t)
 
-	err := w.Process(context.Background(), mockRepo, job, progress)
+	err := w.Process(t.Context(), mockRepo, job, progress)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "was recreated")
 }
 
 func TestWorker_Process_NotFoundResourceSkipped(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	lister := resources.NewMockResourceLister(t)
 	clientFactory := resources.NewMockClientFactory(t)
 	mockClients := resources.NewMockResourceClients(t)

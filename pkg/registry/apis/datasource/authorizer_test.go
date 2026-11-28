@@ -218,7 +218,7 @@ func TestGetAuthorizer_NoUser(t *testing.T) {
 	client := &recordingAccessClient{}
 	b := newAuthorizerTestBuilder(client)
 
-	decision, _, err := b.GetAuthorizer().Authorize(context.Background(), authorizer.AttributesRecord{
+	decision, _, err := b.GetAuthorizer().Authorize(t.Context(), authorizer.AttributesRecord{
 		ResourceRequest: true,
 		Verb:            "get",
 	})

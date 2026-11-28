@@ -221,7 +221,7 @@ func TestNewAPIService_AuthorizesWhoami(t *testing.T) {
 		{name: "namespaced", verb: "list", namespace: "default", want: authorizer.DecisionDeny},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 			if !tc.noIdentity {
 				ctx = authlib.WithAuthInfo(ctx, newTestAuthInfo())
 			}
@@ -273,7 +273,7 @@ func TestNewAPIService_AuthorizesDisplay(t *testing.T) {
 		{name: "anonymous", verb: "list", anonymous: true, want: authorizer.DecisionDeny},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 			if tc.anonymous {
 				ctx = identity.WithRequester(ctx, &identity.StaticRequester{Type: authlib.TypeAnonymous})
 			} else if !tc.noIdentity {
@@ -313,7 +313,7 @@ func TestNewAPIService_AuthorizesSSOSettings(t *testing.T) {
 
 	t.Run("denies provider access for every identity type and verb", func(t *testing.T) {
 		for _, typ := range []authlib.IdentityType{authlib.TypeAccessPolicy, authlib.TypeUser, authlib.TypeAnonymous, authlib.TypeUnauthenticated} {
-			ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: typ})
+			ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: typ})
 			for _, verb := range []string{"get", "list", "watch", "create", "update", "patch", "delete"} {
 				name := "github"
 				if verb == "list" || verb == "watch" || verb == "create" {
@@ -341,14 +341,14 @@ func TestNewAPIService_AuthorizesSSOSettings(t *testing.T) {
 	}
 
 	t.Run("allows an unauthenticated read of the login config", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeUnauthenticated})
+		ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: authlib.TypeUnauthenticated})
 		decision, _, err := b.authorizer.Authorize(ctx, loginConfigAttrs("get"))
 		require.NoError(t, err)
 		require.Equal(t, authorizer.DecisionAllow, decision)
 	})
 
 	t.Run("denies unauthenticated writes to the login config", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeUnauthenticated})
+		ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: authlib.TypeUnauthenticated})
 		for _, verb := range []string{"create", "update", "patch", "delete"} {
 			decision, _, err := b.authorizer.Authorize(ctx, loginConfigAttrs(verb))
 			require.NoError(t, err)
@@ -357,7 +357,7 @@ func TestNewAPIService_AuthorizesSSOSettings(t *testing.T) {
 	})
 
 	t.Run("denies the login config without an identity", func(t *testing.T) {
-		decision, _, _ := b.authorizer.Authorize(context.Background(), loginConfigAttrs("get"))
+		decision, _, _ := b.authorizer.Authorize(t.Context(), loginConfigAttrs("get"))
 		require.Equal(t, authorizer.DecisionDeny, decision)
 	})
 }
@@ -423,7 +423,7 @@ func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
 	route.Handler(response, httptest.NewRequest(http.MethodGet, "/apis/iam.grafana.app/v0alpha1/namespaces/org-1/teamlbacusage", nil))
 	require.Equal(t, http.StatusForbidden, response.Code)
 	require.NotContains(t, response.Body.String(), "counts")
-	decision, _, err := b.teamLBACApiInstaller.GetTeamLBACUsageAuthorizer().Authorize(context.Background(), authorizer.AttributesRecord{
+	decision, _, err := b.teamLBACApiInstaller.GetTeamLBACUsageAuthorizer().Authorize(t.Context(), authorizer.AttributesRecord{
 		ResourceRequest: true, Resource: "teamlbacusage", Verb: "list", Namespace: "org-1",
 	})
 	require.NoError(t, err)

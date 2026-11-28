@@ -122,7 +122,7 @@ func TestWhoamiAuthorizer(t *testing.T) {
 		{name: "namespaced", verb: "list", namespace: "default", want: authorizer.DecisionDeny},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 			if !tc.noIdentity {
 				ctx = types.WithAuthInfo(ctx, newTestAuthInfo())
 			}
@@ -163,7 +163,7 @@ func TestAllowSelfAuthorizerAllowsCurrentUserPermissions(t *testing.T) {
 		return authorizer.DecisionDeny, "base authorizer", nil
 	})
 	authz := allowSelfAuthorizer(base)
-	ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+	ctx := types.WithAuthInfo(t.Context(), newTestAuthInfo())
 	attr := authorizer.AttributesRecord{
 		ResourceRequest: true,
 		Verb:            "get",
@@ -185,7 +185,7 @@ func TestAllowSelfAuthorizerDelegatesOtherRequests(t *testing.T) {
 		return authorizer.DecisionDeny, "base authorizer", nil
 	})
 	authz := allowSelfAuthorizer(base)
-	ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+	ctx := types.WithAuthInfo(t.Context(), newTestAuthInfo())
 
 	for _, attr := range []authorizer.AttributesRecord{
 		{ResourceRequest: true, Verb: "update", Resource: "users", Subresource: "permissions", Name: "~"},
@@ -217,7 +217,7 @@ func TestTeamLBACRuleAuthorizer(t *testing.T) {
 	}
 
 	t.Run("denies a request without an authenticated identity", func(t *testing.T) {
-		decision, reason, err := authz.Authorize(context.Background(), forSubject)
+		decision, reason, err := authz.Authorize(t.Context(), forSubject)
 		require.NoError(t, err)
 		require.Equal(t, authorizer.DecisionDeny, decision)
 		require.Equal(t, "for-subject requires an authenticated service identity", reason)
@@ -227,7 +227,7 @@ func TestTeamLBACRuleAuthorizer(t *testing.T) {
 		authInfo := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 			Rest: authn.AccessTokenClaims{Permissions: []string{"iam.grafana.app:*"}},
 		})
-		decision, _, err := authz.Authorize(types.WithAuthInfo(context.Background(), authInfo), forSubject)
+		decision, _, err := authz.Authorize(types.WithAuthInfo(t.Context(), authInfo), forSubject)
 		require.NoError(t, err)
 		require.Equal(t, authorizer.DecisionAllow, decision)
 	})
@@ -236,7 +236,7 @@ func TestTeamLBACRuleAuthorizer(t *testing.T) {
 		authInfo := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 			Rest: authn.AccessTokenClaims{Permissions: []string{"iam.grafana.app/teamlbacrules:get"}},
 		})
-		decision, _, err := authz.Authorize(types.WithAuthInfo(context.Background(), authInfo), forSubject)
+		decision, _, err := authz.Authorize(types.WithAuthInfo(t.Context(), authInfo), forSubject)
 		require.NoError(t, err)
 		require.Equal(t, authorizer.DecisionAllow, decision)
 	})
@@ -245,7 +245,7 @@ func TestTeamLBACRuleAuthorizer(t *testing.T) {
 		authInfo := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 			Rest: authn.AccessTokenClaims{Permissions: []string{"iam.grafana.app/teams:get"}},
 		})
-		decision, reason, err := authz.Authorize(types.WithAuthInfo(context.Background(), authInfo), forSubject)
+		decision, reason, err := authz.Authorize(types.WithAuthInfo(t.Context(), authInfo), forSubject)
 		require.NoError(t, err)
 		require.Equal(t, authorizer.DecisionDeny, decision)
 		require.Equal(t, "calling service lacks TeamLBACRule read permission", reason)
@@ -258,7 +258,7 @@ func TestTeamLBACRuleAuthorizer(t *testing.T) {
 			},
 			&authn.Claims[authn.IDTokenClaims]{Rest: authn.IDTokenClaims{Type: types.TypeUser}},
 		)
-		decision, reason, err := authz.Authorize(types.WithAuthInfo(context.Background(), authInfo), forSubject)
+		decision, reason, err := authz.Authorize(types.WithAuthInfo(t.Context(), authInfo), forSubject)
 		require.NoError(t, err)
 		require.Equal(t, authorizer.DecisionDeny, decision)
 		require.Equal(t, "for-subject only accepts direct service calls", reason)
@@ -268,7 +268,7 @@ func TestTeamLBACRuleAuthorizer(t *testing.T) {
 		baseCalled = false
 		baseGet := forSubject
 		baseGet.Subresource = ""
-		decision, _, err := authz.Authorize(context.Background(), baseGet)
+		decision, _, err := authz.Authorize(t.Context(), baseGet)
 		require.NoError(t, err)
 		require.Equal(t, authorizer.DecisionAllow, decision)
 		require.True(t, baseCalled)
@@ -291,7 +291,7 @@ func TestAuthorizerCheckRequest(t *testing.T) {
 					}
 
 					auth := sc.newAuthorizer(fakeClient)
-					ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+					ctx := types.WithAuthInfo(t.Context(), newTestAuthInfo())
 
 					attr := authorizer.AttributesRecord{
 						ResourceRequest: true,
@@ -401,7 +401,7 @@ func TestAuthorizerDecisionMatrix(t *testing.T) {
 					}
 
 					auth := sc.newAuthorizer(&fakeAccessClient{checkFunc: wrappedCheck})
-					ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+					ctx := types.WithAuthInfo(t.Context(), newTestAuthInfo())
 
 					attr := authorizer.AttributesRecord{
 						ResourceRequest: tt.resourceRequest,
@@ -435,7 +435,7 @@ func TestAuthorizerDecisionMatrix(t *testing.T) {
 // it through the ResourceAuthorizer would 403 any user who cannot read every
 // item. Named get and named list stay strict.
 func TestAuthorizerListDefersToStorage(t *testing.T) {
-	ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+	ctx := types.WithAuthInfo(t.Context(), newTestAuthInfo())
 
 	for _, sc := range authorizerScenarios {
 		t.Run(sc.name, func(t *testing.T) {
@@ -460,7 +460,7 @@ func TestAuthorizerListDefersToStorage(t *testing.T) {
 
 			t.Run("nameless list denied without identity", func(t *testing.T) {
 				checkCalled := false
-				decision, _, err := newAuth(&checkCalled).Authorize(context.Background(), attr("list", ""))
+				decision, _, err := newAuth(&checkCalled).Authorize(t.Context(), attr("list", ""))
 				require.NoError(t, err)
 				assert.Equal(t, authorizer.DecisionDeny, decision)
 				assert.False(t, checkCalled)
@@ -517,7 +517,7 @@ func TestSSOSettingAuthorizerCheckRequest(t *testing.T) {
 					return types.CheckResponse{Allowed: true}, nil
 				},
 			}
-			ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: types.TypeUser})
+			ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: types.TypeUser})
 
 			decision, _, err := newSSOSettingAuthorizer(client).Authorize(ctx, ssoSettingAttr(verb, "github"))
 			require.NoError(t, err)
@@ -542,7 +542,7 @@ func TestSSOSettingAuthorizerCreateDefersToStorage(t *testing.T) {
 		checkCalled = true
 		return types.CheckResponse{Allowed: false}, nil
 	}}
-	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: types.TypeUser})
+	ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: types.TypeUser})
 
 	decision, _, err := newSSOSettingAuthorizer(client).Authorize(ctx, ssoSettingAttr("create", ""))
 	require.NoError(t, err)
@@ -552,7 +552,7 @@ func TestSSOSettingAuthorizerCreateDefersToStorage(t *testing.T) {
 
 // TestSSOSettingAuthorizerDecisions covers the deny/allow/error paths for a named verb.
 func TestSSOSettingAuthorizerDecisions(t *testing.T) {
-	userCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: types.TypeUser})
+	userCtx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: types.TypeUser})
 
 	t.Run("allowed", func(t *testing.T) {
 		client := &fakeAccessClient{checkFunc: func(context.Context, types.AuthInfo, types.CheckRequest, string) (types.CheckResponse, error) {
@@ -597,7 +597,7 @@ func TestSSOSettingAuthorizerIdentityGuards(t *testing.T) {
 
 	t.Run("no identity denied", func(t *testing.T) {
 		checkCalled := false
-		decision, reason, err := newAuth(&checkCalled).Authorize(context.Background(), ssoSettingAttr("get", "github"))
+		decision, reason, err := newAuth(&checkCalled).Authorize(t.Context(), ssoSettingAttr("get", "github"))
 		require.NoError(t, err)
 		assert.Equal(t, authorizer.DecisionDeny, decision)
 		assert.Equal(t, "cannot access ssosettings without an identity", reason)
@@ -606,7 +606,7 @@ func TestSSOSettingAuthorizerIdentityGuards(t *testing.T) {
 
 	t.Run("anonymous denied", func(t *testing.T) {
 		checkCalled := false
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: types.TypeAnonymous})
+		ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: types.TypeAnonymous})
 		decision, reason, err := newAuth(&checkCalled).Authorize(ctx, ssoSettingAttr("get", "github"))
 		require.NoError(t, err)
 		assert.Equal(t, authorizer.DecisionDeny, decision)
@@ -616,7 +616,7 @@ func TestSSOSettingAuthorizerIdentityGuards(t *testing.T) {
 
 	t.Run("nameless list allowed for authenticated caller without Check", func(t *testing.T) {
 		checkCalled := false
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: types.TypeUser})
+		ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: types.TypeUser})
 		decision, _, err := newAuth(&checkCalled).Authorize(ctx, ssoSettingAttr("list", ""))
 		require.NoError(t, err)
 		assert.Equal(t, authorizer.DecisionAllow, decision)
@@ -625,7 +625,7 @@ func TestSSOSettingAuthorizerIdentityGuards(t *testing.T) {
 
 	t.Run("nameless list denied for anonymous without Check", func(t *testing.T) {
 		checkCalled := false
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: types.TypeAnonymous})
+		ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: types.TypeAnonymous})
 		decision, reason, err := newAuth(&checkCalled).Authorize(ctx, ssoSettingAttr("list", ""))
 		require.NoError(t, err)
 		assert.Equal(t, authorizer.DecisionDeny, decision)
@@ -635,7 +635,7 @@ func TestSSOSettingAuthorizerIdentityGuards(t *testing.T) {
 
 	t.Run("nameless list denied without identity", func(t *testing.T) {
 		checkCalled := false
-		decision, _, err := newAuth(&checkCalled).Authorize(context.Background(), ssoSettingAttr("list", ""))
+		decision, _, err := newAuth(&checkCalled).Authorize(t.Context(), ssoSettingAttr("list", ""))
 		require.NoError(t, err)
 		assert.Equal(t, authorizer.DecisionDeny, decision)
 		assert.False(t, checkCalled)
@@ -643,7 +643,7 @@ func TestSSOSettingAuthorizerIdentityGuards(t *testing.T) {
 
 	t.Run("login-config singleton allowed for anonymous without Check", func(t *testing.T) {
 		checkCalled := false
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: types.TypeAnonymous})
+		ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: types.TypeAnonymous})
 		decision, _, err := newAuth(&checkCalled).Authorize(ctx, ssoSettingAttr("get", sso.LoginConfigName))
 		require.NoError(t, err)
 		assert.Equal(t, authorizer.DecisionAllow, decision)
@@ -652,7 +652,7 @@ func TestSSOSettingAuthorizerIdentityGuards(t *testing.T) {
 
 	t.Run("login-config singleton allowed with no identity without Check", func(t *testing.T) {
 		checkCalled := false
-		decision, _, err := newAuth(&checkCalled).Authorize(context.Background(), ssoSettingAttr("get", sso.LoginConfigName))
+		decision, _, err := newAuth(&checkCalled).Authorize(t.Context(), ssoSettingAttr("get", sso.LoginConfigName))
 		require.NoError(t, err)
 		assert.Equal(t, authorizer.DecisionAllow, decision)
 		assert.False(t, checkCalled)
@@ -661,7 +661,7 @@ func TestSSOSettingAuthorizerIdentityGuards(t *testing.T) {
 	// The carve-out is GET-only: a write to "~" must still go through Check.
 	t.Run("write to login-config singleton is not exempt", func(t *testing.T) {
 		checkCalled := false
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: types.TypeUser})
+		ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: types.TypeUser})
 		_, _, err := newAuth(&checkCalled).Authorize(ctx, ssoSettingAttr("update", sso.LoginConfigName))
 		require.NoError(t, err)
 		assert.True(t, checkCalled, "a write to ~ must not use the public GET carve-out")
@@ -693,7 +693,7 @@ func TestUserAuthorizerStatusVerbMapping(t *testing.T) {
 			}
 
 			auth := newUserAuthorizer(fakeClient)
-			ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+			ctx := types.WithAuthInfo(t.Context(), newTestAuthInfo())
 
 			attr := authorizer.AttributesRecord{
 				ResourceRequest: true,

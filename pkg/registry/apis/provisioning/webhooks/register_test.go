@@ -103,7 +103,7 @@ func TestWebhookExtraBuilder_WebhookURL(t *testing.T) {
 				urlProvider: tt.urlProvider,
 			}
 
-			result := builder.WebhookURL(context.Background(), tt.repo)
+			result := builder.WebhookURL(t.Context(), tt.repo)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -154,7 +154,7 @@ func TestResolvePublicURL(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
 				Spec:       provisioning.RepositorySpec{Webhook: tt.repoWebhook},
 			}
-			assert.Equal(t, tt.expected, builder.WebhookURL(context.Background(), repo))
+			assert.Equal(t, tt.expected, builder.WebhookURL(t.Context(), repo))
 		})
 	}
 }

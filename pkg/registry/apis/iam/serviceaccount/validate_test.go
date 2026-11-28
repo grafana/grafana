@@ -1,7 +1,6 @@
 package serviceaccount
 
 import (
-	"context"
 	"strings"
 	"testing"
 
@@ -242,7 +241,7 @@ func TestValidateOnCreate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := identity.WithRequester(
-				context.Background(),
+				t.Context(),
 				tt.requester,
 			)
 
@@ -445,7 +444,7 @@ func TestValidateOnUpdate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := identity.WithRequester(
-				context.Background(),
+				t.Context(),
 				tt.requester,
 			)
 
@@ -471,7 +470,7 @@ func TestValidateOnUpdate_NoRequester(t *testing.T) {
 		},
 	}
 
-	err := ValidateOnUpdate(context.Background(), serviceAccount, serviceAccount)
+	err := ValidateOnUpdate(t.Context(), serviceAccount, serviceAccount)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "no identity found")
 }
@@ -484,7 +483,7 @@ func TestValidateOnCreate_NoRequester(t *testing.T) {
 		},
 	}
 
-	err := ValidateOnCreate(context.Background(), serviceAccount)
+	err := ValidateOnCreate(t.Context(), serviceAccount)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "no identity found")
 }

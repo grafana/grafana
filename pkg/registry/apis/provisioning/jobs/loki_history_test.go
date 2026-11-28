@@ -110,7 +110,7 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 		jobCopy := job.DeepCopy()
 		delete(jobCopy.Labels, LabelJobClaim)
 
-		stream := history.jobToStream(context.Background(), jobCopy)
+		stream := history.jobToStream(t.Context(), jobCopy)
 
 		// Verify labels
 		assert.Equal(t, JobHistoryLabelValue, stream.Stream[JobHistoryLabelKey])
@@ -313,7 +313,7 @@ func TestLokiJobHistory_Integration(t *testing.T) {
 		).Return(nil)
 
 		// Execute WriteJob (using the integration job)
-		err := history.WriteJob(context.Background(), integrationJob)
+		err := history.WriteJob(t.Context(), integrationJob)
 		require.NoError(t, err)
 	})
 
@@ -347,7 +347,7 @@ func TestLokiJobHistory_Integration(t *testing.T) {
 		).Return(errors.New("loki push failed"))
 
 		// Execute WriteJob and expect error
-		err := history.WriteJob(context.Background(), testJob)
+		err := history.WriteJob(t.Context(), testJob)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to save job history")
 		assert.Contains(t, err.Error(), "loki push failed")
@@ -409,7 +409,7 @@ func TestLokiJobHistory_RecentJobs(t *testing.T) {
 		).Return(mockResult, nil)
 
 		// Execute RecentJobs
-		result, err := history.RecentJobs(context.Background(), "test-ns", "test-repo")
+		result, err := history.RecentJobs(t.Context(), "test-ns", "test-repo")
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Len(t, result.Items, 1)
@@ -441,7 +441,7 @@ func TestLokiJobHistory_RecentJobs(t *testing.T) {
 		).Return(loki.QueryRes{}, errors.New("loki query failed"))
 
 		// Execute RecentJobs and expect error
-		result, err := history.RecentJobs(context.Background(), "test-ns", "test-repo")
+		result, err := history.RecentJobs(t.Context(), "test-ns", "test-repo")
 		require.Error(t, err)
 		assert.Nil(t, result)
 		assert.Contains(t, err.Error(), "failed to query job history")
@@ -482,7 +482,7 @@ func TestLokiJobHistory_RecentJobs(t *testing.T) {
 		).Return(mockResult, nil)
 
 		// Execute RecentJobs - should handle invalid JSON gracefully
-		result, err := history.RecentJobs(context.Background(), "test-ns", "test-repo")
+		result, err := history.RecentJobs(t.Context(), "test-ns", "test-repo")
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		// Invalid JSON entries should be skipped
@@ -543,7 +543,7 @@ func TestLokiJobHistory_GetJob(t *testing.T) {
 		).Return(mockResult, nil)
 
 		// Execute GetJob
-		result, err := history.GetJob(context.Background(), "test-ns", "test-repo", "target-uid")
+		result, err := history.GetJob(t.Context(), "test-ns", "test-repo", "target-uid")
 		require.NoError(t, err)
 		require.NotNil(t, result)
 
@@ -577,7 +577,7 @@ func TestLokiJobHistory_GetJob(t *testing.T) {
 		).Return(mockResult, nil)
 
 		// Execute GetJob
-		result, err := history.GetJob(context.Background(), "test-ns", "test-repo", "missing-uid")
+		result, err := history.GetJob(t.Context(), "test-ns", "test-repo", "missing-uid")
 		require.Error(t, err)
 		assert.Nil(t, result)
 

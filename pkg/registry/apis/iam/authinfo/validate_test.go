@@ -33,7 +33,7 @@ func TestValidateOnCreate(t *testing.T) {
 			AuthID:     "cn=test",
 		},
 	}
-	adminCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: types.TypeUser, OrgRole: types.RoleAdmin})
+	adminCtx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: types.TypeUser, OrgRole: types.RoleAdmin})
 	someErr := errors.New("boom")
 
 	tests := []struct {
@@ -72,7 +72,7 @@ func TestValidateOnCreate(t *testing.T) {
 		},
 		{
 			name:       "no identity is unauthorized",
-			ctx:        context.Background(),
+			ctx:        t.Context(),
 			userGetter: fakeGetter{},
 			check: func(t *testing.T, err error) {
 				require.True(t, apierrors.IsUnauthorized(err), "got %v", err)
@@ -97,7 +97,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			},
 		}
 	}
-	adminCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: types.TypeUser, OrgRole: types.RoleAdmin})
+	adminCtx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: types.TypeUser, OrgRole: types.RoleAdmin})
 	old := newObj("user-1", "ldap", "cn=old")
 
 	t.Run("authID can change", func(t *testing.T) {
@@ -117,7 +117,7 @@ func TestValidateOnUpdate(t *testing.T) {
 	})
 
 	t.Run("no identity is unauthorized", func(t *testing.T) {
-		err := ValidateOnUpdate(context.Background(), newObj("user-1", "ldap", "cn=new"), old)
+		err := ValidateOnUpdate(t.Context(), newObj("user-1", "ldap", "cn=new"), old)
 		require.True(t, apierrors.IsUnauthorized(err), "got %v", err)
 	})
 }

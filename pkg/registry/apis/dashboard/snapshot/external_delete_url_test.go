@@ -1,7 +1,6 @@
 package snapshot
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -37,7 +36,7 @@ func TestExternalSnapshotUsesReturnedDeleteURL(t *testing.T) {
 			}
 			snap, err := convertCreateCmdToK8sSnapshot(cmd, "default")
 			require.NoError(t, err)
-			deleteURL, err := deleteSnapshotFromExternalHost(context.Background(), snap, dashv0.SnapshotSharingOptions{})
+			deleteURL, err := deleteSnapshotFromExternalHost(t.Context(), snap, dashv0.SnapshotSharingOptions{})
 			require.NoError(t, err)
 			require.Equal(t, cmd.ExternalDeleteURL, deleteURL)
 			require.True(t, called)

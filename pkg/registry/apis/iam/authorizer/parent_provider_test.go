@@ -146,7 +146,7 @@ func TestParentProviderImpl_GetParent(t *testing.T) {
 				clients: make(map[schema.GroupResource]dynamic.Interface),
 			}
 
-			parent, err := provider.GetParent(context.Background(), tt.gr, tt.namespace, tt.resourceName)
+			parent, err := provider.GetParent(t.Context(), tt.gr, tt.namespace, tt.resourceName)
 
 			if tt.expectedError != "" {
 				require.Error(t, err)

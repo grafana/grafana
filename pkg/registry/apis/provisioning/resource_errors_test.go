@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -29,7 +28,7 @@ func TestListConnector_StorageErrors(t *testing.T) {
 			lister := resources.NewMockResourceLister(t)
 			lister.EXPECT().List(mock.Anything, "default", "repo", resources.ListOptions{}).Return(nil, tc.err).Once()
 			responder := &testResponder{}
-			ctx := request.WithNamespace(context.Background(), "default")
+			ctx := request.WithNamespace(t.Context(), "default")
 			handler, err := NewListConnector(nil, lister).Connect(ctx, "repo", nil, responder)
 			require.NoError(t, err)
 			req := httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx)
@@ -49,7 +48,7 @@ func TestStatsConnector_StorageErrors(t *testing.T) {
 			lister := resources.NewMockResourceLister(t)
 			lister.EXPECT().RepositoryStats(mock.Anything, "default", "repo").Return(nil, tc.err).Once()
 			responder := &testResponder{}
-			ctx := request.WithNamespace(context.Background(), "default")
+			ctx := request.WithNamespace(t.Context(), "default")
 			handler, err := NewStatsConnector(lister).Connect(ctx, "repo", nil, responder)
 			require.NoError(t, err)
 			req := httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx)
@@ -69,7 +68,7 @@ func TestHandleStats_StorageErrors(t *testing.T) {
 			stats := resources.NewMockNamespaceStatsReader(t)
 			stats.EXPECT().Stats(mock.Anything, "default").Return(nil, tc.err).Once()
 			b := &APIBuilder{namespaceStats: stats}
-			ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{Namespace: "default"})
+			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Namespace: "default"})
 			w := httptest.NewRecorder()
 			b.handleStats(w, httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx))
 			tc.assertResponse(t, w)

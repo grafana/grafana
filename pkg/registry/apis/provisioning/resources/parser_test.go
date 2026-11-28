@@ -1,7 +1,6 @@
 package resources
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -50,7 +49,7 @@ func TestParser(t *testing.T) {
 	}
 
 	t.Run("invalid input", func(t *testing.T) {
-		_, err := parser.Parse(context.Background(), &repository.FileInfo{
+		_, err := parser.Parse(t.Context(), &repository.FileInfo{
 			Data: []byte("hello"), // not a real resource
 		})
 		require.Error(t, err)
@@ -61,7 +60,7 @@ func TestParser(t *testing.T) {
 	})
 
 	t.Run("dashboard parsing (with and without name)", func(t *testing.T) {
-		dash, err := parser.Parse(context.Background(), &repository.FileInfo{
+		dash, err := parser.Parse(t.Context(), &repository.FileInfo{
 			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
 kind: Dashboard
 metadata:
@@ -78,7 +77,7 @@ spec:
 		require.Equal(t, "v0alpha1", dash.GVR.Version)
 
 		// Now try again without a name
-		_, err = parser.Parse(context.Background(), &repository.FileInfo{
+		_, err = parser.Parse(t.Context(), &repository.FileInfo{
 			Data: []byte(`apiVersion: ` + dashboardV1.APIVERSION + `
 kind: Dashboard
 spec:
@@ -89,7 +88,7 @@ spec:
 	})
 
 	t.Run("generate name will generate a name", func(t *testing.T) {
-		dash, err := parser.Parse(context.Background(), &repository.FileInfo{
+		dash, err := parser.Parse(t.Context(), &repository.FileInfo{
 			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
 kind: Dashboard
 metadata:
@@ -117,7 +116,7 @@ spec:
 	})
 
 	t.Run("dashboard classic format", func(t *testing.T) {
-		dash, err := parser.Parse(context.Background(), &repository.FileInfo{
+		dash, err := parser.Parse(t.Context(), &repository.FileInfo{
 			Data: []byte(`{ "uid": "test", "schemaVersion": 30, "panels": [], "tags": [] }`),
 		})
 		require.NoError(t, err)
@@ -134,7 +133,7 @@ spec:
 		// storage layer, not the repository. Leaving the ID label on a create would
 		// bypass the eventually-consistent uniqueness guard and can reintroduce
 		// duplicate IDs when several dashboards sync together.
-		dash, err := parser.Parse(context.Background(), &repository.FileInfo{
+		dash, err := parser.Parse(t.Context(), &repository.FileInfo{
 			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
 kind: Dashboard
 metadata:
@@ -183,7 +182,7 @@ spec:
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				dash, err := parser.Parse(context.Background(), &repository.FileInfo{
+				dash, err := parser.Parse(t.Context(), &repository.FileInfo{
 					Path: tc.filePath,
 					Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
 kind: Dashboard
@@ -311,7 +310,7 @@ func TestParser_FolderAnnotationGuard(t *testing.T) {
 	}
 
 	t.Run("folder-scoped resource still gets a folder annotation", func(t *testing.T) {
-		parsed, err := parser.Parse(context.Background(), &repository.FileInfo{
+		parsed, err := parser.Parse(t.Context(), &repository.FileInfo{
 			Path: "team-a/test-dashboard.json",
 			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
 kind: Dashboard
@@ -329,7 +328,7 @@ spec:
 	})
 
 	t.Run("org-scoped resource gets no folder annotation", func(t *testing.T) {
-		parsed, err := parser.Parse(context.Background(), &repository.FileInfo{
+		parsed, err := parser.Parse(t.Context(), &repository.FileInfo{
 			Path: "team-a/my-playlist.json",
 			Data: []byte(`apiVersion: playlist.grafana.app/v0alpha1
 kind: Playlist
@@ -386,7 +385,7 @@ spec:
 			reader:  reader,
 		}
 
-		parsed, err := p.Parse(context.Background(), &repository.FileInfo{
+		parsed, err := p.Parse(t.Context(), &repository.FileInfo{
 			Path: "team-a/dashboard.json",
 			Ref:  "feature-branch",
 			Data: []byte(dashboardYAML),
@@ -410,7 +409,7 @@ spec:
 			reader:  reader,
 		}
 
-		parsed, err := p.Parse(context.Background(), &repository.FileInfo{
+		parsed, err := p.Parse(t.Context(), &repository.FileInfo{
 			Path: "team-a/dashboard.json",
 			Ref:  "new-pr-branch",
 			Data: []byte(dashboardYAML),
@@ -435,7 +434,7 @@ spec:
 			reader:  reader,
 		}
 
-		parsed, err := p.Parse(context.Background(), &repository.FileInfo{
+		parsed, err := p.Parse(t.Context(), &repository.FileInfo{
 			Path: "team-a/dashboard.json",
 			Ref:  "new-pr-branch",
 			Data: []byte(dashboardYAML),
@@ -458,7 +457,7 @@ spec:
 			reader:  reader,
 		}
 
-		parsed, err := p.Parse(context.Background(), &repository.FileInfo{
+		parsed, err := p.Parse(t.Context(), &repository.FileInfo{
 			Path: "team-a/dashboard.json",
 			Ref:  "feature-branch",
 			Data: []byte(dashboardYAML),
@@ -647,7 +646,7 @@ func TestDryRunDeletePopulatesExisting(t *testing.T) {
 			Repo:   testRepoInfo(),
 		}
 
-		require.NoError(t, parsed.DryRun(context.Background()))
+		require.NoError(t, parsed.DryRun(t.Context()))
 		require.NotNil(t, parsed.Existing)
 		require.Equal(t, "my-resource", parsed.Existing.GetName())
 	})
@@ -666,7 +665,7 @@ func TestDryRunDeletePopulatesExisting(t *testing.T) {
 			Repo:   testRepoInfo(),
 		}
 
-		require.NoError(t, parsed.DryRun(context.Background()))
+		require.NoError(t, parsed.DryRun(t.Context()))
 		require.Nil(t, parsed.Upsert, "Upsert must remain nil for a dry run")
 		mockClient.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 		mockClient.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
@@ -687,7 +686,7 @@ func TestDryRunDeletePopulatesExisting(t *testing.T) {
 			Repo:   testRepoInfo(),
 		}
 
-		require.NoError(t, parsed.DryRun(context.Background()))
+		require.NoError(t, parsed.DryRun(t.Context()))
 		require.Nil(t, parsed.Existing)
 	})
 
@@ -705,7 +704,7 @@ func TestDryRunDeletePopulatesExisting(t *testing.T) {
 			Repo:   testRepoInfo(),
 		}
 
-		err := parsed.DryRun(context.Background())
+		err := parsed.DryRun(t.Context())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to get existing resource for delete dry run")
 		require.Contains(t, err.Error(), "connection refused")
@@ -720,7 +719,7 @@ func TestDryRunDeletePopulatesExisting(t *testing.T) {
 			}},
 		}
 
-		err := parsed.DryRun(context.Background())
+		err := parsed.DryRun(t.Context())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "no client configured")
 	})
@@ -741,7 +740,7 @@ func TestDryRunDeletePopulatesExisting(t *testing.T) {
 			Repo:   testRepoInfo(),
 		}
 
-		require.NoError(t, parsed.DryRun(context.Background()))
+		require.NoError(t, parsed.DryRun(t.Context()))
 		require.Equal(t, "team-a", parsed.ExistingFolder())
 	})
 }
@@ -820,7 +819,7 @@ func TestParsedResource_DryRun_FieldValidation(t *testing.T) {
 				Repo:                 testRepoInfo(),
 			}
 
-			require.NoError(t, parsed.DryRun(context.Background()))
+			require.NoError(t, parsed.DryRun(t.Context()))
 			mockClient.AssertExpectations(t)
 		})
 	}
@@ -851,7 +850,7 @@ func TestParsedResource_DryRun_CarriesResourceVersion(t *testing.T) {
 		Repo:   testRepoInfo(),
 	}
 
-	require.NoError(t, parsed.DryRun(context.Background()))
+	require.NoError(t, parsed.DryRun(t.Context()))
 	require.Equal(t, provisioning.ResourceActionUpdate, parsed.Action)
 	mockClient.AssertExpectations(t)
 }
@@ -1197,7 +1196,7 @@ func TestParserAcceptsSecureValuesForIdentityReads(t *testing.T) {
 		},
 	}
 
-	parsed, err := p.Parse(context.Background(), &repository.FileInfo{
+	parsed, err := p.Parse(t.Context(), &repository.FileInfo{
 		Path: "datasource.yaml",
 		Data: []byte(`apiVersion: ` + gvk.GroupVersion().String() + `
 kind: DataSource

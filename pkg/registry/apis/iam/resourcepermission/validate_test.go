@@ -1,7 +1,6 @@
 package resourcepermission
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -183,7 +182,7 @@ func TestValidateOnCreate(t *testing.T) {
 	mappers := NewMappersRegistry()
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := ValidateCreateAndUpdateInput(context.Background(), test.obj, mappers)
+			err := ValidateCreateAndUpdateInput(t.Context(), test.obj, mappers)
 			if test.want == nil {
 				assert.NoError(t, err)
 			} else {
@@ -300,7 +299,7 @@ func TestValidateOnCreate_KindAndVerbRestrictions(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := ValidateCreateAndUpdateInput(context.Background(), test.obj, mappers)
+			err := ValidateCreateAndUpdateInput(t.Context(), test.obj, mappers)
 			if test.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -351,7 +350,7 @@ func TestValidateDeleteInput(t *testing.T) {
 	mappers := NewMappersRegistry()
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := ValidateDeleteInput(context.Background(), test.objName, mappers)
+			err := ValidateDeleteInput(t.Context(), test.objName, mappers)
 			if test.want == nil {
 				assert.NoError(t, err)
 			} else {

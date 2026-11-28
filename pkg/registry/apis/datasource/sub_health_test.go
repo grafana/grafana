@@ -109,7 +109,7 @@ func TestSubHealthREST_Connect(t *testing.T) {
 		r := &subHealthREST{builder: builder}
 
 		responder := &mockHealthResponder{}
-		handler, err := r.Connect(context.Background(), "test-ds", nil, responder)
+		handler, err := r.Connect(t.Context(), "test-ds", nil, responder)
 
 		require.Error(t, err)
 		require.Nil(t, handler)
@@ -128,7 +128,7 @@ func TestSubHealthREST_Connect(t *testing.T) {
 		r := &subHealthREST{builder: builder}
 
 		responder := &mockHealthResponder{}
-		handler, err := r.Connect(context.Background(), "test-ds", nil, responder)
+		handler, err := r.Connect(t.Context(), "test-ds", nil, responder)
 
 		require.Error(t, err)
 		require.Nil(t, handler)
@@ -144,7 +144,7 @@ func TestSubHealthREST_Connect(t *testing.T) {
 		r := &subHealthREST{builder: builder}
 
 		responder := &mockHealthResponder{}
-		handler, err := r.Connect(context.Background(), "test-ds", nil, responder)
+		handler, err := r.Connect(t.Context(), "test-ds", nil, responder)
 		require.NoError(t, err)
 		require.NotNil(t, handler)
 
@@ -171,7 +171,7 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 		}
 
 		responder := &mockHealthResponder{}
-		handler, err := shr.Connect(context.Background(), "dsname", nil, responder)
+		handler, err := shr.Connect(t.Context(), "dsname", nil, responder)
 		require.NoError(t, err)
 
 		recorder := httptest.NewRecorder()
@@ -206,7 +206,7 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 		}
 
 		responder := &mockHealthResponder{}
-		handler, err := shr.Connect(context.Background(), "dsname", nil, responder)
+		handler, err := shr.Connect(t.Context(), "dsname", nil, responder)
 		require.NoError(t, err)
 
 		recorder := httptest.NewRecorder()
@@ -234,7 +234,7 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 		}
 
 		responder := &mockHealthResponder{}
-		handler, err := shr.Connect(context.Background(), "dsname", nil, responder)
+		handler, err := shr.Connect(t.Context(), "dsname", nil, responder)
 		require.NoError(t, err)
 
 		recorder := httptest.NewRecorder()
@@ -268,7 +268,7 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 		}
 
 		responder := &mockHealthResponder{}
-		handler, err := shr.Connect(context.Background(), "dsname", nil, responder)
+		handler, err := shr.Connect(t.Context(), "dsname", nil, responder)
 		require.NoError(t, err)
 
 		recorder := httptest.NewRecorder()
@@ -299,7 +299,7 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 		}
 
 		responder := &mockHealthResponder{}
-		handler, err := shr.Connect(context.Background(), "dsname", nil, responder)
+		handler, err := shr.Connect(t.Context(), "dsname", nil, responder)
 		require.NoError(t, err)
 
 		recorder := httptest.NewRecorder()
@@ -335,7 +335,7 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 					},
 				}
 				responder := &mockHealthResponder{}
-				handler, err := shr.Connect(context.Background(), "dsname", nil, responder)
+				handler, err := shr.Connect(t.Context(), "dsname", nil, responder)
 				require.NoError(t, err)
 
 				recorder := httptest.NewRecorder()
@@ -376,7 +376,7 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 		}
 
 		responder := &mockHealthResponder{}
-		handler, err := shr.Connect(context.Background(), "test-ds", nil, responder)
+		handler, err := shr.Connect(t.Context(), "test-ds", nil, responder)
 		require.NoError(t, err)
 
 		recorder := httptest.NewRecorder()
@@ -408,7 +408,7 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 		// The apiserver puts the request namespace in the Connect context. It must reach the
 		// plugin CheckHealth call so the multi-tenant middleware can resolve stack settings;
 		// the inner req.Context() does not carry it (httptest requests use context.Background).
-		ctx := request.WithNamespace(context.Background(), "stacks-10782")
+		ctx := request.WithNamespace(t.Context(), "stacks-10782")
 		responder := &mockHealthResponder{}
 		handler, err := shr.Connect(ctx, "dsname", nil, responder)
 		require.NoError(t, err)
@@ -431,7 +431,7 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 			},
 		}
 		responder := &mockHealthResponder{}
-		handler, err := shr.Connect(context.Background(), "dsname", nil, responder)
+		handler, err := shr.Connect(t.Context(), "dsname", nil, responder)
 		require.NoError(t, err)
 
 		recorder := httptest.NewRecorder()
@@ -458,7 +458,7 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 		}
 
 		responder := &mockHealthResponder{}
-		handler, err := shr.Connect(context.Background(), "dsname", nil, responder)
+		handler, err := shr.Connect(t.Context(), "dsname", nil, responder)
 		require.NoError(t, err)
 
 		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))

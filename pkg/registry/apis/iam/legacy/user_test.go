@@ -1,7 +1,6 @@
 package legacy
 
 import (
-	"context"
 	"testing"
 	"text/template"
 	"time"
@@ -78,7 +77,7 @@ func TestQueryUsers_NullEmailVerified(t *testing.T) {
 
 	store := &legacySQLStore{}
 	args := trivialArgs{SQLTemplate: mocks.NewTestingSQLTemplate()}
-	res, err := store.queryUsers(context.Background(), helper, trivialTemplate, &args, 100)
+	res, err := store.queryUsers(t.Context(), helper, trivialTemplate, &args, 100)
 	require.NoError(t, err)
 	require.Len(t, res.Items, 1)
 	require.False(t, res.Items[0].EmailVerified)
@@ -104,7 +103,7 @@ func TestQueryUsers_EmailVerifiedTrue(t *testing.T) {
 
 	store := &legacySQLStore{}
 	args := trivialArgs{SQLTemplate: mocks.NewTestingSQLTemplate()}
-	res, err := store.queryUsers(context.Background(), helper, trivialTemplate, &args, 100)
+	res, err := store.queryUsers(t.Context(), helper, trivialTemplate, &args, 100)
 	require.NoError(t, err)
 	require.Len(t, res.Items, 1)
 	require.True(t, res.Items[0].EmailVerified)

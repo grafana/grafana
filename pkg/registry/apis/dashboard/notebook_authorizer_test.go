@@ -1,7 +1,6 @@
 package dashboard
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -71,7 +70,7 @@ func TestNotebookAuthorizer(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+			ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{
 				OrgID:       1,
 				Permissions: map[int64]map[string][]string{1: tc.perms},
 			})
@@ -89,14 +88,14 @@ func TestNotebookAuthorizer(t *testing.T) {
 	}
 
 	t.Run("denies when there is no requester", func(t *testing.T) {
-		decision, _, err := authz.Authorize(context.Background(), authzAttributes(dashv2beta1.NotebookResourceInfo.GetName(), "list"))
+		decision, _, err := authz.Authorize(t.Context(), authzAttributes(dashv2beta1.NotebookResourceInfo.GetName(), "list"))
 		require.Error(t, err)
 		require.Equal(t, authorizer.DecisionDeny, decision)
 	})
 
 	t.Run("denies every verb when the feature is disabled, even with full permissions", func(t *testing.T) {
 		setNotebooksToggle(t, false)
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+		ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{
 			OrgID:       1,
 			Permissions: map[int64]map[string][]string{1: editor},
 		})
@@ -116,13 +115,13 @@ func TestNotebookAuthorizer_NilAccessControl(t *testing.T) {
 		authz := newNotebookAuthorizer(nil, grafanaauthorizer.NewServiceAuthorizer())
 		// The service authorizer errors without an identity, which proves the
 		// request reached it.
-		_, _, err := authz.Authorize(context.Background(), authzAttributes(dashv2beta1.NotebookResourceInfo.GetName(), "list"))
+		_, _, err := authz.Authorize(t.Context(), authzAttributes(dashv2beta1.NotebookResourceInfo.GetName(), "list"))
 		require.ErrorContains(t, err, "no identity found")
 	})
 
 	t.Run("denies when there is no fallback", func(t *testing.T) {
 		authz := newNotebookAuthorizer(nil, nil)
-		decision, reason, err := authz.Authorize(context.Background(), authzAttributes(dashv2beta1.NotebookResourceInfo.GetName(), "list"))
+		decision, reason, err := authz.Authorize(t.Context(), authzAttributes(dashv2beta1.NotebookResourceInfo.GetName(), "list"))
 		require.NoError(t, err)
 		require.Equal(t, authorizer.DecisionDeny, decision)
 		require.Equal(t, "access control is not configured", reason)
@@ -138,7 +137,7 @@ func TestDashboardsAPIBuilderNotebookAuthorizerEnforcesRBAC(t *testing.T) {
 		accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 	}).GetAuthorizer()
 
-	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgID: 1})
+	ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{OrgID: 1})
 	decision, reason, err := authz.Authorize(ctx, authzAttributes(dashv2beta1.NotebookResourceInfo.GetName(), "list"))
 	require.NoError(t, err)
 	require.Equal(t, authorizer.DecisionDeny, decision)

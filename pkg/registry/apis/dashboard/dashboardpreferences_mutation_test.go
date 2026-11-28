@@ -1,7 +1,6 @@
 package dashboard
 
 import (
-	"context"
 	"encoding/json"
 	"reflect"
 	"testing"
@@ -80,7 +79,7 @@ func dashboardPreferencesAttributesForOp(op admission.Operation, newObj, oldObj 
 
 func TestDashboardsAPIBuilderMutateDashboardPreferences(t *testing.T) {
 	builder := &DashboardsAPIBuilder{}
-	ctx := context.Background()
+	ctx := t.Context()
 
 	mutate := func(op admission.Operation, obj *dashv2beta1.DashboardPreferences) error {
 		return builder.Mutate(ctx, dashboardPreferencesAttributesForOp(op, obj, nil), nil)

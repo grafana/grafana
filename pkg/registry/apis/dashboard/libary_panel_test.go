@@ -76,7 +76,7 @@ func TestLibraryPanelStorePreservesPatchSourceFolder(t *testing.T) {
 		updated.Annotations[utils.AnnoKeyFolder] = "destination"
 		return updated, nil
 	})
-	ctx := requestcontext.WithNamespace(context.Background(), "stacks-1")
+	ctx := requestcontext.WithNamespace(t.Context(), "stacks-1")
 	ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: 1})
 
 	_, _, err := store.Update(ctx, panel.Name, patchInfo, nil, nil, false, &metav1.UpdateOptions{})

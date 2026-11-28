@@ -1,7 +1,6 @@
 package datasource
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -17,7 +16,7 @@ import (
 )
 
 func TestDataSourceMigrationStorageMode(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	cfg := setting.NewCfg()
 	sqlStore := db.NewTestStore(t, db.WithCfg(cfg), db.WithoutMigrator())
 	def := DataSourceMigration(migrator.NewDataSourceMigrator(nil, nil))

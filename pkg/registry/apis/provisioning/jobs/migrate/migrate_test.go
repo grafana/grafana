@@ -344,7 +344,7 @@ func TestMigrationWorker_Migrate(t *testing.T) {
 					Migrate: &migrateOptions,
 				},
 			}
-			err := migrator.migrate(context.Background(), readerWriter, migrateJob, progressRecorder)
+			err := migrator.migrate(t.Context(), readerWriter, migrateJob, progressRecorder)
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
@@ -393,7 +393,7 @@ func TestMigrationWorker_BranchMigration(t *testing.T) {
 		// unexpected call, so the absence of an expectation asserts the pull is skipped.
 
 		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
-		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+		err := migrator.migrate(t.Context(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x"},
 		}}, pr)
 		require.NoError(t, err)
@@ -450,7 +450,7 @@ func TestMigrationWorker_BranchMigration(t *testing.T) {
 		}), pr).Return(nil)
 
 		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
-		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+		err := migrator.migrate(t.Context(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{
 				Branch: "feature-x",
 				Resources: []provisioning.ResourceRef{
@@ -504,7 +504,7 @@ func TestMigrationWorker_BranchMigration(t *testing.T) {
 		}), pr).Return(nil)
 
 		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
-		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+		err := migrator.migrate(t.Context(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x"},
 		}}, pr)
 		require.NoError(t, err)
@@ -552,7 +552,7 @@ func TestMigrationWorker_BranchMigration(t *testing.T) {
 		}), pr).Return(nil)
 
 		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
-		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+		err := migrator.migrate(t.Context(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x"},
 		}}, pr)
 		require.NoError(t, err)
@@ -582,7 +582,7 @@ func TestMigrationWorker_BranchMigration(t *testing.T) {
 		nc.On("Clean", mock.Anything, "test-ns", pr).Return(nil)
 
 		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
-		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+		err := migrator.migrate(t.Context(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{Branch: "main"},
 		}}, pr)
 		require.NoError(t, err)
@@ -627,7 +627,7 @@ func TestMigrationWorker_SkipResourceDeletion(t *testing.T) {
 		}), pr).Return(nil)
 
 		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
-		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+		err := migrator.migrate(t.Context(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{SkipResourceDeletion: true},
 		}}, pr)
 		require.NoError(t, err)
@@ -652,7 +652,7 @@ func TestMigrationWorker_SkipResourceDeletion(t *testing.T) {
 		}), mock.Anything).Return(nil)
 
 		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
-		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+		err := migrator.migrate(t.Context(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x", SkipResourceDeletion: true},
 		}}, pr)
 		require.NoError(t, err)
@@ -716,7 +716,7 @@ func TestMigrationWorker_CommitMessagePrecedence(t *testing.T) {
 					Migrate: &provisioning.MigrateJobOptions{Message: tt.optsMessage},
 				},
 			}
-			err := migrator.migrate(context.Background(), repo, job, pr)
+			err := migrator.migrate(t.Context(), repo, job, pr)
 			require.NoError(t, err)
 		})
 	}
@@ -768,7 +768,7 @@ func TestMigrationWorker_TakeoverAllowlist(t *testing.T) {
 		nc.On("Clean", mock.Anything, "test-ns", pr).Return(nil)
 
 		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
-		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{}}}, pr)
+		err := migrator.migrate(t.Context(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{}}}, pr)
 		require.NoError(t, err)
 	})
 
@@ -801,7 +801,7 @@ func TestMigrationWorker_TakeoverAllowlist(t *testing.T) {
 		nc.On("Clean", mock.Anything, "test-ns", pr).Return(nil)
 
 		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
-		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{}}}, pr)
+		err := migrator.migrate(t.Context(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{}}}, pr)
 		require.NoError(t, err)
 	})
 
@@ -850,7 +850,7 @@ func TestMigrationWorker_TakeoverAllowlist(t *testing.T) {
 		nc.On("Clean", mock.Anything, "test-ns", pr).Return(nil)
 
 		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
-		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{}}}, pr)
+		err := migrator.migrate(t.Context(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{}}}, pr)
 		require.NoError(t, err)
 	})
 }
@@ -896,7 +896,7 @@ func TestMigrationWorker_SelectiveResources(t *testing.T) {
 		}), pr).Return(nil)
 
 		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
-		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{Resources: selected}}}, pr)
+		err := migrator.migrate(t.Context(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{Resources: selected}}}, pr)
 		require.NoError(t, err)
 	})
 
@@ -916,7 +916,7 @@ func TestMigrationWorker_SelectiveResources(t *testing.T) {
 		// cleanup. mockery fails the test if any of those are called, since no
 		// expectations are registered for them.
 		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
-		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{Resources: selected}}}, pr)
+		err := migrator.migrate(t.Context(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{Resources: selected}}}, pr)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "Instance repositories should only migrate all resources")
 	})

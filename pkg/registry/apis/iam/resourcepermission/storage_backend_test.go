@@ -24,7 +24,7 @@ func TestIntegration_ResourcePermSqlBackend_ReadResource(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
-	sql, err := backend.dbProvider(context.Background())
+	sql, err := backend.dbProvider(t.Context())
 	require.NoError(t, err)
 	setupTestRoles(t, sql.DB)
 
@@ -32,7 +32,7 @@ func TestIntegration_ResourcePermSqlBackend_ReadResource(t *testing.T) {
 	updated2 := time.Date(2025, 9, 3, 0, 0, 0, 0, time.UTC) // managed role for team 1 has a later updated permission
 
 	t.Run("ReadResource - Invalid namespace", func(t *testing.T) {
-		resp := backend.ReadResource(context.Background(), &resourcepb.ReadRequest{
+		resp := backend.ReadResource(t.Context(), &resourcepb.ReadRequest{
 			Key: &resourcepb.ResourceKey{Name: "folder.grafana.app-folders-fold1", Namespace: "invalid"},
 		})
 		require.NotNil(t, resp)
@@ -42,7 +42,7 @@ func TestIntegration_ResourcePermSqlBackend_ReadResource(t *testing.T) {
 	})
 
 	t.Run("ReadResource - Get fold1 resource permissions", func(t *testing.T) {
-		resp := backend.ReadResource(context.Background(), &resourcepb.ReadRequest{
+		resp := backend.ReadResource(t.Context(), &resourcepb.ReadRequest{
 			Key: &resourcepb.ResourceKey{Name: "folder.grafana.app-folders-fold1", Namespace: "default"},
 		})
 
@@ -62,7 +62,7 @@ func TestIntegration_ResourcePermSqlBackend_ReadResource(t *testing.T) {
 	})
 
 	t.Run("ReadResource - Get fold1 in org-2 resource permissions", func(t *testing.T) {
-		resp := backend.ReadResource(context.Background(), &resourcepb.ReadRequest{
+		resp := backend.ReadResource(t.Context(), &resourcepb.ReadRequest{
 			Key: &resourcepb.ResourceKey{Name: "folder.grafana.app-folders-fold1", Namespace: "org-2"},
 		})
 
@@ -82,7 +82,7 @@ func TestIntegration_ResourcePermSqlBackend_ReadResource(t *testing.T) {
 	})
 
 	t.Run("ReadResource - Get dash1 resource permissions", func(t *testing.T) {
-		resp := backend.ReadResource(context.Background(), &resourcepb.ReadRequest{
+		resp := backend.ReadResource(t.Context(), &resourcepb.ReadRequest{
 			Key: &resourcepb.ResourceKey{Name: "dashboard.grafana.app-dashboards-dash1", Namespace: "default"},
 		})
 
@@ -134,7 +134,7 @@ func TestWriteEvent_Add(t *testing.T) {
 	t.Run("should error with invalid namespace", func(t *testing.T) {
 		backend := ProvideStorageBackend(dbProvider, NewMappersRegistry())
 
-		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+		rv, err := backend.WriteEvent(t.Context(), resource.WriteEvent{
 			Type: resourcepb.WatchEvent_ADDED,
 			Key:  &resourcepb.ResourceKey{Name: "folder.grafana.app-folders-fold1", Namespace: "invalid"},
 		})
@@ -170,7 +170,7 @@ func TestWriteEvent_Add(t *testing.T) {
 		require.NoError(t, err)
 
 		gr := v0alpha1.ResourcePermissionInfo.GroupResource()
-		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+		rv, err := backend.WriteEvent(t.Context(), resource.WriteEvent{
 			Type:   resourcepb.WatchEvent_ADDED,
 			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folder.grafana.app-folders-", Namespace: "default"},
 			Object: resourcePerm,
@@ -206,7 +206,7 @@ func TestWriteEvent_Add(t *testing.T) {
 		require.NoError(t, err)
 
 		gr := v0alpha1.ResourcePermissionInfo.GroupResource()
-		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+		rv, err := backend.WriteEvent(t.Context(), resource.WriteEvent{
 			Type:   resourcepb.WatchEvent_ADDED,
 			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "unknown.grafana.app-unknown-ukn1", Namespace: "default"},
 			Object: resourcePerm,
@@ -243,7 +243,7 @@ func TestWriteEvent_Add(t *testing.T) {
 		require.NoError(t, err)
 
 		gr := v0alpha1.ResourcePermissionInfo.GroupResource()
-		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+		rv, err := backend.WriteEvent(t.Context(), resource.WriteEvent{
 			Type:   resourcepb.WatchEvent_ADDED,
 			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folder.grafana.app-folders-fold1", Namespace: "default"},
 			Object: resourcePerm,
@@ -253,7 +253,7 @@ func TestWriteEvent_Add(t *testing.T) {
 		require.Equal(t, timeNow().UnixMilli(), rv)
 
 		t.Run("Should error on duplicate add", func(t *testing.T) {
-			rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+			rv, err := backend.WriteEvent(t.Context(), resource.WriteEvent{
 				Type:   resourcepb.WatchEvent_ADDED,
 				Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folder.grafana.app-folders-fold1", Namespace: "default"},
 				Object: resourcePerm,
@@ -330,7 +330,7 @@ func TestWriteEvent_Add_ServiceAccount(t *testing.T) {
 		require.NoError(t, err)
 
 		gr := v0alpha1.ResourcePermissionInfo.GroupResource()
-		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+		rv, err := backend.WriteEvent(t.Context(), resource.WriteEvent{
 			Type:   resourcepb.WatchEvent_ADDED,
 			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "iam.grafana.app-serviceaccounts-robot", Namespace: "default"},
 			Object: resourcePerm,
@@ -341,7 +341,7 @@ func TestWriteEvent_Add_ServiceAccount(t *testing.T) {
 		// Verify the permission was written with the ID-based scope
 		sess := store.GetSqlxSession()
 		var scope string
-		err = sess.Get(context.Background(), &scope, "SELECT scope FROM permission WHERE action = ? AND role_id = (SELECT id FROM role WHERE name = ?)", "serviceaccounts:edit", "managed:users:101:permissions")
+		err = sess.Get(t.Context(), &scope, "SELECT scope FROM permission WHERE action = ? AND role_id = (SELECT id FROM role WHERE name = ?)", "serviceaccounts:edit", "managed:users:101:permissions")
 		require.NoError(t, err)
 		require.Equal(t, "serviceaccounts:id:201", scope)
 	})
@@ -373,7 +373,7 @@ func TestWriteEvent_Add_ServiceAccount(t *testing.T) {
 		require.NoError(t, err)
 
 		gr := v0alpha1.ResourcePermissionInfo.GroupResource()
-		_, err = backend.WriteEvent(context.Background(), resource.WriteEvent{
+		_, err = backend.WriteEvent(t.Context(), resource.WriteEvent{
 			Type:   resourcepb.WatchEvent_ADDED,
 			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folder.grafana.app-folders-fold1", Namespace: "default"},
 			Object: resourcePerm,
@@ -392,7 +392,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 	}
 
 	backend := setupBackend(t)
-	sql, err := backend.dbProvider(context.Background())
+	sql, err := backend.dbProvider(t.Context())
 	require.NoError(t, err)
 	setupTestRoles(t, sql.DB)
 
@@ -411,7 +411,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		}
 
 		callbackCalled := false
-		count, err := backend.ListIterator(context.Background(), req, func(resource.ListIterator) error {
+		count, err := backend.ListIterator(t.Context(), req, func(resource.ListIterator) error {
 			callbackCalled = true
 			return nil
 		})
@@ -436,7 +436,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		}
 
 		callbackCalled := false
-		count, err := backend.ListIterator(context.Background(), req, func(resource.ListIterator) error {
+		count, err := backend.ListIterator(t.Context(), req, func(resource.ListIterator) error {
 			callbackCalled = true
 			return nil
 		})
@@ -460,7 +460,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		}
 
 		var results []v0alpha1.ResourcePermission
-		listRV, err := backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
+		listRV, err := backend.ListIterator(t.Context(), req, func(it resource.ListIterator) error {
 			for it.Next() {
 				var perm v0alpha1.ResourcePermission
 				err := json.Unmarshal(it.Value(), &perm)
@@ -511,7 +511,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		}
 
 		var results []v0alpha1.ResourcePermission
-		listRV, err := backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
+		listRV, err := backend.ListIterator(t.Context(), req, func(it resource.ListIterator) error {
 			for it.Next() {
 				var perm v0alpha1.ResourcePermission
 				err := json.Unmarshal(it.Value(), &perm)
@@ -543,7 +543,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		}
 
 		callbackCalled := false
-		listRV, err := backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
+		listRV, err := backend.ListIterator(t.Context(), req, func(it resource.ListIterator) error {
 			callbackCalled = true
 			// Just verify the iterator works
 			for it.Next() {
@@ -570,7 +570,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		}
 
 		var results []v0alpha1.ResourcePermission
-		listRV, err := backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
+		listRV, err := backend.ListIterator(t.Context(), req, func(it resource.ListIterator) error {
 			for it.Next() {
 				var perm v0alpha1.ResourcePermission
 				err := json.Unmarshal(it.Value(), &perm)
@@ -598,7 +598,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		}
 
 		expectedErr := errors.New("callback error")
-		listRV, err := backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
+		listRV, err := backend.ListIterator(t.Context(), req, func(it resource.ListIterator) error {
 			return expectedErr
 		})
 
@@ -627,7 +627,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		var perm v0alpha1.ResourcePermission
 		continueToken := "start:0"
 		results := []string{}
-		_, _ = backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
+		_, _ = backend.ListIterator(t.Context(), req, func(it resource.ListIterator) error {
 			for it.Next() {
 				continueToken = it.ContinueToken()
 				require.NoError(t, json.Unmarshal(it.Value(), &perm))
@@ -641,7 +641,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 		require.Equal(t, "start:1", continueToken)
 
 		req.NextPageToken = continueToken
-		_, _ = backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
+		_, _ = backend.ListIterator(t.Context(), req, func(it resource.ListIterator) error {
 			for it.Next() {
 				continueToken = it.ContinueToken()
 				require.NoError(t, json.Unmarshal(it.Value(), &perm))
@@ -656,7 +656,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 
 		// No more results, token should not change
 		req.NextPageToken = continueToken
-		_, _ = backend.ListIterator(context.Background(), req, func(it resource.ListIterator) error {
+		_, _ = backend.ListIterator(t.Context(), req, func(it resource.ListIterator) error {
 			for it.Next() {
 				continueToken = it.ContinueToken()
 				require.NoError(t, json.Unmarshal(it.Value(), &perm))
@@ -679,7 +679,7 @@ func TestIntegration_WriteEvent_Delete(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
-	sql, err := backend.dbProvider(context.Background())
+	sql, err := backend.dbProvider(t.Context())
 	require.NoError(t, err)
 	setupTestRoles(t, sql.DB)
 
@@ -689,7 +689,7 @@ func TestIntegration_WriteEvent_Delete(t *testing.T) {
 	gr := v0alpha1.ResourcePermissionInfo.GroupResource()
 
 	t.Run("Should error if namespace is invalid", func(t *testing.T) {
-		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+		rv, err := backend.WriteEvent(t.Context(), resource.WriteEvent{
 			Key:  &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folder.grafana.app-folders-fold1", Namespace: "invalid"},
 			Type: resourcepb.WatchEvent_DELETED,
 		})
@@ -700,7 +700,7 @@ func TestIntegration_WriteEvent_Delete(t *testing.T) {
 	})
 
 	t.Run("Should fail to delete resource permissions if resource name is not specified", func(t *testing.T) {
-		_, err = backend.WriteEvent(context.Background(), resource.WriteEvent{
+		_, err = backend.WriteEvent(t.Context(), resource.WriteEvent{
 			Key:  &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "", Namespace: "default"},
 			Type: resourcepb.WatchEvent_DELETED,
 		})
@@ -709,7 +709,7 @@ func TestIntegration_WriteEvent_Delete(t *testing.T) {
 	})
 
 	t.Run("Should fail to delete resource permissions for unknown resource", func(t *testing.T) {
-		_, err = backend.WriteEvent(context.Background(), resource.WriteEvent{
+		_, err = backend.WriteEvent(t.Context(), resource.WriteEvent{
 			Key:  &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "unknown.grafana.app-unknown-uid", Namespace: "default"},
 			Type: resourcepb.WatchEvent_DELETED,
 		})
@@ -719,7 +719,7 @@ func TestIntegration_WriteEvent_Delete(t *testing.T) {
 
 	t.Run("Should successfully delete fold1 permissions in org-1", func(t *testing.T) {
 		// Check that permissions exist
-		resp := backend.ReadResource(context.Background(), &resourcepb.ReadRequest{
+		resp := backend.ReadResource(t.Context(), &resourcepb.ReadRequest{
 			Key: &resourcepb.ResourceKey{Name: "folder.grafana.app-folders-fold1", Namespace: "default"},
 		})
 
@@ -732,20 +732,20 @@ func TestIntegration_WriteEvent_Delete(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, permission.Spec.Permissions, 1)
 
-		_, err = backend.WriteEvent(context.Background(), resource.WriteEvent{
+		_, err = backend.WriteEvent(t.Context(), resource.WriteEvent{
 			Key:  &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folder.grafana.app-folders-fold1", Namespace: "default"},
 			Type: resourcepb.WatchEvent_DELETED,
 		})
 		require.Nil(t, err)
 
 		// Check that permissions are deleted
-		resp = backend.ReadResource(context.Background(), &resourcepb.ReadRequest{
+		resp = backend.ReadResource(t.Context(), &resourcepb.ReadRequest{
 			Key: &resourcepb.ResourceKey{Name: "folder.grafana.app-folders-fold1", Namespace: "default"},
 		})
 		require.NotNil(t, resp.Error)
 
 		// Check that org-2 permissions are unaffected
-		resp = backend.ReadResource(context.Background(), &resourcepb.ReadRequest{
+		resp = backend.ReadResource(t.Context(), &resourcepb.ReadRequest{
 			Key: &resourcepb.ResourceKey{Name: "folder.grafana.app-folders-fold1", Namespace: "org-2"},
 		})
 		require.NotNil(t, resp)
@@ -757,7 +757,7 @@ func TestIntegration_WriteEvent_Delete(t *testing.T) {
 		require.Len(t, permission.Spec.Permissions, 1)
 
 		// Check that dash1 permissions in org 1 are unaffected
-		resp = backend.ReadResource(context.Background(), &resourcepb.ReadRequest{
+		resp = backend.ReadResource(t.Context(), &resourcepb.ReadRequest{
 			Key: &resourcepb.ResourceKey{Name: "dashboard.grafana.app-dashboards-dash1", Namespace: "default"},
 		})
 		require.NotNil(t, resp)
@@ -789,7 +789,7 @@ func TestWriteEvent_Modify(t *testing.T) {
 	t.Run("should error with invalid namespace", func(t *testing.T) {
 		backend := ProvideStorageBackend(dbProvider, NewMappersRegistry())
 
-		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+		rv, err := backend.WriteEvent(t.Context(), resource.WriteEvent{
 			Type: resourcepb.WatchEvent_MODIFIED,
 			Key:  &resourcepb.ResourceKey{Name: "folder.grafana.app-folders-fold1", Namespace: "invalid"},
 		})
@@ -825,7 +825,7 @@ func TestWriteEvent_Modify(t *testing.T) {
 		require.NoError(t, err)
 
 		gr := v0alpha1.ResourcePermissionInfo.GroupResource()
-		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+		rv, err := backend.WriteEvent(t.Context(), resource.WriteEvent{
 			Type:   resourcepb.WatchEvent_MODIFIED,
 			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folder.grafana.app-folders-", Namespace: "default"},
 			Object: resourcePerm,
@@ -861,7 +861,7 @@ func TestWriteEvent_Modify(t *testing.T) {
 		require.NoError(t, err)
 
 		gr := v0alpha1.ResourcePermissionInfo.GroupResource()
-		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+		rv, err := backend.WriteEvent(t.Context(), resource.WriteEvent{
 			Type:   resourcepb.WatchEvent_MODIFIED,
 			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "unknown.grafana.app-unknown-ukn1", Namespace: "default"},
 			Object: resourcePerm,
@@ -899,7 +899,7 @@ func TestWriteEvent_Modify(t *testing.T) {
 
 		// Create resource first
 		gr := v0alpha1.ResourcePermissionInfo.GroupResource()
-		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+		rv, err := backend.WriteEvent(t.Context(), resource.WriteEvent{
 			Type:   resourcepb.WatchEvent_ADDED,
 			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folder.grafana.app-folders-fold1", Namespace: "default"},
 			Object: resourcePerm,
@@ -931,7 +931,7 @@ func TestWriteEvent_Modify(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		rv, err = backend.WriteEvent(context.Background(), resource.WriteEvent{
+		rv, err = backend.WriteEvent(t.Context(), resource.WriteEvent{
 			Type:   resourcepb.WatchEvent_MODIFIED,
 			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folder.grafana.app-folders-fold1", Namespace: "default"},
 			Object: resourcePerm,

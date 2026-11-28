@@ -28,7 +28,7 @@ func TestJobCleanupController_Run_StopsOnContextCancel(t *testing.T) {
 
 	cc := NewJobCleanupController(store, &MockHistoryWriter{}, 30*time.Second)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 
 	runDone := make(chan error, 1)
 	go func() {
@@ -75,7 +75,7 @@ func TestJobCleanupController_Run_CompletesInitialCleanupBeforeExiting(t *testin
 
 	cc := NewJobCleanupController(store, &MockHistoryWriter{}, 30*time.Second)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 
 	runDone := make(chan struct{})
 	go func() {
@@ -126,7 +126,7 @@ func TestConcurrentJobDriver_Run_StopsOnContextCancel(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 
 	runDone := make(chan error, 1)
 	go func() {
@@ -189,7 +189,7 @@ func TestConcurrentJobDriver_Run_AllDriversExitBeforeRunReturns(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 
 		runDone := make(chan error, 1)
 		go func() {

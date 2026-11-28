@@ -96,7 +96,7 @@ func TestPendingDeleteRecorderRolledBackBatch(t *testing.T) {
 		t.Run(fmt.Sprint(conflicts), func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				store := &rolledBackPendingStorage{conflicts: conflicts}
-				ctx := apirequest.WithNamespace(context.Background(), "default")
+				ctx := apirequest.WithNamespace(t.Context(), "default")
 				f := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "reports", UID: "uid-a"}}
 				err := pendingRecorder(store)(ctx, f)
 				if conflicts == 1 {
@@ -115,7 +115,7 @@ func TestPendingDeleteRecorderRolledBackBatch(t *testing.T) {
 func TestPendingDeleteRecorderIdempotent(t *testing.T) {
 	store := &fakePendingStorage{}
 	record := pendingRecorder(store)
-	ctx := apirequest.WithNamespace(context.Background(), "default")
+	ctx := apirequest.WithNamespace(t.Context(), "default")
 	f := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "reports", UID: "CalculatedUID-AbC123"}}
 	require.NoError(t, record(ctx, f))
 	require.Equal(t, "default", store.entry.Namespace)
@@ -137,7 +137,7 @@ func TestPendingDeleteRecorderIdempotent(t *testing.T) {
 func TestPendingDeleteRecorderCancellation(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		store := &rolledBackPendingStorage{conflicts: 100}
-		ctx, cancel := context.WithCancel(apirequest.WithNamespace(context.Background(), "default"))
+		ctx, cancel := context.WithCancel(apirequest.WithNamespace(t.Context(), "default"))
 		result := make(chan error, 1)
 		go func() {
 			result <- pendingRecorder(store)(ctx, &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "reports", UID: "uid-a"}})
@@ -151,7 +151,7 @@ func TestPendingDeleteRecorderCancellation(t *testing.T) {
 
 func TestPendingDeleteAuthorizesOriginalCaller(t *testing.T) {
 	user := &identity.StaticRequester{}
-	ctx := identity.WithRequester(apirequest.WithNamespace(context.Background(), "default"), user)
+	ctx := identity.WithRequester(apirequest.WithNamespace(t.Context(), "default"), user)
 	for _, allowed := range []bool{false, true} {
 		t.Run(fmt.Sprint(allowed), func(t *testing.T) {
 			store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"reports": {ObjectMeta: metav1.ObjectMeta{Name: "reports", Namespace: "default", UID: "uid-a", Annotations: map[string]string{utils.AnnoKeyFolder: "parent"}}}}}
@@ -220,7 +220,7 @@ func TestPendingDeleteDeadline(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				release := make(chan struct{})
 				defer close(release)
-				ctx, cancel := context.WithCancel(context.Background())
+				ctx, cancel := context.WithCancel(t.Context())
 				defer cancel()
 				if tc.callerTimeout > 0 {
 					var stop context.CancelFunc
@@ -288,7 +288,7 @@ func TestPendingDeleteDeadlineStartsAfterRecordingAndPreservesResult(t *testing.
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
-				ctx, cancel := context.WithCancel(context.Background())
+				ctx, cancel := context.WithCancel(t.Context())
 				defer cancel()
 				want := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "reports", UID: "a"}}
 				var result runtime.Object = want
@@ -357,7 +357,7 @@ func TestPendingDeleteRecordsBeforeStorage(t *testing.T) {
 			if mode == "dry run" {
 				opts.DryRun = []string{metav1.DryRunAll}
 			}
-			_, _, err := wrapped.Delete(context.Background(), "reports", nil, opts)
+			_, _, err := wrapped.Delete(t.Context(), "reports", nil, opts)
 			if mode == "failure" {
 				require.Error(t, err)
 			} else {
@@ -392,7 +392,7 @@ func TestPendingDeleteValidationAndFailure(t *testing.T) {
 				uid := apitypes.UID("wrong")
 				opts.Preconditions = &metav1.Preconditions{UID: &uid}
 			}
-			_, _, err := wrapped.Delete(apirequest.WithNamespace(context.Background(), "default"), "reports", func(context.Context, runtime.Object) error {
+			_, _, err := wrapped.Delete(apirequest.WithNamespace(t.Context(), "default"), "reports", func(context.Context, runtime.Object) error {
 				if mode == "validation" {
 					return errors.New("validation failed")
 				}
@@ -417,7 +417,7 @@ func TestPendingDeletePinsIdentity(t *testing.T) {
 		return nil
 	}}
 	opts := &metav1.DeleteOptions{}
-	_, _, err := wrapped.Delete(context.Background(), "reports", nil, opts)
+	_, _, err := wrapped.Delete(t.Context(), "reports", nil, opts)
 	require.True(t, apierrors.IsConflict(err))
 	require.Empty(t, store.deleted)
 	require.Nil(t, opts.Preconditions)
@@ -512,7 +512,7 @@ func TestPendingDeleteCollectionRecordsEachFolder(t *testing.T) {
 		recorded = append(recorded, f.Name)
 		return nil
 	}}
-	_, err := (pendingCollectionDeleter{storage: wrapped, inner: inner}).DeleteCollection(context.Background(), nil, &metav1.DeleteOptions{}, nil)
+	_, err := (pendingCollectionDeleter{storage: wrapped, inner: inner}).DeleteCollection(t.Context(), nil, &metav1.DeleteOptions{}, nil)
 	require.NoError(t, err)
 	require.ElementsMatch(t, []string{"a", "b"}, recorded)
 	require.ElementsMatch(t, recorded, store.deleted)
@@ -679,9 +679,9 @@ func TestPendingDeleteOptionalInterfaces(t *testing.T) {
 			require.Equal(t, tc.want, watchOK)
 			require.Equal(t, tc.want, collectionOK)
 			if tc.want {
-				_, err := w.Watch(context.Background(), nil)
+				_, err := w.Watch(t.Context(), nil)
 				require.NoError(t, err)
-				_, err = c.DeleteCollection(context.Background(), nil, nil, nil)
+				_, err = c.DeleteCollection(t.Context(), nil, nil, nil)
 				require.NoError(t, err)
 				require.True(t, optional.watched)
 				require.True(t, optional.deletedCollection)
@@ -1376,7 +1376,7 @@ func TestCascadeDelete_RejectsEnumerationIdentityAsRequester(t *testing.T) {
 
 	// Simulates the original bug: the real requester was lost somewhere upstream and Delete
 	// captured the enumeration identity (the one WithServiceIdentityContext mints) in its place.
-	ctx, _ := identity.WithServiceIdentity(apirequest.WithNamespace(context.Background(), "default"), 1)
+	ctx, _ := identity.WithServiceIdentity(apirequest.WithNamespace(t.Context(), "default"), 1)
 
 	_, _, err := s.Delete(ctx, "root", nil, forceDelete())
 	require.True(t, apierrors.IsForbidden(err), "must be a 403, not a generic error: %v", err)
@@ -1830,9 +1830,9 @@ func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, store.collectionValidation)
 
-		err = store.collectionValidation(context.Background(), finalizerFolder("late"))
+		err = store.collectionValidation(t.Context(), finalizerFolder("late"))
 		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
-		require.NoError(t, store.collectionValidation(context.Background(), newFolder("plain")))
+		require.NoError(t, store.collectionValidation(t.Context(), newFolder("plain")))
 	})
 
 	t.Run("the caller's own delete validation still runs", func(t *testing.T) {
@@ -1846,7 +1846,7 @@ func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 		require.NoError(t, err)
 
 		plain := newFolder("plain")
-		require.ErrorIs(t, store.collectionValidation(context.Background(), plain), denied)
+		require.ErrorIs(t, store.collectionValidation(t.Context(), plain), denied)
 		require.Same(t, plain, seen)
 	})
 }
@@ -2078,7 +2078,7 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 
 	// serviceCtx is the cascade controller's caller: an access policy with no folder permissions.
 	serviceCtx := func() context.Context {
-		return identity.WithRequester(apirequest.WithNamespace(context.Background(), "default"),
+		return identity.WithRequester(apirequest.WithNamespace(t.Context(), "default"),
 			&identity.StaticRequester{Type: authlib.TypeAccessPolicy, UserUID: "access-policy:grafana", Namespace: "default"})
 	}
 	// subfolderOf builds a store holding a finalizer subfolder under a parent, terminating or not.
@@ -2258,14 +2258,14 @@ func TestCheckFolderContentsAccess(t *testing.T) {
 
 	t.Run("nil accessClient is a no-op", func(t *testing.T) {
 		s := &cascadeDeleteStorage{}
-		require.NoError(t, s.checkFolderContentsAccess(context.Background(), user, "default", "folder", "parent"))
+		require.NoError(t, s.checkFolderContentsAccess(t.Context(), user, "default", "folder", "parent"))
 	})
 
 	t.Run("without global variables, checks alert.rules:delete, folders:write, dashboards:delete and folders:delete only", func(t *testing.T) {
 		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagGrafanaDashboardGlobalVariables: false})
 		ac := &recordingAccessClient{}
 		s := &cascadeDeleteStorage{accessClient: ac}
-		require.NoError(t, s.checkFolderContentsAccess(context.Background(), user, "default", "folder", "parent"))
+		require.NoError(t, s.checkFolderContentsAccess(t.Context(), user, "default", "folder", "parent"))
 		require.Equal(t, []contentsAccessCheck{
 			{authlib.CheckRequest{Namespace: "default", Verb: utils.VerbDelete, Group: cascadeAlertRuleGroup, Resource: cascadeAlertRuleResource}, "folder"},
 			{authlib.CheckRequest{Namespace: "default", Verb: utils.VerbUpdate, Group: folderGVR.Group, Resource: folderGVR.Resource, Name: "folder"}, "parent"},
@@ -2278,7 +2278,7 @@ func TestCheckFolderContentsAccess(t *testing.T) {
 		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagGrafanaDashboardGlobalVariables: true})
 		ac := &recordingAccessClient{}
 		s := &cascadeDeleteStorage{accessClient: ac}
-		require.NoError(t, s.checkFolderContentsAccess(context.Background(), user, "default", "folder", "parent"))
+		require.NoError(t, s.checkFolderContentsAccess(t.Context(), user, "default", "folder", "parent"))
 		require.Equal(t, []contentsAccessCheck{
 			{authlib.CheckRequest{Namespace: "default", Verb: utils.VerbDelete, Group: cascadeAlertRuleGroup, Resource: cascadeAlertRuleResource}, "folder"},
 			{authlib.CheckRequest{Namespace: "default", Verb: utils.VerbUpdate, Group: folderGVR.Group, Resource: folderGVR.Resource, Name: "folder"}, "parent"},
@@ -2292,7 +2292,7 @@ func TestCheckFolderContentsAccess(t *testing.T) {
 		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagGrafanaDashboardGlobalVariables: true})
 		ac := &recordingAccessClient{}
 		s := &cascadeDeleteStorage{accessClient: ac}
-		require.NoError(t, s.checkFolderContentsAccess(context.Background(), user, "default", "root", ""))
+		require.NoError(t, s.checkFolderContentsAccess(t.Context(), user, "default", "root", ""))
 		require.Equal(t, folder.GeneralFolderUID, ac.checks[1].folder)
 		require.Equal(t, "root", ac.checks[2].folder, "dashboards")
 		require.Equal(t, folder.GeneralFolderUID, ac.checks[3].folder, "folders:delete")
@@ -2305,7 +2305,7 @@ func TestCheckFolderContentsAccess(t *testing.T) {
 			return req.Resource != dashGVR.Resource
 		}}
 		s := &cascadeDeleteStorage{accessClient: ac}
-		err := s.checkFolderContentsAccess(context.Background(), user, "default", "folder", "parent")
+		err := s.checkFolderContentsAccess(t.Context(), user, "default", "folder", "parent")
 		require.True(t, apierrors.IsForbidden(err))
 	})
 
@@ -2315,7 +2315,7 @@ func TestCheckFolderContentsAccess(t *testing.T) {
 			return req.Resource != folderGVR.Resource || req.Verb != utils.VerbDelete
 		}}
 		s := &cascadeDeleteStorage{accessClient: ac}
-		err := s.checkFolderContentsAccess(context.Background(), user, "default", "folder", "parent")
+		err := s.checkFolderContentsAccess(t.Context(), user, "default", "folder", "parent")
 		require.True(t, apierrors.IsForbidden(err))
 	})
 
@@ -2325,7 +2325,7 @@ func TestCheckFolderContentsAccess(t *testing.T) {
 			return req.Resource != varGVR.Resource
 		}}
 		s := &cascadeDeleteStorage{accessClient: ac}
-		err := s.checkFolderContentsAccess(context.Background(), user, "default", "folder", "parent")
+		err := s.checkFolderContentsAccess(t.Context(), user, "default", "folder", "parent")
 		require.True(t, apierrors.IsForbidden(err))
 	})
 
@@ -2333,7 +2333,7 @@ func TestCheckFolderContentsAccess(t *testing.T) {
 		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagGrafanaDashboardGlobalVariables: false})
 		ac := &recordingAccessClient{err: errors.New("boom")}
 		s := &cascadeDeleteStorage{accessClient: ac}
-		err := s.checkFolderContentsAccess(context.Background(), user, "default", "folder", "parent")
+		err := s.checkFolderContentsAccess(t.Context(), user, "default", "folder", "parent")
 		require.ErrorContains(t, err, "boom")
 	})
 }

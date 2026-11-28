@@ -44,7 +44,7 @@ func TestFolderSyncHooks_Create(t *testing.T) {
 				permissionStore: storeMock,
 			}
 
-			f, err := b.beginCreate(context.Background(), tt.folder, nil)
+			f, err := b.beginCreate(t.Context(), tt.folder, nil)
 			if err != nil {
 				require.NoError(t, err)
 			}
@@ -94,7 +94,7 @@ func TestFolderSyncHooks_Update(t *testing.T) {
 				permissionStore: storeMock,
 			}
 
-			f, err := b.beginUpdate(context.Background(), tt.newFolder, tt.oldFolder, nil)
+			f, err := b.beginUpdate(t.Context(), tt.newFolder, tt.oldFolder, nil)
 			if err != nil {
 				require.NoError(t, err)
 			}

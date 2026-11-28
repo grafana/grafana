@@ -1,7 +1,6 @@
 package informer
 
 import (
-	"context"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -94,15 +93,15 @@ func TestNewCachedRepositoryGetter(t *testing.T) {
 	require.NoError(t, indexer.Add(repo("other", "c")))
 	getter := NewCachedRepositoryGetter(listers.NewRepositoryLister(indexer))
 
-	got, err := getter.Get(context.Background(), testNamespace, "a")
+	got, err := getter.Get(t.Context(), testNamespace, "a")
 	require.NoError(t, err)
 	assert.Equal(t, "a", got.Name)
 
-	count, err := getter.CountRepositories(context.Background(), testNamespace)
+	count, err := getter.CountRepositories(t.Context(), testNamespace)
 	require.NoError(t, err)
 	assert.Equal(t, 2, count, "scoped to the namespace, and a repository awaiting its finalizers still counts")
 
-	confirmed, err := getter.ConfirmRepositoryCount(context.Background(), testNamespace)
+	confirmed, err := getter.ConfirmRepositoryCount(t.Context(), testNamespace)
 	require.NoError(t, err)
 	assert.Equal(t, count, confirmed, "the apiserver watch reaches every replica, so the lister already is the confirmation")
 }
@@ -113,11 +112,11 @@ func TestClientRepositoryGetter_GetReadsTheAPI(t *testing.T) {
 	full.Spec.Title = "a title"
 	g := NewClientRepositoryGetter(fake.NewClientset(full).ProvisioningV0alpha1(), usinformer.NewStore())
 
-	got, err := g.Get(context.Background(), "ns", "fresh")
+	got, err := g.Get(t.Context(), "ns", "fresh")
 	require.NoError(t, err)
 	assert.Equal(t, "a title", got.Spec.Title, "the reconcile gets the whole object")
 
-	_, err = g.Get(context.Background(), "ns", "missing")
+	_, err = g.Get(t.Context(), "ns", "missing")
 	assert.True(t, apierrors.IsNotFound(err))
 }
 
@@ -128,14 +127,14 @@ func TestClientRepositoryGetter_GetWritesThrough(t *testing.T) {
 	store := usinformer.NewStore()
 	g := NewClientRepositoryGetter(fake.NewClientset(repoAt("ns", "fresh", "7")).ProvisioningV0alpha1(), store)
 
-	_, err := g.Get(context.Background(), "ns", "fresh")
+	_, err := g.Get(t.Context(), "ns", "fresh")
 	require.NoError(t, err)
-	assert.Equal(t, []string{"ns/fresh@7"}, identities(t, store.List(context.Background())), "an identity, not the whole object")
+	assert.Equal(t, []string{"ns/fresh@7"}, identities(t, store.List(t.Context())), "an identity, not the whole object")
 
-	store.Update(context.Background(), identity("ns", "gone", "3"))
-	_, err = g.Get(context.Background(), "ns", "gone")
+	store.Update(t.Context(), identity("ns", "gone", "3"))
+	_, err = g.Get(t.Context(), "ns", "gone")
 	require.True(t, apierrors.IsNotFound(err))
-	assert.Equal(t, []string{"ns/fresh@7"}, identities(t, store.List(context.Background())), "a vanished repository leaves the store")
+	assert.Equal(t, []string{"ns/fresh@7"}, identities(t, store.List(t.Context())), "a vanished repository leaves the store")
 }
 
 // The confirmed count reads the API, not the store.
@@ -143,11 +142,11 @@ func TestClientRepositoryGetter_ConfirmCountListsTheAPI(t *testing.T) {
 	client := fake.NewClientset(repo("ns-a", "one"), repo("ns-a", "two"), repo("ns-b", "other"))
 	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), usinformer.NewStore())
 
-	cached, err := g.CountRepositories(context.Background(), "ns-a")
+	cached, err := g.CountRepositories(t.Context(), "ns-a")
 	require.NoError(t, err)
 	assert.Zero(t, cached, "the store has seen none of them")
 
-	confirmed, err := g.ConfirmRepositoryCount(context.Background(), "ns-a")
+	confirmed, err := g.ConfirmRepositoryCount(t.Context(), "ns-a")
 	require.NoError(t, err)
 	assert.Equal(t, 2, confirmed, "scoped to the namespace")
 }
@@ -159,7 +158,7 @@ func TestClientRepositoryGetter_CountFiltersNamespace(t *testing.T) {
 	store := seededStore(repo("ns-a", "one"), repo("ns-a", "two"), terminating(repo("ns-a", "going")), repo("ns-b", "other"))
 	g := NewClientRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), store)
 
-	count, err := g.CountRepositories(context.Background(), "ns-a")
+	count, err := g.CountRepositories(t.Context(), "ns-a")
 	require.NoError(t, err)
 	assert.Equal(t, 3, count)
 }
@@ -171,7 +170,7 @@ func TestNewRepositoryDeltaSource(t *testing.T) {
 
 	t.Run("nats enabled reads fresh from the API", func(t *testing.T) {
 		_, getter := NewRepositoryDeltaSource(newFakeSubscriber(), client, nil, time.Minute, nil, nil)
-		got, err := getter.Get(context.Background(), testNamespace, "r")
+		got, err := getter.Get(t.Context(), testNamespace, "r")
 		require.NoError(t, err)
 		assert.Equal(t, "r", got.Name)
 	})
@@ -180,7 +179,7 @@ func TestNewRepositoryDeltaSource(t *testing.T) {
 		_, getter := NewRepositoryDeltaSource(nil, client, nil, time.Minute, nil, nil)
 		// The cache getter reads the (empty, unsynced) informer lister, so the
 		// object present in the API is not found — proving it does not hit the API.
-		_, err := getter.Get(context.Background(), testNamespace, "r")
+		_, err := getter.Get(t.Context(), testNamespace, "r")
 		assert.True(t, apierrors.IsNotFound(err))
 	})
 }

@@ -40,7 +40,7 @@ func TestSSOSettingsBackfill(t *testing.T) {
 	mt := newFakeSettings()
 	b := &SSOSettingsBackfill{legacyReader: reader, mtReader: mt, mtWriter: mt, namespace: "stacks-11", log: log.New("test")}
 
-	require.NoError(t, b.backfill(context.Background()))
+	require.NoError(t, b.backfill(t.Context()))
 
 	// The OAuth provider is copied per-key into its section.
 	assert.Equal(t, "abc", mt.upserts["auth.github|client_id"])
@@ -60,7 +60,7 @@ func TestSSOSettingsBackfill_WritesUnderConfiguredNamespace(t *testing.T) {
 	mt := newFakeSettings()
 	b := &SSOSettingsBackfill{legacyReader: reader, mtReader: mt, mtWriter: mt, namespace: "stacks-11", log: log.New("test")}
 
-	require.NoError(t, b.backfill(context.Background()))
+	require.NoError(t, b.backfill(t.Context()))
 
 	assert.Equal(t, map[string]bool{"stacks-11": true}, mt.namespaces)
 }
@@ -112,7 +112,7 @@ func TestSSOSettingsBackfill_PropagatesReadError(t *testing.T) {
 	reader := &fakeStoredLister{err: errors.New("boom")}
 	b := &SSOSettingsBackfill{legacyReader: reader, mtWriter: newFakeSettings(), namespace: "stacks-11", log: log.New("test")}
 
-	require.Error(t, b.backfill(context.Background()))
+	require.Error(t, b.backfill(t.Context()))
 }
 
 func TestSSOSettingsBackfill_Defaults(t *testing.T) {
@@ -141,7 +141,7 @@ func TestSSOSettingsBackfill_Defaults(t *testing.T) {
 	mt := newFakeSettings()
 	b := &SSOSettingsBackfill{legacyReader: reader, mtReader: mt, mtWriter: mt, namespace: "stacks-11", log: log.New("test")}
 
-	require.NoError(t, b.backfill(context.Background()))
+	require.NoError(t, b.backfill(t.Context()))
 
 	// Explicit values are preserved
 	assert.Equal(t, "false", mt.upserts["auth.myProvider|setting_1"])
@@ -171,7 +171,7 @@ func TestSSOSettingsBackfill_PrunesStaleRows(t *testing.T) {
 	)
 	b := &SSOSettingsBackfill{legacyReader: reader, mtReader: mt, mtWriter: mt, namespace: "stacks-11", log: log.New("test")}
 
-	require.NoError(t, b.backfill(context.Background()))
+	require.NoError(t, b.backfill(t.Context()))
 
 	assert.Equal(t, []string{"auth.myProvider|removed_key"}, mt.deleted)
 	assert.Equal(t, "abc", mt.upserts["auth.myProvider|client_id"])
@@ -185,11 +185,11 @@ func TestSSOSettingsBackfill_Converges(t *testing.T) {
 	mt := newFakeSettings(usRow("auth.github", "removed_key", "x"))
 	b := &SSOSettingsBackfill{legacyReader: reader, mtReader: mt, mtWriter: mt, namespace: "stacks-11", log: log.New("test")}
 
-	require.NoError(t, b.backfill(context.Background()))
+	require.NoError(t, b.backfill(t.Context()))
 	require.Equal(t, []string{"auth.github|removed_key"}, mt.deleted)
 
 	// A second pass should be a no-op
-	require.NoError(t, b.backfill(context.Background()))
+	require.NoError(t, b.backfill(t.Context()))
 	assert.Equal(t, []string{"auth.github|removed_key"}, mt.deleted)
 }
 
@@ -201,7 +201,7 @@ func TestSSOSettingsBackfill_PropagatesPruneError(t *testing.T) {
 	mt.listErr = errors.New("boom")
 	b := &SSOSettingsBackfill{legacyReader: reader, mtReader: mt, mtWriter: mt, namespace: "stacks-11", log: log.New("test")}
 
-	require.Error(t, b.backfill(context.Background()))
+	require.Error(t, b.backfill(t.Context()))
 }
 
 func TestSSOSettingsBackfill_NoDefaultsRegistered(t *testing.T) {
@@ -213,7 +213,7 @@ func TestSSOSettingsBackfill_NoDefaultsRegistered(t *testing.T) {
 	mt := newFakeSettings()
 	b := &SSOSettingsBackfill{legacyReader: reader, mtReader: mt, mtWriter: mt, namespace: "stacks-11", log: log.New("test")}
 
-	require.NoError(t, b.backfill(context.Background()))
+	require.NoError(t, b.backfill(t.Context()))
 
 	assert.Equal(t, "value_1", mt.upserts["auth.myProvider|setting_1"])
 	assert.Equal(t, "value_2", mt.upserts["auth.myProvider|setting_2"])

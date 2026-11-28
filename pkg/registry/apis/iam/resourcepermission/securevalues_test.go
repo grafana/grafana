@@ -1,7 +1,6 @@
 package resourcepermission
 
 import (
-	"context"
 	"strings"
 	"testing"
 
@@ -18,7 +17,7 @@ import (
 
 func TestIntegrationSecureValueResourcePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
-	ctx := context.Background()
+	ctx := t.Context()
 	backend := setupBackend(t)
 	backend.mappers.RegisterMapper(
 		schema.GroupResource{Group: "secret.grafana.app", Resource: "securevalues"},

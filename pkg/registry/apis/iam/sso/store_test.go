@@ -86,7 +86,7 @@ func TestLegacyStore_Create(t *testing.T) {
 			name: "fails without an identity and does not upsert",
 			svc:  &fakeSSOService{},
 			op: func(s *LegacyStore) (runtime.Object, error) {
-				return s.Create(context.Background(), ssoObj("azuread", map[string]any{"enabled": "true"}), nil, &metav1.CreateOptions{})
+				return s.Create(t.Context(), ssoObj("azuread", map[string]any{"enabled": "true"}), nil, &metav1.CreateOptions{})
 			},
 			assert: func(t *testing.T, sso *iamv0.SSOSetting, err error, svc *fakeSSOService) {
 				require.Error(t, err)

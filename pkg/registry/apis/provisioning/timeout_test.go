@@ -86,7 +86,7 @@ func TestWithTimeout_RunsInnerHandler(t *testing.T) {
 	}
 
 	wrapped := WithTimeout(inner, 30*time.Second).(rest.Connecter)
-	h, err := wrapped.Connect(context.Background(), "repo", nil, &recordingResponder{})
+	h, err := wrapped.Connect(t.Context(), "repo", nil, &recordingResponder{})
 	require.NoError(t, err)
 
 	rr := httptest.NewRecorder()
@@ -119,7 +119,7 @@ func TestWithTimeout_PreservesRequestContext(t *testing.T) {
 	// Mirror production: the outer Connect ctx has a namespace (k8s adds it in
 	// ConnectResource) but no filter-added values. The inbound request has the
 	// filter-added values but not the namespace.
-	connectCtx := request.WithNamespace(context.Background(), "ns-from-connect")
+	connectCtx := request.WithNamespace(t.Context(), "ns-from-connect")
 
 	wrapped := WithTimeout(inner, 30*time.Second).(rest.Connecter)
 	h, err := wrapped.Connect(connectCtx, "repo", nil, &recordingResponder{})
@@ -156,7 +156,7 @@ func TestWithTimeout_HandlerSeesTimeoutCancellation(t *testing.T) {
 	})
 
 	wrapped := WithTimeout(inner, timeout).(rest.Connecter)
-	h, err := wrapped.Connect(context.Background(), "repo", nil, &recordingResponder{})
+	h, err := wrapped.Connect(t.Context(), "repo", nil, &recordingResponder{})
 	require.NoError(t, err)
 
 	rr := httptest.NewRecorder()
@@ -172,7 +172,7 @@ func TestWithTimeout_PropagatesConnectError(t *testing.T) {
 
 	wrapped := WithTimeout(inner, 30*time.Second).(rest.Connecter)
 	responder := &recordingResponder{}
-	h, err := wrapped.Connect(context.Background(), "repo", nil, responder)
+	h, err := wrapped.Connect(t.Context(), "repo", nil, responder)
 
 	require.NoError(t, err, "outer Connect should succeed; inner runs at request time")
 	require.NotNil(t, h, "outer Connect should always return a handler")

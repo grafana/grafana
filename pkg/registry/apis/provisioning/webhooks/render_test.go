@@ -1,7 +1,6 @@
 package webhooks
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -50,7 +49,7 @@ func TestRenderErrorStatus(t *testing.T) {
 			client.EXPECT().GetBlob(mock.Anything, mock.Anything).Return(input.resp, input.err).Once()
 			connector := NewRenderConnector(client, nil)
 			responder := &renderErrorResponder{}
-			ctx := request.WithNamespace(context.Background(), "default")
+			ctx := request.WithNamespace(t.Context(), "default")
 			handler, err := connector.Connect(ctx, "repo", nil, responder)
 			require.NoError(t, err)
 			handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/repo/render/123e4567-e89b-12d3-a456-426614174000", nil))

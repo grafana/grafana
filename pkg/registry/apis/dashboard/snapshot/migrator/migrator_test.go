@@ -71,7 +71,7 @@ func insertSnapshot(t *testing.T, store db.DB, snap *dashboardsnapshots.Dashboar
 	if snap.DeleteKey == "" {
 		snap.DeleteKey = snap.Key
 	}
-	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
+	err := store.WithDbSession(t.Context(), func(sess *db.Session) error {
 		_, err := sess.Insert(snap)
 		return err
 	})
@@ -129,7 +129,7 @@ func TestSnapshotUploadStopsOnSendFailure(t *testing.T) {
 func TestIntegrationMigrateSnapshots(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	opts := migrations.MigrateOptions{
 		Namespace: "default",
 		Progress:  func(int, string) {},

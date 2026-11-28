@@ -31,7 +31,7 @@ func newPermissiveMockQuotaTracker(t *testing.T) quotas.QuotaTracker {
 }
 
 func TestIncrementalSync_ContextCancelled(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 	repo := repository.NewMockVersioned(t)
 	repoResources := resources.NewMockRepositoryResources(t)
@@ -69,7 +69,7 @@ func runIncrementalSyncTests(t *testing.T, tests []incrementalSyncTestCase) {
 
 			tt.setupMocks(repo, repoResources, progress)
 
-			err := IncrementalSync(context.Background(), withIncrementalSyncReader(t, repo, repoResources), tt.previousRef, tt.currentRef, repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tt.quotaTracker)
+			err := IncrementalSync(t.Context(), withIncrementalSyncReader(t, repo, repoResources), tt.previousRef, tt.currentRef, repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tt.quotaTracker)
 
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)
@@ -414,7 +414,7 @@ func TestIncrementalSync_FolderMetadataRequiresReader(t *testing.T) {
 	}, nil)
 
 	err := IncrementalSync(
-		context.Background(),
+		t.Context(),
 		repo,
 		"old-ref",
 		"new-ref",
@@ -1116,7 +1116,7 @@ func TestIncrementalSync_RenameQuotaGate(t *testing.T) {
 				repoResources.On("RenameResourceFile", mock.Anything, "dashboards/old&path.json", "old-ref", "dashboards/recovered.json", "new-ref", mock.Anything).
 					Run(func(args mock.Arguments) {
 						if beforeCreate, ok := args.Get(5).(resources.BeforeCreate); ok {
-							_, _ = beforeCreate(context.Background(), "dashboards/recovered.json")
+							_, _ = beforeCreate(t.Context(), "dashboards/recovered.json")
 						}
 					}).
 					Return("recovered-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
@@ -1547,7 +1547,7 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 
 			tt.setupMocks(repo, repoResources, progress)
 
-			err := IncrementalSync(context.Background(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+			err := IncrementalSync(t.Context(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)
@@ -1659,7 +1659,7 @@ func TestFindOrphanedFolders_SkipsRelocatedUIDs(t *testing.T) {
 		"Computations/": {"moved-uid"},
 	}
 
-	orphaned := findOrphanedFolders(context.Background(), repo, "new-ref", affectedFolders, relocations, tracing.NewNoopTracerService())
+	orphaned := findOrphanedFolders(t.Context(), repo, "new-ref", affectedFolders, relocations, tracing.NewNoopTracerService())
 
 	require.Equal(t, []folderDeletion{
 		{Path: "removed/", UID: "removed-uid", Reason: provisioning.ReasonFolderOrphaned},
@@ -1711,7 +1711,7 @@ func TestIncrementalSync_MissingFolderMetadata(t *testing.T) {
 			return result.Action() == repository.FileActionCreated && result.Path() == "myfolder/dashboard.json"
 		})).Return()
 
-		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+		err := IncrementalSync(t.Context(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 		require.NoError(t, err)
 		mockReader.AssertCalled(t, "ReadTree", mock.Anything, "new-ref")
 	})
@@ -1748,7 +1748,7 @@ func TestIncrementalSync_MissingFolderMetadata(t *testing.T) {
 
 		mockReader.On("ReadTree", mock.Anything, "new-ref").Return([]repository.FileTreeEntry(nil), fmt.Errorf("read tree failed"))
 
-		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+		err := IncrementalSync(t.Context(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "detect missing folder metadata: read tree failed")
 	})
@@ -1792,7 +1792,7 @@ func TestIncrementalSync_InvalidFolderMetadata(t *testing.T) {
 			{Path: "alpha/_folder.json", Blob: true},
 		}, nil)
 
-		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+		err := IncrementalSync(t.Context(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 		require.NoError(t, err)
 	})
 
@@ -1837,7 +1837,7 @@ func TestIncrementalSync_InvalidFolderMetadata(t *testing.T) {
 			{Path: "alpha/_folder.json", Blob: true},
 		}, nil)
 
-		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+		err := IncrementalSync(t.Context(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 		require.NoError(t, err)
 		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
 	})
@@ -1898,7 +1898,7 @@ func TestIncrementalSync_InvalidFolderMetadata(t *testing.T) {
 			{Path: "moved/_folder.json", Blob: true},
 		}, nil)
 
-		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+		err := IncrementalSync(t.Context(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 		require.NoError(t, err)
 	})
 }
@@ -1933,7 +1933,7 @@ func TestIncrementalSync_FolderRouting(t *testing.T) {
 				result.Error() == nil
 		})).Return()
 
-		err := IncrementalSync(context.Background(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+		err := IncrementalSync(t.Context(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 		require.NoError(t, err)
 
 		repoResources.AssertCalled(t, "EnsureFolderPathExist", mock.Anything, "alpha/", "new-ref", mock.Anything)
@@ -1968,7 +1968,7 @@ func TestIncrementalSync_FolderRouting(t *testing.T) {
 				result.Error().Error() == "re-parenting child folder at gamma/: folder update failed"
 		})).Return()
 
-		err := IncrementalSync(context.Background(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+		err := IncrementalSync(t.Context(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 		require.NoError(t, err)
 	})
 }
@@ -2019,7 +2019,7 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 			{Path: "alpha/dash.json", Blob: true},
 		}, nil)
 
-		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+		err := IncrementalSync(t.Context(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 		require.NoError(t, err)
 
 		repoResources.AssertCalled(t, "EnsureFolderPathExist", mock.Anything, "alpha/", "new-ref", mock.Anything)
@@ -2071,7 +2071,7 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 			{Path: "gamma/dash.json", Blob: true},
 		}, nil)
 
-		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+		err := IncrementalSync(t.Context(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 		require.NoError(t, err)
 
 		repoResources.AssertCalled(t, "WriteResourceFromFile", mock.Anything, "gamma/dash.json", "new-ref")
@@ -2108,7 +2108,7 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 			{Path: "beta/new-dash.json", Blob: true},
 		}, nil)
 
-		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+		err := IncrementalSync(t.Context(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 		require.NoError(t, err)
 
 		// _folder.json deletion should NOT reach RemoveResourceFromFile
@@ -2171,7 +2171,7 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 			{Path: "alpha/dash.json", Blob: true},
 		}, nil)
 
-		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+		err := IncrementalSync(t.Context(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 		require.NoError(t, err)
 
 		repoResources.AssertCalled(t, "EnsureFolderPathExist", mock.Anything, "alpha/", "new-ref", mock.Anything, mock.Anything)
@@ -2223,7 +2223,7 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 			{Path: "alpha/beta", Blob: false},
 		}, nil)
 
-		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+		err := IncrementalSync(t.Context(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 		require.NoError(t, err)
 
 		repoResources.AssertCalled(t, "EnsureFolderPathExist", mock.Anything, "alpha/beta/", "new-ref", mock.Anything)
@@ -2267,7 +2267,7 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 			{Path: "alpha/_folder.json", Blob: true},
 		}, nil)
 
-		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+		err := IncrementalSync(t.Context(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 		require.NoError(t, err)
 
 		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, "old-uid")
@@ -2281,8 +2281,8 @@ func TestDeleteFolders(t *testing.T) {
 		repoResources := resources.NewMockRepositoryResources(t)
 		progress := jobs.NewMockJobProgressRecorder(t)
 
-		deleteFolders(context.Background(), nil, repoResources, progress, tracer)
-		deleteFolders(context.Background(), []folderDeletion{}, repoResources, progress, tracer)
+		deleteFolders(t.Context(), nil, repoResources, progress, tracer)
+		deleteFolders(t.Context(), []folderDeletion{}, repoResources, progress, tracer)
 
 		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
 		progress.AssertNotCalled(t, "Record", mock.Anything, mock.Anything)
@@ -2304,7 +2304,7 @@ func TestDeleteFolders(t *testing.T) {
 				r.Error() == nil
 		})).Return()
 
-		deleteFolders(context.Background(), []folderDeletion{
+		deleteFolders(t.Context(), []folderDeletion{
 			{Path: "dashboards/", UID: "folder-uid"},
 		}, repoResources, progress, tracer)
 
@@ -2327,7 +2327,7 @@ func TestDeleteFolders(t *testing.T) {
 				r.Error().Error() == "delete folder bad-uid: not found"
 		})).Return()
 
-		deleteFolders(context.Background(), []folderDeletion{
+		deleteFolders(t.Context(), []folderDeletion{
 			{Path: "alpha/", UID: "bad-uid"},
 		}, repoResources, progress, tracer)
 	})
@@ -2348,7 +2348,7 @@ func TestDeleteFolders(t *testing.T) {
 				r.Error() == nil
 		})).Return()
 
-		deleteFolders(context.Background(), []folderDeletion{
+		deleteFolders(t.Context(), []folderDeletion{
 			{Path: "bad&path/", UID: "never-existed-uid"},
 		}, repoResources, progress, tracer)
 	})
@@ -2364,7 +2364,7 @@ func TestDeleteFolders(t *testing.T) {
 				r.Warning() != nil
 		})).Return()
 
-		deleteFolders(context.Background(), []folderDeletion{
+		deleteFolders(t.Context(), []folderDeletion{
 			{Path: "alpha/", UID: "old-uid"},
 		}, repoResources, progress, tracer)
 
@@ -2383,7 +2383,7 @@ func TestDeleteFolders(t *testing.T) {
 				r.Warning() != nil
 		})).Return()
 
-		deleteFolders(context.Background(), []folderDeletion{
+		deleteFolders(t.Context(), []folderDeletion{
 			{Path: "dashboards/", UID: "folder-uid"},
 		}, repoResources, progress, tracer)
 
@@ -2403,7 +2403,7 @@ func TestDeleteFolders(t *testing.T) {
 				r.Warning() != nil
 		})).Return()
 
-		deleteFolders(context.Background(), []folderDeletion{
+		deleteFolders(t.Context(), []folderDeletion{
 			{Path: "alpha/", UID: "old-uid"},
 		}, repoResources, progress, tracer)
 
@@ -2424,7 +2424,7 @@ func TestDeleteFolders(t *testing.T) {
 				r.Warning() != nil
 		})).Return()
 
-		deleteFolders(context.Background(), []folderDeletion{
+		deleteFolders(t.Context(), []folderDeletion{
 			{Path: "alpha/", UID: "old-uid"},
 		}, repoResources, progress, tracer)
 
@@ -2447,7 +2447,7 @@ func TestDeleteFolders(t *testing.T) {
 			}).Return(nil)
 		progress.On("Record", mock.Anything, mock.Anything).Return()
 
-		deleteFolders(context.Background(), []folderDeletion{
+		deleteFolders(t.Context(), []folderDeletion{
 			{Path: "a/", UID: "shallow-uid"},
 			{Path: "a/b/", UID: "mid-uid"},
 			{Path: "a/b/c/", UID: "deep-uid"},
@@ -2481,7 +2481,7 @@ func TestDeleteFolders(t *testing.T) {
 				r.Warning() != nil
 		})).Return().Once()
 
-		deleteFolders(context.Background(), []folderDeletion{
+		deleteFolders(t.Context(), []folderDeletion{
 			{Path: "", UID: "test-repo", Reason: provisioning.ReasonFolderMetadataCreated},
 			{Path: "alpha/", UID: "alpha-uid"},
 		}, repoResources, progress, tracer)

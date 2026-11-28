@@ -73,7 +73,7 @@ func TestCleanupQueue_DeletesOnlyUnclaimedJobsForRepository(t *testing.T) {
 	fakeClient := newFilteringClientset()
 	store := newTestStore(fakeClient.ProvisioningV0alpha1())
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	createJob(ctx, t, fakeClient, "stacks-123", "repo-a-pending-1", "repo-a", false)
@@ -100,7 +100,7 @@ func TestCleanupQueue_NoJobs(t *testing.T) {
 	fakeClient := newFilteringClientset()
 	store := newTestStore(fakeClient.ProvisioningV0alpha1())
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	deleted, err := store.CleanupQueue(ctx, "stacks-123", "repo-a")
@@ -115,7 +115,7 @@ func TestCleanupQueue_InvalidRepositoryLabel(t *testing.T) {
 	fakeClient := newFilteringClientset()
 	store := newTestStore(fakeClient.ProvisioningV0alpha1())
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	longName := strings.Repeat("a", 64) // exceeds the 63-character label value limit
@@ -131,7 +131,7 @@ func TestCleanupQueue_DeletesJobsMatchedBySpecRepository(t *testing.T) {
 	fakeClient := newFilteringClientset()
 	store := newTestStore(fakeClient.ProvisioningV0alpha1())
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	// No LabelRepository, only spec.Repository.
@@ -156,7 +156,7 @@ func TestCleanupQueue_RetriesDeleteWhenConflictIsNotAClaim(t *testing.T) {
 	fakeClient := newFilteringClientset()
 	store := newTestStore(fakeClient.ProvisioningV0alpha1())
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	createJob(ctx, t, fakeClient, "stacks-123", "repo-a-pending", "repo-a", false)
@@ -212,7 +212,7 @@ func TestCleanupQueue_SkipsJobClaimedAfterList(t *testing.T) {
 	fakeClient := newFilteringClientset()
 	store := newTestStore(fakeClient.ProvisioningV0alpha1())
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	createJob(ctx, t, fakeClient, "stacks-123", "repo-a-pending", "repo-a", false)
@@ -278,7 +278,7 @@ func TestCleanupQueue_SkipsRecreatedJobThatIsNotACandidate(t *testing.T) {
 			fakeClient := newFilteringClientset()
 			store := newTestStore(fakeClient.ProvisioningV0alpha1())
 
-			ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+			ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 			require.NoError(t, err)
 
 			createJob(ctx, t, fakeClient, "stacks-123", "repo-a-sync", "repo-a", false)
@@ -317,7 +317,7 @@ func TestCleanupQueue_PreservesOrphanCleanupJobs(t *testing.T) {
 	fakeClient := newFilteringClientset()
 	store := newTestStore(fakeClient.ProvisioningV0alpha1())
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	createJob(ctx, t, fakeClient, "stacks-123", "repo-a-pending", "repo-a", false)
@@ -347,7 +347,7 @@ func TestCleanupQueue_ReportsPartialCountOnError(t *testing.T) {
 	fakeClient := newFilteringClientset()
 	store := newTestStore(fakeClient.ProvisioningV0alpha1())
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	createJob(ctx, t, fakeClient, "stacks-123", "repo-a-pending-1", "repo-a", false)

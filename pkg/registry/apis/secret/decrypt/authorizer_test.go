@@ -20,7 +20,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 	defaultNs := xkube.Namespace("default")
 
 	t.Run("when no auth info is present, it returns false", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
 		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
@@ -29,7 +29,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 	})
 
 	t.Run("when token permissions are empty, it returns false", func(t *testing.T) {
-		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{})
+		ctx := createAuthContext(t.Context(), defaultNs.String(), "identity", []string{})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
 		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
@@ -38,7 +38,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 	})
 
 	t.Run("when service identity is empty, it returns false", func(t *testing.T) {
-		ctx := createAuthContext(context.Background(), defaultNs.String(), "", []string{})
+		ctx := createAuthContext(t.Context(), defaultNs.String(), "", []string{})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
 		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
@@ -47,7 +47,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 	})
 
 	t.Run("when service identity is empty string, it returns false", func(t *testing.T) {
-		ctx := createAuthContext(context.Background(), defaultNs.String(), " ", []string{})
+		ctx := createAuthContext(t.Context(), defaultNs.String(), " ", []string{})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
 		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
@@ -59,13 +59,13 @@ func TestDecryptAuthorizer(t *testing.T) {
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
 		// nameless
-		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues"})
+		ctx := createAuthContext(t.Context(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues"})
 		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
 		require.NotEmpty(t, identity)
 		require.False(t, allowed)
 
 		// named
-		ctx = createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues/name"})
+		ctx = createAuthContext(t.Context(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues/name"})
 		identity, allowed, _ = authorizer.Authorize(ctx, defaultNs, "", nil, nil)
 		require.NotEmpty(t, identity)
 		require.False(t, allowed)
@@ -75,20 +75,20 @@ func TestDecryptAuthorizer(t *testing.T) {
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
 		// nameless
-		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues:*"})
+		ctx := createAuthContext(t.Context(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues:*"})
 		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
 		require.NotEmpty(t, identity)
 		require.False(t, allowed)
 
 		// named
-		ctx = createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues/name:something"})
+		ctx = createAuthContext(t.Context(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues/name:something"})
 		identity, allowed, _ = authorizer.Authorize(ctx, defaultNs, "", nil, nil)
 		require.NotEmpty(t, identity)
 		require.False(t, allowed)
 	})
 
 	t.Run("when permission does not have 2 or 3 parts, it returns false", func(t *testing.T) {
-		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app:decrypt"})
+		ctx := createAuthContext(t.Context(), defaultNs.String(), "identity", []string{"secret.grafana.app:decrypt"})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
 		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
@@ -97,7 +97,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 	})
 
 	t.Run("when permission has group that is not `secret.grafana.app`, it returns false", func(t *testing.T) {
-		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"wrong.group/securevalues/invalid:decrypt"})
+		ctx := createAuthContext(t.Context(), defaultNs.String(), "identity", []string{"wrong.group/securevalues/invalid:decrypt"})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
 		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
@@ -109,20 +109,20 @@ func TestDecryptAuthorizer(t *testing.T) {
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
 		// nameless
-		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/invalid-resource:decrypt"})
+		ctx := createAuthContext(t.Context(), defaultNs.String(), "identity", []string{"secret.grafana.app/invalid-resource:decrypt"})
 		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", nil, nil)
 		require.NotEmpty(t, identity)
 		require.False(t, allowed)
 
 		// named
-		ctx = createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/invalid-resource/name:decrypt"})
+		ctx = createAuthContext(t.Context(), defaultNs.String(), "identity", []string{"secret.grafana.app/invalid-resource/name:decrypt"})
 		identity, allowed, _ = authorizer.Authorize(ctx, defaultNs, "", nil, nil)
 		require.NotEmpty(t, identity)
 		require.False(t, allowed)
 	})
 
 	t.Run("when the allow list is empty, it allows all identities", func(t *testing.T) {
-		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues:decrypt"})
+		ctx := createAuthContext(t.Context(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues:decrypt"})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
 		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
@@ -134,13 +134,13 @@ func TestDecryptAuthorizer(t *testing.T) {
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
 		// nameless
-		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues:decrypt"})
+		ctx := createAuthContext(t.Context(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues:decrypt"})
 		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", []string{"group2"}, nil)
 		require.NotEmpty(t, identity)
 		require.False(t, allowed)
 
 		// named
-		ctx = createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues/name:decrypt"})
+		ctx = createAuthContext(t.Context(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues/name:decrypt"})
 		identity, allowed, _ = authorizer.Authorize(ctx, defaultNs, "", []string{"group2"}, nil)
 		require.NotEmpty(t, identity)
 		require.False(t, allowed)
@@ -150,20 +150,20 @@ func TestDecryptAuthorizer(t *testing.T) {
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
 		// nameless
-		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues:decrypt"})
+		ctx := createAuthContext(t.Context(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues:decrypt"})
 		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
 		require.True(t, allowed)
 		require.Equal(t, "identity", identity)
 
 		// named
-		ctx = createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues/name:decrypt"})
+		ctx = createAuthContext(t.Context(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues/name:decrypt"})
 		identity, allowed, _ = authorizer.Authorize(ctx, defaultNs, "name", []string{"identity"}, nil)
 		require.True(t, allowed)
 		require.Equal(t, "identity", identity)
 	})
 
 	t.Run("when there are multiple permissions, some invalid, only valid ones are considered", func(t *testing.T) {
-		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{
+		ctx := createAuthContext(t.Context(), defaultNs.String(), "identity", []string{
 			"secret.grafana.app/securevalues/name1:decrypt",
 			"secret.grafana.app/securevalues/name2:decrypt",
 			"secret.grafana.app/securevalues/invalid:read",
@@ -182,7 +182,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 	})
 
 	t.Run("when empty secure value name with specific permission, it returns false", func(t *testing.T) {
-		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues/name:decrypt"})
+		ctx := createAuthContext(t.Context(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues/name:decrypt"})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
 		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
@@ -191,7 +191,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 	})
 
 	t.Run("when permission has an extra / but no name, it returns false", func(t *testing.T) {
-		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues/:decrypt"})
+		ctx := createAuthContext(t.Context(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues/:decrypt"})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
 		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
@@ -200,7 +200,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 	})
 
 	t.Run("when the decrypters list is empty, meaning nothing can decrypt the secure value, it returns false", func(t *testing.T) {
-		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues:decrypt"})
+		ctx := createAuthContext(t.Context(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues:decrypt"})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
 		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "name", []string{}, nil)
@@ -209,7 +209,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 	})
 
 	t.Run("when one of decrypters matches the identity, it returns true", func(t *testing.T) {
-		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity1", []string{"secret.grafana.app/securevalues:decrypt"})
+		ctx := createAuthContext(t.Context(), defaultNs.String(), "identity1", []string{"secret.grafana.app/securevalues:decrypt"})
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
 		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", []string{"identity1", "identity2", "identity3"}, nil)
@@ -218,7 +218,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 	})
 
 	t.Run("when one of extra owner decrypters matches the identity, it returns true", func(t *testing.T) {
-		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity1", []string{"secret.grafana.app/securevalues:decrypt"})
+		ctx := createAuthContext(t.Context(), defaultNs.String(), "identity1", []string{"secret.grafana.app/securevalues:decrypt"})
 		authorizer := ProvideDecryptAuthorizer(tracer, []ExtraOwnerDecrypter{
 			{
 				Identity: "identity1",
@@ -238,7 +238,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 	})
 
 	t.Run("when there are extra owner decrypters but it does not match the identity, it returns false", func(t *testing.T) {
-		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity1", []string{"secret.grafana.app/securevalues:decrypt"})
+		ctx := createAuthContext(t.Context(), defaultNs.String(), "identity1", []string{"secret.grafana.app/securevalues:decrypt"})
 		authorizer := ProvideDecryptAuthorizer(tracer, []ExtraOwnerDecrypter{
 			{
 				Identity: "identity2",
@@ -257,7 +257,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 	})
 
 	t.Run("when one of extra owner decrypters matches the identity but not the group, it returns false", func(t *testing.T) {
-		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity1", []string{"secret.grafana.app/securevalues:decrypt"})
+		ctx := createAuthContext(t.Context(), defaultNs.String(), "identity1", []string{"secret.grafana.app/securevalues:decrypt"})
 		authorizer := ProvideDecryptAuthorizer(tracer, []ExtraOwnerDecrypter{
 			{
 				Identity: "identity1",
@@ -277,17 +277,17 @@ func TestDecryptAuthorizer(t *testing.T) {
 	t.Run("permissions must be case-sensitive and return false", func(t *testing.T) {
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
-		ctx := createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"SECRET.grafana.app/securevalues:decrypt"})
+		ctx := createAuthContext(t.Context(), defaultNs.String(), "identity", []string{"SECRET.grafana.app/securevalues:decrypt"})
 		identity, allowed, _ := authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
 		require.Equal(t, "identity", identity)
 		require.False(t, allowed)
 
-		ctx = createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/SECUREVALUES:decrypt"})
+		ctx = createAuthContext(t.Context(), defaultNs.String(), "identity", []string{"secret.grafana.app/SECUREVALUES:decrypt"})
 		identity, allowed, _ = authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
 		require.Equal(t, "identity", identity)
 		require.False(t, allowed)
 
-		ctx = createAuthContext(context.Background(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues:DECRYPT"})
+		ctx = createAuthContext(t.Context(), defaultNs.String(), "identity", []string{"secret.grafana.app/securevalues:DECRYPT"})
 		identity, allowed, _ = authorizer.Authorize(ctx, defaultNs, "", []string{"identity"}, nil)
 		require.Equal(t, "identity", identity)
 		require.False(t, allowed)
@@ -296,7 +296,7 @@ func TestDecryptAuthorizer(t *testing.T) {
 	t.Run("when namespace doesn't match the token's, it returns false", func(t *testing.T) {
 		authorizer := ProvideDecryptAuthorizer(tracer, nil)
 
-		ctx := createAuthContext(context.Background(), "namespace1", "identity", []string{"secret.grafana.app/securevalues:decrypt"})
+		ctx := createAuthContext(t.Context(), "namespace1", "identity", []string{"secret.grafana.app/securevalues:decrypt"})
 		identity, allowed, _ := authorizer.Authorize(ctx, "namespace2", "", []string{"identity"}, nil)
 		require.Empty(t, identity)
 		require.False(t, allowed)

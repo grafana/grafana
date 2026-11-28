@@ -26,7 +26,7 @@ func TestToV0ResourcePermissions(t *testing.T) {
 	ns := types.NamespaceInfo{Value: "default"}
 
 	t.Run("empty permissions", func(t *testing.T) {
-		result, err := backend.toV0ResourcePermissions(context.Background(), ns, []rbacAssignment{})
+		result, err := backend.toV0ResourcePermissions(t.Context(), ns, []rbacAssignment{})
 		require.NoError(t, err)
 		require.Nil(t, result)
 	})
@@ -80,7 +80,7 @@ func TestToV0ResourcePermissions(t *testing.T) {
 			},
 		}
 
-		result, err := backend.toV0ResourcePermissions(context.Background(), ns, permissions)
+		result, err := backend.toV0ResourcePermissions(t.Context(), ns, permissions)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Len(t, result, 1)

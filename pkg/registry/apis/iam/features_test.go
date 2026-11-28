@@ -1,7 +1,6 @@
 package iam
 
 import (
-	"context"
 	"testing"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -280,7 +279,7 @@ func TestFeaturesFromFlags(t *testing.T) {
 			require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(flags)))
 			t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 
-			require.Equal(t, tt.want, FeaturesFromFlags(context.Background(), openfeature.NewDefaultClient()))
+			require.Equal(t, tt.want, FeaturesFromFlags(t.Context(), openfeature.NewDefaultClient()))
 		})
 	}
 }
@@ -293,7 +292,7 @@ func TestFeaturesFromFlagsFullUsersAPITakesPrecedenceOverReadOnly(t *testing.T) 
 	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(flags)))
 	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 
-	require.Equal(t, Features{UsersAPI: true}, FeaturesFromFlags(context.Background(), openfeature.NewDefaultClient()))
+	require.Equal(t, Features{UsersAPI: true}, FeaturesFromFlags(t.Context(), openfeature.NewDefaultClient()))
 }
 
 func TestFeaturesFromFlagsResolvesOnce(t *testing.T) {
@@ -304,7 +303,7 @@ func TestFeaturesFromFlagsResolvesOnce(t *testing.T) {
 	require.NoError(t, openfeature.SetProviderAndWait(provider))
 	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 
-	got := FeaturesFromFlags(context.Background(), openfeature.NewDefaultClient())
+	got := FeaturesFromFlags(t.Context(), openfeature.NewDefaultClient())
 	require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{}))
 	require.True(t, got.RolesAPI)
 }
@@ -313,7 +312,7 @@ func TestResolveFeaturesExplicitConfigurationDoesNotEvaluateLegacyFlags(t *testi
 	configured := Features{UsersAPI: true}
 
 	// A nil client would panic if ResolveFeatures attempted legacy evaluation.
-	got := ResolveFeatures(context.Background(), &configured, nil)
+	got := ResolveFeatures(t.Context(), &configured, nil)
 
 	require.Equal(t, configured, got)
 }
@@ -333,5 +332,5 @@ func TestFeaturesFromFlagsExcludesRuntimeFlags(t *testing.T) {
 	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(flags)))
 	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 
-	require.Equal(t, Features{}, FeaturesFromFlags(context.Background(), openfeature.NewDefaultClient()))
+	require.Equal(t, Features{}, FeaturesFromFlags(t.Context(), openfeature.NewDefaultClient()))
 }

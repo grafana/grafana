@@ -1,7 +1,6 @@
 package team
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -50,7 +49,7 @@ func TestMutateOnCreateAndUpdate_ExternalGroups(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			obj := &iamv0alpha1.Team{Spec: iamv0alpha1.TeamSpec{ExternalGroups: tc.in}}
-			require.NoError(t, MutateOnCreateAndUpdate(context.Background(), obj))
+			require.NoError(t, MutateOnCreateAndUpdate(t.Context(), obj))
 			require.Equal(t, tc.want, obj.Spec.ExternalGroups)
 		})
 	}

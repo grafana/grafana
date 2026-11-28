@@ -33,14 +33,14 @@ func TestResolveExpirationSettingsFromConfigProvider(t *testing.T) {
 	settingService := &fakeSettingService{}
 	rest := NewTokensREST(nil, nil, noop.NewTracerProvider().Tracer("test"), provider, settingService)
 
-	resolved, err := rest.resolveExpirationSettings(context.Background())
+	resolved, err := rest.resolveExpirationSettings(t.Context())
 	require.NoError(t, err)
 	assert.Equal(t, expirationSettings{apiKeyMaxSecondsToLive: 3600, saTokenExpirationDays: 7}, resolved)
 	assert.False(t, settingService.called)
 }
 
 func TestResolveExpirationSettingsFromSettingService(t *testing.T) {
-	ctx := k8srequest.WithNamespace(context.Background(), "stacks-123")
+	ctx := k8srequest.WithNamespace(t.Context(), "stacks-123")
 	settingService := &fakeSettingService{
 		settings: []*settingsvc.Setting{
 			{Section: serviceAccountsSection, Key: tokenExpirationDayLimitKey, Value: " 14 "},
@@ -65,7 +65,7 @@ func TestResolveExpirationSettingsDefaultsForMissingOrBlankMTSettings(t *testing
 	}
 	rest := NewTokensREST(nil, nil, noop.NewTracerProvider().Tracer("test"), nil, settingService)
 
-	resolved, err := rest.resolveExpirationSettings(context.Background())
+	resolved, err := rest.resolveExpirationSettings(t.Context())
 	require.NoError(t, err)
 	assert.Equal(t, expirationSettings{
 		apiKeyMaxSecondsToLive: defaultTokenExpirationLimit,
@@ -112,7 +112,7 @@ func TestResolveExpirationSettingsErrors(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rest := NewTokensREST(nil, nil, noop.NewTracerProvider().Tracer("test"), tt.cfgProvider, tt.settingService)
-			_, err := rest.resolveExpirationSettings(context.Background())
+			_, err := rest.resolveExpirationSettings(t.Context())
 			require.ErrorContains(t, err, tt.errorContains)
 		})
 	}
@@ -232,7 +232,7 @@ func TestHandleCreateDoesNotStoreRejectedToken(t *testing.T) {
 			require.NoError(t, err)
 			responder := &fakeResponder{}
 
-			rest.handleCreate(context.Background(), claims.NamespaceInfo{OrgID: 1}, "sa-uid", req, responder)
+			rest.handleCreate(t.Context(), claims.NamespaceInfo{OrgID: 1}, "sa-uid", req, responder)
 
 			require.Error(t, responder.err)
 			assert.True(t, tt.isExpected(responder.err))

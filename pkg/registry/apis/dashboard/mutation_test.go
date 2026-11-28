@@ -1,7 +1,6 @@
 package dashboard
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -324,7 +323,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			default:
 				operationOptions = nil
 			}
-			err := b.Mutate(context.Background(), admission.NewAttributesRecord(
+			err := b.Mutate(t.Context(), admission.NewAttributesRecord(
 				tt.inputObj,
 				nil,
 				dashv1.DashboardResourceInfo.GroupVersionKind(),

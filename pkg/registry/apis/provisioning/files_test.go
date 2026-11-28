@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -173,7 +172,7 @@ func TestHandleDirectoryListing_RefNotFoundMapsTo404(t *testing.T) {
 	responder := &fakeResponder{}
 
 	connector.handleDirectoryListing(
-		context.Background(),
+		t.Context(),
 		"test-repo",
 		resources.DualWriteOptions{Path: "", Ref: "test-panel"},
 		mockReadWriter,
@@ -269,7 +268,7 @@ func TestHandleMethodRequest_FolderMetadataGuard(t *testing.T) {
 			opts := resources.DualWriteOptions{Path: tc.path, OriginalPath: tc.originalPath}
 
 			if tc.expectForbidden {
-				_, err := connector.handleMethodRequest(context.Background(), req, opts, false, nil, nil, nil)
+				_, err := connector.handleMethodRequest(t.Context(), req, opts, false, nil, nil, nil)
 				require.Error(t, err)
 				assert.True(t, apierrors.IsForbidden(err))
 			} else {
@@ -277,7 +276,7 @@ func TestHandleMethodRequest_FolderMetadataGuard(t *testing.T) {
 				// This is intentional: we only test the guard logic here, not the downstream handlers.
 				require.Panics(t, func() {
 					//nolint:errcheck
-					_, _ = connector.handleMethodRequest(context.Background(), req, opts, false, nil, nil, nil)
+					_, _ = connector.handleMethodRequest(t.Context(), req, opts, false, nil, nil, nil)
 				}, "guard must not intercept; code should proceed past the guard")
 			}
 		})
@@ -313,7 +312,7 @@ func TestHandlePut_DirectoryRouting(t *testing.T) {
 			// dualReadWriter. The panic confirms the routing decision was correct.
 			require.Panics(t, func() {
 				//nolint:errcheck
-				_, _ = connector.handlePut(context.Background(), req, opts, tc.isDir, nil)
+				_, _ = connector.handlePut(t.Context(), req, opts, tc.isDir, nil)
 			}, "should proceed past routing and panic on nil dualReadWriter")
 		})
 	}
@@ -328,7 +327,7 @@ func TestHandleMethodRequest_PutDirectoryRouting(t *testing.T) {
 
 		require.Panics(t, func() {
 			//nolint:errcheck
-			_, _ = connector.handleMethodRequest(context.Background(), req, opts, true, nil, nil, nil)
+			_, _ = connector.handleMethodRequest(t.Context(), req, opts, true, nil, nil, nil)
 		})
 	})
 }
@@ -561,7 +560,7 @@ func TestHandleGetRawFile(t *testing.T) {
 
 			opts := resources.DualWriteOptions{Path: tt.path}
 
-			result, err := connector.handleGetRawFile(context.Background(), opts, mockReadWriter, authorizer)
+			result, err := connector.handleGetRawFile(t.Context(), opts, mockReadWriter, authorizer)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -603,7 +602,7 @@ func TestHandleGetRawFile_FolderScopedAuth(t *testing.T) {
 		connector := &filesConnector{access: mockAccess}
 
 		_, err := connector.handleGetRawFile(
-			context.Background(),
+			t.Context(),
 			resources.DualWriteOptions{Path: "team-a/README.md"},
 			mockReadWriter,
 			authorizer,

@@ -125,7 +125,7 @@ func Test_SecureValueClient_CRUD_NoPermissions(t *testing.T) {
 		ctx         context.Context
 		errorReason metav1.StatusReason
 	}{
-		{"no auth context", context.Background(), metav1.StatusReasonUnauthorized},
+		{"no auth context", t.Context(), metav1.StatusReasonUnauthorized},
 		{"no permissions", testutils.CreateUserAuthContext(t.Context(), ns, nil), metav1.StatusReasonForbidden},
 		{"mismatching namespace", testutils.CreateUserAuthContext(t.Context(), "other-ns", nil), metav1.StatusReasonForbidden},
 	}

@@ -184,7 +184,7 @@ func TestConcurrentJobDriver_ClaimedElsewhereIsDropped(t *testing.T) {
 
 		driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
 
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 		runDone := make(chan error, 1)
 		go func() { runDone <- driver.Run(ctx) }()
@@ -227,7 +227,7 @@ func TestConcurrentJobDriver_TransientErrorsRetryUntilDropped(t *testing.T) {
 
 		driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
 
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 		runDone := make(chan error, 1)
 		go func() { runDone <- driver.Run(ctx) }()
@@ -273,7 +273,7 @@ func TestConcurrentJobDriver_ResyncUpdateRecoversDroppedJob(t *testing.T) {
 
 		driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
 
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 		runDone := make(chan error, 1)
 		go func() { runDone <- driver.Run(ctx) }()
@@ -337,7 +337,7 @@ func TestConcurrentJobDriver_ProcessesJobEndToEnd(t *testing.T) {
 	metrics := RegisterJobMetrics(prometheus.NewPedanticRegistry())
 	driver := newTestConcurrentDriver(t, 1, store, repoGetter, history, &metrics, worker)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 	runDone := make(chan error, 1)
 	go func() { runDone <- driver.Run(ctx) }()
@@ -418,7 +418,7 @@ func TestConcurrentJobDriver_PostClaimFailureDoesNotRerunJob(t *testing.T) {
 		// Keep the cooldown from masking an erroneous rate-limited retry.
 		driver.postClaimCooldown = 0
 
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 		runDone := make(chan error, 1)
 		go func() { runDone <- driver.Run(ctx) }()
@@ -504,7 +504,7 @@ func TestConcurrentJobDriver_CooldownBlocksDirtyRedeliveryAfterPostClaimFailure(
 		driver := newTestConcurrentDriver(t, 1, store, repoGetter, history, &metrics, worker)
 		handler := driver.EventHandler()
 
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 		runDone := make(chan error, 1)
 		go func() { runDone <- driver.Run(ctx) }()
@@ -568,7 +568,7 @@ func TestConcurrentJobDriver_DuplicateEventsCauseNoDuplicateProcessing(t *testin
 
 		driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
 
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 		runDone := make(chan error, 1)
 		go func() { runDone <- driver.Run(ctx) }()

@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"testing"
@@ -568,7 +567,7 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 			mockMetrics.EXPECT().RecordHealthCheck("connection", mock.Anything, mock.Anything, mock.Anything).Return()
 
 			hc := NewConnectionHealthChecker(mockTester, mockMetrics)
-			result, err := hc.RefreshHealthWithPatchOps(context.Background(), tt.conn)
+			result, err := hc.RefreshHealthWithPatchOps(t.Context(), tt.conn)
 
 			if tt.expectError {
 				assert.Error(t, err)

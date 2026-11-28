@@ -219,11 +219,11 @@ func TestBeginServiceAccountUpdate(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{mutateCallback: testRoleChange}
 
-		finishFunc, err := b.BeginServiceAccountUpdate(context.Background(), &newSA, &oldSA, nil)
+		finishFunc, err := b.BeginServiceAccountUpdate(t.Context(), &newSA, &oldSA, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finishFunc)
 
-		finishFunc(context.Background(), true)
+		finishFunc(t.Context(), true)
 		wg.Wait()
 	})
 
@@ -265,11 +265,11 @@ func TestBeginServiceAccountUpdate(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{mutateCallback: testRemoveRole}
 
-		finishFunc, err := b.BeginServiceAccountUpdate(context.Background(), &newSA, &oldSA, nil)
+		finishFunc, err := b.BeginServiceAccountUpdate(t.Context(), &newSA, &oldSA, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finishFunc)
 
-		finishFunc(context.Background(), true)
+		finishFunc(t.Context(), true)
 		wg.Wait()
 	})
 
@@ -294,7 +294,7 @@ func TestBeginServiceAccountUpdate(t *testing.T) {
 			},
 		}
 
-		finishFunc, err := b.BeginServiceAccountUpdate(context.Background(), &newSA, &oldSA, nil)
+		finishFunc, err := b.BeginServiceAccountUpdate(t.Context(), &newSA, &oldSA, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finishFunc) // Hooks must always return a non-nil FinishFunc
 	})
@@ -328,11 +328,11 @@ func TestBeginServiceAccountUpdate(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{mutateCallback: testNoCall}
 
-		finishFunc, err := b.BeginServiceAccountUpdate(context.Background(), &newSA, &oldSA, nil)
+		finishFunc, err := b.BeginServiceAccountUpdate(t.Context(), &newSA, &oldSA, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finishFunc)
 
-		finishFunc(context.Background(), false)
+		finishFunc(t.Context(), false)
 		require.Equal(t, 0, callCount, "zanzana should not be called when update fails")
 	})
 
@@ -363,7 +363,7 @@ func TestBeginServiceAccountUpdate(t *testing.T) {
 			},
 		}
 
-		finishFunc, err := builder.BeginServiceAccountUpdate(context.Background(), &newSA, &oldSA, nil)
+		finishFunc, err := builder.BeginServiceAccountUpdate(t.Context(), &newSA, &oldSA, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finishFunc) // Hooks must always return a non-nil FinishFunc
 	})

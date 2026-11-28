@@ -191,13 +191,13 @@ func TestSingleAPIClients_PropagatesTraceContext(t *testing.T) {
 	})
 
 	clients := newSingleAPIClients(provider)
-	dyn, _, err := clients.GetClientsForResource(context.Background(), schema.GroupVersionResource{})
+	dyn, _, err := clients.GetClientsForResource(t.Context(), schema.GroupVersionResource{})
 	require.NoError(t, err)
 
 	// Start a sampled span so there is an active SpanContext for the propagator to inject.
 	tp := sdktrace.NewTracerProvider(sdktrace.WithSampler(sdktrace.AlwaysSample()))
-	t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
-	ctx, span := tp.Tracer("test").Start(context.Background(), "outbound")
+	t.Cleanup(func() { _ = tp.Shutdown(context.WithoutCancel(t.Context())) })
+	ctx, span := tp.Tracer("test").Start(t.Context(), "outbound")
 
 	gvr := schema.GroupVersionResource{Group: "playlist.grafana.app", Version: "v0alpha1", Resource: "playlists"}
 	_, err = dyn.Resource(gvr).Namespace("default").List(ctx, metav1.ListOptions{})

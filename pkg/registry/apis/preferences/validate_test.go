@@ -1,7 +1,6 @@
 package preferences
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -251,7 +250,7 @@ func TestAPIBuilder_Validate(t *testing.T) {
 				nil,
 			)
 
-			err := b.Validate(context.Background(), attrs, nil)
+			err := b.Validate(t.Context(), attrs, nil)
 			if !tt.wantErr {
 				require.NoError(t, err)
 				return

@@ -48,7 +48,7 @@ func TestFolderStorageCreateLogsOriginalError(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			var logs bytes.Buffer
-			ctx := logging.Context(context.Background(), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
+			ctx := logging.Context(t.Context(), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
 			store := grafanarest.NewMockStorage(t)
 			store.On("Create", ctx, mock.Anything, mock.Anything, mock.Anything).Return(nil, original).Once()
 			fs := folderStorage{store: store}
@@ -136,7 +136,7 @@ func TestFolderStorageCreateErrorResponses(t *testing.T) {
 			store := grafanarest.NewMockStorage(t)
 			store.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, tc.err).Once()
 			fs := folderStorage{store: store}
-			out, err := fs.Create(context.Background(), &folders.Folder{}, nil, &metav1.CreateOptions{})
+			out, err := fs.Create(t.Context(), &folders.Folder{}, nil, &metav1.CreateOptions{})
 			require.Nil(t, out)
 			require.Error(t, err)
 			w := httptest.NewRecorder()
@@ -189,7 +189,7 @@ func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
 			}
 			obj := &folders.Folder{}
 
-			ctx := request.WithNamespace(context.Background(), "org-2")
+			ctx := request.WithNamespace(t.Context(), "org-2")
 			ctx = identity.WithRequester(ctx, &user.SignedInUser{
 				UserID: 1,
 			})
@@ -242,7 +242,7 @@ func TestFolderStorageCreateRefreshesCreatorPermissions(t *testing.T) {
 			}
 			fs, _ := newRefreshingFolderStorage(t, nil, acService)
 
-			ctx := identity.WithRequester(request.WithNamespace(context.Background(), "org-2"), creator)
+			ctx := identity.WithRequester(request.WithNamespace(t.Context(), "org-2"), creator)
 			_, err := fs.Create(ctx, &folders.Folder{}, nil, &metav1.CreateOptions{})
 			require.NoError(t, err)
 
@@ -258,7 +258,7 @@ func TestFolderStorageCreateRefreshesCreatorPermissions(t *testing.T) {
 		}
 		fs, _ := newRefreshingFolderStorage(t, errors.New("write failed"), acService)
 
-		ctx := identity.WithRequester(request.WithNamespace(context.Background(), "org-2"), creators["user"])
+		ctx := identity.WithRequester(request.WithNamespace(t.Context(), "org-2"), creators["user"])
 		_, err := fs.Create(ctx, &folders.Folder{}, nil, &metav1.CreateOptions{})
 		require.Error(t, err)
 	})

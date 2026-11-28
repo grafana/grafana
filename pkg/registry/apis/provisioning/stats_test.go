@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -20,7 +19,7 @@ import (
 func serveStats(t *testing.T, lister resources.ResourceLister, namespace, name string) *testResponder {
 	t.Helper()
 	responder := &testResponder{}
-	ctx := request.WithNamespace(context.Background(), namespace)
+	ctx := request.WithNamespace(t.Context(), namespace)
 	handler, err := NewStatsConnector(lister).Connect(ctx, name, nil, responder)
 	require.NoError(t, err)
 	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx))

@@ -1,7 +1,6 @@
 package dashboard
 
 import (
-	"context"
 	"testing"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -105,7 +104,7 @@ func TestVariableAuthorizer(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+			ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{
 				OrgID: 1,
 				Permissions: map[int64]map[string][]string{
 					1: tc.perms,
@@ -133,7 +132,7 @@ func TestVariableAuthorizer_NilAccessControl(t *testing.T) {
 	authz := newVariableAuthorizer(nil, grafanaauthorizer.NewServiceAuthorizer())
 
 	t.Run("denies when there is no identity", func(t *testing.T) {
-		decision, _, err := authz.Authorize(context.Background(), authorizer.AttributesRecord{
+		decision, _, err := authz.Authorize(t.Context(), authorizer.AttributesRecord{
 			ResourceRequest: true,
 			Verb:            "list",
 			APIGroup:        "dashboard.grafana.app",
@@ -144,7 +143,7 @@ func TestVariableAuthorizer_NilAccessControl(t *testing.T) {
 	})
 
 	t.Run("falls through to the service authorizer for a user with delegated permissions", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(), variableServiceAuthorizedRequester())
+		ctx := identity.WithRequester(t.Context(), variableServiceAuthorizedRequester())
 		decision, reason, err := authz.Authorize(ctx, authorizer.AttributesRecord{
 			ResourceRequest: true,
 			Verb:            "list",
@@ -170,7 +169,7 @@ func TestVariableAuthorizer_CoarseUpdateDoesNotResolveParentFolder(t *testing.T)
 	authz := newVariableAuthorizer(acSvc, nil)
 	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
 
-	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+	ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
 			1: {ActionVariablesWrite: {generalScope}},
@@ -224,7 +223,7 @@ func setGlobalVariablesToggle(t *testing.T, enabled bool) {
 // TestDashboardsAPIBuilderVariableAuthorizer verifies that the global variables
 // feature is gated per request in the authorizer when storage is registered.
 func TestDashboardsAPIBuilderVariableAuthorizer(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	authz := (&DashboardsAPIBuilder{
 		accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 	}).GetAuthorizer()
@@ -243,7 +242,7 @@ func TestDashboardsAPIBuilderVariableAuthorizer(t *testing.T) {
 
 	t.Run("denies user requests when disabled even with a requester", func(t *testing.T) {
 		setGlobalVariablesToggle(t, false)
-		userCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgID: 1})
+		userCtx := identity.WithRequester(t.Context(), &identity.StaticRequester{OrgID: 1})
 		for _, verb := range []string{"get", "list", "watch", "create", "update", "delete", "deletecollection"} {
 			t.Run(verb, func(t *testing.T) {
 				decision, reason, err := authz.Authorize(userCtx, authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), verb))
@@ -256,7 +255,7 @@ func TestDashboardsAPIBuilderVariableAuthorizer(t *testing.T) {
 
 	t.Run("allows service identity read and delete when disabled so folder cleanup can remove leftovers", func(t *testing.T) {
 		setGlobalVariablesToggle(t, false)
-		svcCtx := identity.WithServiceIdentityContext(context.Background(), 1)
+		svcCtx := identity.WithServiceIdentityContext(t.Context(), 1)
 		for _, verb := range []string{"get", "list", "watch", "delete", "deletecollection"} {
 			t.Run(verb, func(t *testing.T) {
 				decision, reason, err := authz.Authorize(svcCtx, authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), verb))
@@ -269,7 +268,7 @@ func TestDashboardsAPIBuilderVariableAuthorizer(t *testing.T) {
 
 	t.Run("denies service identity writes when disabled", func(t *testing.T) {
 		setGlobalVariablesToggle(t, false)
-		svcCtx := identity.WithServiceIdentityContext(context.Background(), 1)
+		svcCtx := identity.WithServiceIdentityContext(t.Context(), 1)
 		for _, verb := range []string{"create", "update", "patch"} {
 			t.Run(verb, func(t *testing.T) {
 				decision, reason, err := authz.Authorize(svcCtx, authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), verb))
@@ -307,14 +306,14 @@ func TestDashboardsAPIBuilderVariableAuthorizer_StandaloneNilAccessControl(t *te
 	t.Run("no identity", func(t *testing.T) {
 		for _, verb := range []string{"get", "list", "watch", "create", "update", "delete", "deletecollection"} {
 			t.Run(verb, func(t *testing.T) {
-				_, _, err := authz.Authorize(context.Background(), authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), verb))
+				_, _, err := authz.Authorize(t.Context(), authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), verb))
 				require.ErrorContains(t, err, "no identity found")
 			})
 		}
 	})
 
 	t.Run("user with delegated permissions is allowed at the authorizer", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(), variableServiceAuthorizedRequester())
+		ctx := identity.WithRequester(t.Context(), variableServiceAuthorizedRequester())
 		for _, verb := range []string{"get", "list", "watch", "create", "update", "delete", "deletecollection"} {
 			t.Run(verb, func(t *testing.T) {
 				decision, reason, err := authz.Authorize(ctx, authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), verb))

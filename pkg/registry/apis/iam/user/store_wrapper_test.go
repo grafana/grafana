@@ -85,7 +85,7 @@ func TestStoreWrapper_SettingService_AfterGet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sw := NewStoreWrapper(nil, &fakeSettingService{settings: tt.settings})
-			ctx := withAuthInfo(context.Background(), tt.requester)
+			ctx := withAuthInfo(t.Context(), tt.requester)
 			user := &iamv0.User{
 				ObjectMeta: metav1.ObjectMeta{Name: tt.login},
 				Spec:       iamv0.UserSpec{Login: tt.login},
@@ -110,7 +110,7 @@ func TestStoreWrapper_SettingService_FilterList(t *testing.T) {
 			{Section: "users", Key: "hidden_users", Value: "hidden1, hidden2"},
 		},
 	})
-	ctx := withAuthInfo(context.Background(), "hidden1")
+	ctx := withAuthInfo(t.Context(), "hidden1")
 
 	list := &iamv0.UserList{
 		Items: []iamv0.User{
@@ -138,7 +138,7 @@ func TestStoreWrapper_SettingService_BeforeCreate(t *testing.T) {
 			{Section: "users", Key: "hidden_users", Value: "admin"},
 		},
 	})
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("blocked for hidden login", func(t *testing.T) {
 		err := sw.BeforeCreate(ctx, &iamv0.User{
@@ -164,7 +164,7 @@ func TestStoreWrapper_SettingService_BeforeUpdate(t *testing.T) {
 			{Section: "users", Key: "hidden_users", Value: "admin"},
 		},
 	})
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("blocked when old user is hidden", func(t *testing.T) {
 		oldObj := &iamv0.User{ObjectMeta: metav1.ObjectMeta{Name: "admin"}, Spec: iamv0.UserSpec{Login: "admin"}}
@@ -196,7 +196,7 @@ func TestStoreWrapper_SettingService_BeforeDelete(t *testing.T) {
 			{Section: "users", Key: "hidden_users", Value: "admin"},
 		},
 	})
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("blocked for hidden user", func(t *testing.T) {
 		err := sw.BeforeDelete(ctx, &iamv0.User{
@@ -218,7 +218,7 @@ func TestStoreWrapper_SettingService_BeforeDelete(t *testing.T) {
 
 func TestStoreWrapper_NilProviders(t *testing.T) {
 	sw := NewStoreWrapper(nil, nil)
-	ctx := withAuthInfo(context.Background(), "admin")
+	ctx := withAuthInfo(t.Context(), "admin")
 
 	user := &iamv0.User{
 		ObjectMeta: metav1.ObjectMeta{Name: "admin"},
@@ -255,7 +255,7 @@ func TestStoreWrapper_SettingService_Error(t *testing.T) {
 	sw := NewStoreWrapper(nil, &fakeSettingService{
 		err: assert.AnError,
 	})
-	ctx := context.Background()
+	ctx := t.Context()
 	user := &iamv0.User{
 		ObjectMeta: metav1.ObjectMeta{Name: "admin"},
 		Spec:       iamv0.UserSpec{Login: "admin"},
@@ -291,7 +291,7 @@ func TestStoreWrapper_ServiceIdentityBypass(t *testing.T) {
 	})
 
 	// Create a service identity context — should bypass all hidden user filtering.
-	svcCtx, _ := identity.WithServiceIdentity(context.Background(), 1)
+	svcCtx, _ := identity.WithServiceIdentity(t.Context(), 1)
 	hiddenUser := &iamv0.User{
 		ObjectMeta: metav1.ObjectMeta{Name: "admin"},
 		Spec:       iamv0.UserSpec{Login: "admin"},

@@ -51,7 +51,7 @@ func ancestryTestContext(t *testing.T, namespace string, serviceAccount bool) co
 	t.Helper()
 	ns, err := authlib.ParseNamespace(namespace)
 	require.NoError(t, err)
-	return request.WithNamespace(identity.WithRequester(context.Background(), &user.SignedInUser{
+	return request.WithNamespace(identity.WithRequester(t.Context(), &user.SignedInUser{
 		UserID: 1, OrgID: ns.OrgID, IsServiceAccount: serviceAccount,
 	}), namespace)
 }

@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -39,7 +38,7 @@ func TestProvideHistoryJobCleanup_DeletesOnlyExpiredJobs(t *testing.T) {
 					historicJob("fresh", expiration/2),
 				)
 
-				source, err := ProvideHistoryJobCleanup(context.Background(), tc.natsEnabled, client, expiration)
+				source, err := ProvideHistoryJobCleanup(t.Context(), tc.natsEnabled, client, expiration)
 				require.NoError(t, err)
 
 				stop := make(chan struct{})
@@ -49,9 +48,9 @@ func TestProvideHistoryJobCleanup_DeletesOnlyExpiredJobs(t *testing.T) {
 				synctest.Wait()
 
 				jobs := client.ProvisioningV0alpha1().HistoricJobs("ns")
-				_, err = jobs.Get(context.Background(), "expired", metav1.GetOptions{})
+				_, err = jobs.Get(t.Context(), "expired", metav1.GetOptions{})
 				assert.True(t, apierrors.IsNotFound(err), "expected expired job to be deleted, got %v", err)
-				_, err = jobs.Get(context.Background(), "fresh", metav1.GetOptions{})
+				_, err = jobs.Get(t.Context(), "fresh", metav1.GetOptions{})
 				assert.NoError(t, err, "expected fresh job to be kept")
 			})
 		})

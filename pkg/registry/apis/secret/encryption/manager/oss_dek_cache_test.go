@@ -1,7 +1,6 @@
 package manager
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -14,7 +13,7 @@ import (
 
 func TestOSSDataKeyCache(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 	tracer := noop.NewTracerProvider().Tracer("test")
 
 	settings := setting.NewCfg()
@@ -59,7 +58,7 @@ func TestOSSDataKeyCache(t *testing.T) {
 
 func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 	tracer := noop.NewTracerProvider().Tracer("test")
 
 	settings := setting.NewCfg()
@@ -155,7 +154,7 @@ func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
 // Test namespace isolation
 func TestOSSDataKeyCache_NamespaceIsolation(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 	tracer := noop.NewTracerProvider().Tracer("test")
 
 	settings := setting.NewCfg()
@@ -235,7 +234,7 @@ func TestOSSDataKeyCache_NamespaceIsolation(t *testing.T) {
 
 func TestOSSDataKeyCache_Expiration(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 	tracer := noop.NewTracerProvider().Tracer("test")
 	t.Run("entries expire after TTL", func(t *testing.T) {
 		settings := setting.NewCfg()
@@ -414,7 +413,7 @@ func TestOSSDataKeyCache_Expiration(t *testing.T) {
 // Test Flush()
 func TestOSSDataKeyCache_Flush(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 	tracer := noop.NewTracerProvider().Tracer("test")
 
 	settings := setting.NewCfg()
@@ -523,7 +522,7 @@ func TestOSSDataKeyCache_Flush(t *testing.T) {
 
 func TestOSSDataKeyCache_Set_NamespaceValidation(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 	settings := setting.NewCfg()
 	settings.SecretsManagement = setting.SecretsManagerSettings{
 		DataKeysCacheTTL: 999 * time.Hour,
