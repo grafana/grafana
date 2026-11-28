@@ -40,7 +40,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
@@ -191,7 +190,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/loader"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/marketplacelicensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
-	pluginassets2 "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth/tokenexchange"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
@@ -334,15 +333,20 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	pluginsourcesService := pluginsources.ProvideService(cfg, pluginManagementCfg)
+	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
+	errorRegistry := pluginerrs.ProvideErrorTracker()
+	pluginsourcesService := pluginsources.ProvideService(cfg, pluginManagementCfg, pluginscdnService, errorRegistry)
 	discovery := pipeline.ProvideDiscoveryStage(pluginManagementCfg, inMemory)
 	keystoreService := keystore.ProvideService(kvStore)
 	keyRetriever := dynamic.ProvideService(cfg, keystoreService)
 	keyretrieverService := keyretriever.ProvideService(keyRetriever)
 	signatureSignature := signature.ProvideService(pluginManagementCfg, keyretrieverService)
-	localProvider := pluginassets.NewLocalProvider()
-	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
-	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, localProvider, pluginscdnService)
+	licensingService := licensing2.ProvideLicensing(cfg, ossLicensingService)
+	remoteProvider, err := pluginassets.ProvideRemoteProvider(cfg, licensingService, pluginscdnService)
+	if err != nil {
+		return nil, err
+	}
+	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, remoteProvider, pluginscdnService)
 	unsignedPluginAuthorizer := signature.ProvideOSSAuthorizer(pluginManagementCfg)
 	validation := signature.ProvideValidatorService(unsignedPluginAuthorizer)
 	angularpatternsstoreService := angularpatternsstore.ProvideService(kvStore)
@@ -480,7 +484,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	licensingService := licensing2.ProvideLicensing(cfg, ossLicensingService)
 	ssosettingsimplService := ssosettingsimpl.ProvideService(cfg, configProvider, legacyDatabaseProvider, accessControl, routeRegisterImpl, featureToggles, secretsService, usageStats, registerer, ossImpl, ossLicensingService)
 	defaultSettingsProvider := pluginsso.ProvideDefaultSettingsProvider(ssosettingsimplService)
 	marketplacelicensingLicensing := marketplacelicensing.Provide(cfg)
@@ -491,7 +494,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	errorRegistry := pluginerrs.ProvideErrorTracker()
 	loaderLoader := loader.ProvideService(pluginManagementCfg, discovery, bootstrap, validate, initialize, terminate, errorRegistry)
 	pluginstoreService, err := pluginstore.ProvideService(inMemory, pluginsourcesService, loaderLoader, featureToggles)
 	if err != nil {
@@ -767,8 +769,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	calculator := pluginassets2.ProvideModuleHashCalculator(pluginManagementCfg, pluginscdnService, signatureSignature, inMemory)
-	pluginassetsService := pluginassets2.ProvideService(calculator)
+	calculator := pluginassets.ProvideModuleHashCalculator(pluginManagementCfg, pluginscdnService, signatureSignature, inMemory)
+	pluginassetsService := pluginassets.ProvideService(calculator)
 	avatarCacheServer := avatar.ProvideAvatarCacheServer(cfg)
 	prefService := prefimpl.ProvideService(sqlStore, cfg)
 	k8sHandler := prefapi.ProvideK8sHandler(cfg, eventualRestConfigProvider, dashboardService)
@@ -1150,15 +1152,20 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	pluginsourcesService := pluginsources.ProvideService(cfg, pluginManagementCfg)
+	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
+	errorRegistry := pluginerrs.ProvideErrorTracker()
+	pluginsourcesService := pluginsources.ProvideService(cfg, pluginManagementCfg, pluginscdnService, errorRegistry)
 	discovery := pipeline.ProvideDiscoveryStage(pluginManagementCfg, inMemory)
 	keystoreService := keystore.ProvideService(kvStore)
 	keyRetriever := dynamic.ProvideService(cfg, keystoreService)
 	keyretrieverService := keyretriever.ProvideService(keyRetriever)
 	signatureSignature := signature.ProvideService(pluginManagementCfg, keyretrieverService)
-	localProvider := pluginassets.NewLocalProvider()
-	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
-	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, localProvider, pluginscdnService)
+	licensingService := licensing2.ProvideLicensing(cfg, ossLicensingService)
+	remoteProvider, err := pluginassets.ProvideRemoteProvider(cfg, licensingService, pluginscdnService)
+	if err != nil {
+		return nil, err
+	}
+	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, remoteProvider, pluginscdnService)
 	unsignedPluginAuthorizer := signature.ProvideOSSAuthorizer(pluginManagementCfg)
 	validation := signature.ProvideValidatorService(unsignedPluginAuthorizer)
 	angularpatternsstoreService := angularpatternsstore.ProvideService(kvStore)
@@ -1285,7 +1292,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	licensingService := licensing2.ProvideLicensing(cfg, ossLicensingService)
 	ssosettingsimplService := ssosettingsimpl.ProvideService(cfg, configProvider, legacyDatabaseProvider, accessControl, routeRegisterImpl, featureToggles, secretsService, usageStats, registerer, ossImpl, ossLicensingService)
 	defaultSettingsProvider := pluginsso.ProvideDefaultSettingsProvider(ssosettingsimplService)
 	marketplacelicensingLicensing := marketplacelicensing.Provide(cfg)
@@ -1296,7 +1302,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	errorRegistry := pluginerrs.ProvideErrorTracker()
 	loaderLoader := loader.ProvideService(pluginManagementCfg, discovery, bootstrap, validate, initialize, terminate, errorRegistry)
 	pluginstoreService, err := pluginstore.ProvideService(inMemory, pluginsourcesService, loaderLoader, featureToggles)
 	if err != nil {
@@ -1582,8 +1587,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	calculator := pluginassets2.ProvideModuleHashCalculator(pluginManagementCfg, pluginscdnService, signatureSignature, inMemory)
-	pluginassetsService := pluginassets2.ProvideService(calculator)
+	calculator := pluginassets.ProvideModuleHashCalculator(pluginManagementCfg, pluginscdnService, signatureSignature, inMemory)
+	pluginassetsService := pluginassets.ProvideService(calculator)
 	avatarCacheServer := avatar.ProvideAvatarCacheServer(cfg)
 	prefService := prefimpl.ProvideService(sqlStore, cfg)
 	k8sHandler := prefapi.ProvideK8sHandler(cfg, eventualRestConfigProvider, dashboardService)
@@ -2144,15 +2149,20 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	pluginsourcesService := pluginsources.ProvideService(cfg, pluginManagementCfg)
+	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
+	errorRegistry := pluginerrs.ProvideErrorTracker()
+	pluginsourcesService := pluginsources.ProvideService(cfg, pluginManagementCfg, pluginscdnService, errorRegistry)
 	discovery := pipeline.ProvideDiscoveryStage(pluginManagementCfg, inMemory)
 	keystoreService := keystore.ProvideService(kvStore)
 	keyRetriever := dynamic.ProvideService(cfg, keystoreService)
 	keyretrieverService := keyretriever.ProvideService(keyRetriever)
 	signatureSignature := signature.ProvideService(pluginManagementCfg, keyretrieverService)
-	localProvider := pluginassets.NewLocalProvider()
-	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
-	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, localProvider, pluginscdnService)
+	licensingService := licensing2.ProvideLicensing(cfg, ossLicensingService)
+	remoteProvider, err := pluginassets.ProvideRemoteProvider(cfg, licensingService, pluginscdnService)
+	if err != nil {
+		return nil, err
+	}
+	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, remoteProvider, pluginscdnService)
 	unsignedPluginAuthorizer := signature.ProvideOSSAuthorizer(pluginManagementCfg)
 	validation := signature.ProvideValidatorService(unsignedPluginAuthorizer)
 	angularpatternsstoreService := angularpatternsstore.ProvideService(kvStore)
@@ -2236,7 +2246,6 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	licensingService := licensing2.ProvideLicensing(cfg, ossLicensingService)
 	defaultSettingsProvider := pluginsso.ProvideDefaultSettingsProvider(ssosettingsimplService)
 	marketplacelicensingLicensing := marketplacelicensing.Provide(cfg)
 	envVarsProvider := pluginconfig.NewEnvVarsProvider(pluginInstanceCfg, licensingService, defaultSettingsProvider, marketplacelicensingLicensing)
@@ -2246,7 +2255,6 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	errorRegistry := pluginerrs.ProvideErrorTracker()
 	loaderLoader := loader.ProvideService(pluginManagementCfg, discovery, bootstrap, validate, initialize, terminate, errorRegistry)
 	pluginstoreService, err := pluginstore.ProvideService(inMemory, pluginsourcesService, loaderLoader, featureToggles)
 	if err != nil {

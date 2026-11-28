@@ -135,6 +135,8 @@ var WireSet = wire.NewSet(
 	plugininstaller.ProvideService,
 	pluginassets.ProvideModuleHashCalculator,
 	pluginassets.ProvideService,
+	pluginassets.ProvideRemoteProvider,
+	wire.Bind(new(pluginassets2.Provider), new(*pluginassets.RemoteProvider)),
 	pluginchecker.ProvidePreinstall,
 	wire.Bind(new(pluginchecker.Preinstall), new(*pluginchecker.PreinstallImpl)),
 	advisor.ProvideService,
@@ -159,8 +161,6 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(sources.Registry), new(*pluginsources.Service)),
 	checkregistry.ProvideService,
 	wire.Bind(new(checkregistry.CheckService), new(*checkregistry.Service)),
-	pluginassets2.NewLocalProvider,
-	wire.Bind(new(pluginassets2.Provider), new(*pluginassets2.LocalProvider)),
 	marketplacelicensing.Provide,
 )
 

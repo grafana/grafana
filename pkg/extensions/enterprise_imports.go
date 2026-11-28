@@ -261,7 +261,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/plugins/manager/registry"
 	_ "github.com/grafana/grafana/pkg/plugins/manager/signature"
 	_ "github.com/grafana/grafana/pkg/plugins/manager/sources"
-	_ "github.com/grafana/grafana/pkg/plugins/pluginassets"
+	_ "github.com/grafana/grafana/pkg/plugins/manager/sources/cdn"
 	_ "github.com/grafana/grafana/pkg/plugins/pluginerrs"
 	_ "github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	_ "github.com/grafana/grafana/pkg/plugins/repo"

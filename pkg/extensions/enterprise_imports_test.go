@@ -24,7 +24,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/infra/log/logtest"
 	_ "github.com/grafana/grafana/pkg/models/usertoken"
 	_ "github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
-	_ "github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	_ "github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	_ "github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	_ "github.com/grafana/grafana/pkg/router/routertest"
