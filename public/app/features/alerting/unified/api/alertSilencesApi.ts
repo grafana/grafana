@@ -94,7 +94,7 @@ export const alertSilencesApi = alertingApi.injectEndpoints({
         url: `/api/alertmanager/${datasourceUid}/api/v2/silence/${silenceId}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['AlertmanagerSilences'],
+      invalidatesTags: ['AlertmanagerSilences', 'AlertmanagerAlerts'],
     }),
   }),
 });

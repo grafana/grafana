@@ -1,8 +1,8 @@
-import { HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
-import { render, screen } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
-import { AlertState } from 'app/plugins/datasource/alertmanager/types';
+import { AlertState, SilenceState } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
@@ -14,7 +14,7 @@ import SilenceViewPage from './SilenceViewPage';
 
 const MOCK_RULE_UID = 'abc-rule-uid-123';
 
-setupMswServer();
+const server = setupMswServer();
 
 function renderSilenceViewPage(silenceId: string) {
   return render(
@@ -141,5 +141,86 @@ describe('SilenceViewPage', () => {
     expect(await screen.findByText(/alert rule unavailable/i)).toBeInTheDocument();
     expect(screen.getByLabelText('Alert rule unavailable')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: MOCK_GRAFANA_ALERT_RULE_TITLE })).not.toBeInTheDocument();
+  });
+
+  describe('unsilence', () => {
+    it('should expire the silence when clicking Unsilence', async () => {
+      grantUserPermissions([
+        AccessControlAction.AlertingInstanceRead,
+        AccessControlAction.AlertingSilenceRead,
+        AccessControlAction.AlertingSilenceUpdate,
+      ]);
+      const expired = jest.fn();
+      server.use(
+        http.delete('/api/alertmanager/:datasourceUid/api/v2/silence/:uuid', ({ params }) => {
+          expired(params.uuid);
+          return HttpResponse.json({ message: 'silence deleted' });
+        })
+      );
+
+      const { user } = renderSilenceViewPage(MOCK_SILENCE_ID_EXISTING);
+
+      await user.click(await screen.findByRole('button', { name: 'Unsilence' }));
+
+      await waitFor(() => expect(expired).toHaveBeenCalledWith(MOCK_SILENCE_ID_EXISTING));
+    });
+
+    it('should refresh the affected alerts after expiring the silence', async () => {
+      grantUserPermissions([
+        AccessControlAction.AlertingInstanceRead,
+        AccessControlAction.AlertingSilenceRead,
+        AccessControlAction.AlertingSilenceUpdate,
+      ]);
+      setAlertmanagerAlertsHandler([
+        mockAlertmanagerAlert({
+          fingerprint: 'unique-fingerprint-1',
+          status: { state: AlertState.Suppressed, silencedBy: [MOCK_SILENCE_ID_EXISTING], inhibitedBy: [] },
+          labels: { alertname: 'TestAlert', severity: 'warning' },
+        }),
+      ]);
+      server.use(
+        http.delete('/api/alertmanager/:datasourceUid/api/v2/silence/:uuid', () => {
+          setAlertmanagerAlertsHandler([]);
+          return HttpResponse.json({ message: 'silence deleted' });
+        })
+      );
+
+      const { user } = renderSilenceViewPage(MOCK_SILENCE_ID_EXISTING);
+
+      expect(await screen.findByText('TestAlert')).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Unsilence' }));
+
+      await waitFor(() => expect(screen.queryByText('TestAlert')).not.toBeInTheDocument());
+    });
+
+    it('should not show Unsilence when the silence is not writable', async () => {
+      const silenceId = 'read-only-silence';
+      const readOnlySilence = mockSilence({
+        id: silenceId,
+        accessControl: { create: true, read: true, write: false },
+      });
+      setSilenceGetResolver(() => HttpResponse.json(readOnlySilence));
+
+      renderSilenceViewPage(silenceId);
+
+      expect(await screen.findByText(readOnlySilence.comment)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Unsilence' })).not.toBeInTheDocument();
+    });
+
+    it('should not show Unsilence for an expired silence', async () => {
+      grantUserPermissions([
+        AccessControlAction.AlertingInstanceRead,
+        AccessControlAction.AlertingSilenceRead,
+        AccessControlAction.AlertingSilenceUpdate,
+      ]);
+      const silenceId = 'expired-silence';
+      const expiredSilence = mockSilence({ id: silenceId, status: { state: SilenceState.Expired } });
+      setSilenceGetResolver(() => HttpResponse.json(expiredSilence));
+
+      renderSilenceViewPage(silenceId);
+
+      expect(await screen.findByText(expiredSilence.comment)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Unsilence' })).not.toBeInTheDocument();
+    });
   });
 });
