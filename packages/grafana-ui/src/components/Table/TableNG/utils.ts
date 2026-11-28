@@ -1909,12 +1909,16 @@ function isPlainObject(value: unknown): value is object {
 export function buildInspectValue(
   value: unknown,
   field: Field,
-  formatGeometry?: OpenLayersContextValue['formatGeometry']
-): [string, TableCellInspectorMode] {
+  formatGeometry?: OpenLayersContextValue['formatGeometry'],
+  autoDetectJson = false
+): [string, TableCellInspectorMode, string] {
   const cellOptions = getCellOptions(field);
 
   let inspectValue: string;
   let mode = TableCellInspectorMode.text;
+  // The plain text tab shows the value as the data source returned it; only the code editor
+  // gets the pretty-printed version of a detected JSON string.
+  let plainText: string | undefined;
 
   if (field.type === FieldType.geo && isGeometry(value)) {
     inspectValue = formatGeometry ? formatGeometry(value) : JSON.stringify(value, null, '  ');
@@ -1951,9 +1955,21 @@ export function buildInspectValue(
     mode = TableCellInspectorMode.code;
   } else {
     inspectValue = String(value ?? '');
+    if (autoDetectJson && field.type === FieldType.string && typeof value === 'string') {
+      const text = value.trim();
+      if ((text.startsWith('{') && text.endsWith('}')) || (text.startsWith('[') && text.endsWith(']'))) {
+        try {
+          inspectValue = JSON.stringify(JSON.parse(text), null, '  ');
+          plainText = value;
+          mode = TableCellInspectorMode.code;
+        } catch {
+          // Keep malformed JSON as plain text.
+        }
+      }
+    }
   }
 
-  return [inspectValue, mode];
+  return [inspectValue, mode, plainText ?? inspectValue];
 }
 
 export function getSummaryCellTextAlign(textAlign: TextAlign, cellType: TableCellDisplayMode): TextAlign {

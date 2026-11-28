@@ -4,6 +4,7 @@ exports[`TableNG utils buildInspectValue should handle NaN 1`] = `
 [
   "NaN",
   "text",
+  "NaN",
 ]
 `;
 
@@ -15,6 +16,11 @@ exports[`TableNG utils buildInspectValue should handle array 1`] = `
   "baz"
 ]",
   "code",
+  "[
+  "foo",
+  "bar",
+  "baz"
+]",
 ]
 `;
 
@@ -22,6 +28,7 @@ exports[`TableNG utils buildInspectValue should handle boolean 1`] = `
 [
   "true",
   "text",
+  "true",
 ]
 `;
 
@@ -29,6 +36,7 @@ exports[`TableNG utils buildInspectValue should handle geo 1`] = `
 [
   "POINT(0 -0.0006656516255105771)",
   "code",
+  "POINT(0 -0.0006656516255105771)",
 ]
 `;
 
@@ -36,6 +44,7 @@ exports[`TableNG utils buildInspectValue should handle geo w/ invalid format 1`]
 [
   "6y4h9b",
   "text",
+  "6y4h9b",
 ]
 `;
 
@@ -66,6 +75,30 @@ exports[`TableNG utils buildInspectValue should handle geo w/out formatGeometry 
   ]
 }",
   "code",
+  "{
+  "disposed": false,
+  "pendingRemovals_": null,
+  "dispatching_": null,
+  "listeners_": null,
+  "revision_": 1,
+  "ol_uid": "1",
+  "values_": null,
+  "extent_": [
+    null,
+    null,
+    null,
+    null
+  ],
+  "extentRevision_": -1,
+  "simplifiedGeometryMaxMinSquaredTolerance": 0,
+  "simplifiedGeometryRevision": 0,
+  "layout": "XY",
+  "stride": 2,
+  "flatCoordinates": [
+    0,
+    -74.1
+  ]
+}",
 ]
 `;
 
@@ -73,6 +106,7 @@ exports[`TableNG utils buildInspectValue should handle null 1`] = `
 [
   "",
   "text",
+  "",
 ]
 `;
 
@@ -80,6 +114,7 @@ exports[`TableNG utils buildInspectValue should handle null w/ JSON 1`] = `
 [
   "null",
   "code",
+  "null",
 ]
 `;
 
@@ -87,6 +122,7 @@ exports[`TableNG utils buildInspectValue should handle numbers 1`] = `
 [
   "0",
   "text",
+  "0",
 ]
 `;
 
@@ -97,6 +133,10 @@ exports[`TableNG utils buildInspectValue should handle object 1`] = `
   "b": "baz"
 }",
   "code",
+  "{
+  "foo": true,
+  "b": "baz"
+}",
 ]
 `;
 
@@ -110,6 +150,13 @@ exports[`TableNG utils buildInspectValue should handle sparkline (no x) 1`] = `
   10
 ]",
   "code",
+  "[
+  2,
+  4,
+  6,
+  8,
+  10
+]",
 ]
 `;
 
@@ -121,6 +168,11 @@ exports[`TableNG utils buildInspectValue should handle sparkline 1`] = `
   [2000, 30]
 ]",
   "code",
+  "[
+  [0, 10],
+  [1000, 20],
+  [2000, 30]
+]",
 ]
 `;
 
@@ -128,6 +180,7 @@ exports[`TableNG utils buildInspectValue should handle string 1`] = `
 [
   "foo",
   "text",
+  "foo",
 ]
 `;
 
@@ -135,6 +188,7 @@ exports[`TableNG utils buildInspectValue should handle string w/ JSON (invalid J
 [
   ""{\\"invalid\\": \\"json"",
   "code",
+  ""{\\"invalid\\": \\"json"",
 ]
 `;
 
@@ -144,6 +198,9 @@ exports[`TableNG utils buildInspectValue should handle string w/ JSON 1`] = `
   "valid": "json"
 }",
   "code",
+  "{
+  "valid": "json"
+}",
 ]
 `;
 
@@ -151,5 +208,6 @@ exports[`TableNG utils buildInspectValue should handle undefined 1`] = `
 [
   "",
   "text",
+  "",
 ]
 `;

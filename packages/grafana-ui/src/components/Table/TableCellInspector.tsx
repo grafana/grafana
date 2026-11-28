@@ -20,6 +20,8 @@ export enum TableCellInspectorMode {
 
 interface TableCellInspectorProps {
   value: unknown;
+  /** Value without formatting, shown in the plain text tab when `value` is pretty-printed. */
+  plainText?: string;
   onDismiss: () => void;
   mode: TableCellInspectorMode;
 }
@@ -47,12 +49,16 @@ export function TableCellInspector(props: TableCellInspectorProps) {
  */
 export function TableCellInspectorDrawer({
   value,
+  plainText,
   onDismiss,
   mode,
   codeMirrorEnabled = false,
 }: TableCellInspectorDrawerProps) {
   const [currentMode, setMode] = useState(mode);
   const text = toString(value).trim();
+  // The plain text tab shows the value as it came from the data source, without the
+  // indentation applied to the code editor and without trimming it.
+  const textOnly = plainText != null ? toString(plainText) : text;
   const styles = useStyles2(getStyles);
 
   const tabs = [
@@ -81,7 +87,11 @@ export function TableCellInspectorDrawer({
   return (
     <Drawer onClose={onDismiss} title={t('grafana-ui.table.inspect-drawer-title', 'Inspect value')} tabs={tabBar}>
       <Stack direction="column" gap={2}>
-        <ClipboardButton icon="copy" getText={() => text} style={{ marginLeft: 'auto', width: '200px' }}>
+        <ClipboardButton
+          icon="copy"
+          getText={() => (currentMode === TableCellInspectorMode.code ? text : textOnly)}
+          style={{ marginLeft: 'auto', width: '200px' }}
+        >
           <Trans i18nKey="grafana-ui.table.copy">Copy to Clipboard</Trans>
         </ClipboardButton>
         {currentMode === 'code' && codeMirrorEnabled ? (
@@ -106,7 +116,7 @@ export function TableCellInspectorDrawer({
             wordWrap={true}
           />
         ) : (
-          <pre className={styles.textContainer}>{text}</pre>
+          <pre className={styles.textContainer}>{textOnly}</pre>
         )}
       </Stack>
     </Drawer>

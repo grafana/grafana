@@ -432,6 +432,7 @@ export const Table = memo((props: Props) => {
         <TableCellInspector
           mode={inspectCell.mode}
           value={inspectCell.value}
+          plainText={inspectCell.plainText}
           onDismiss={() => {
             setInspectCell(null);
           }}

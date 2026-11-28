@@ -3,10 +3,15 @@ import userEvent from '@testing-library/user-event';
 
 import { applyFieldOverrides, createTheme, type DataFrame, FieldType, toDataFrame } from '@grafana/data';
 
+import { copyTextToClipboard } from '../../utils/copyToClipboard';
 import { Icon } from '../Icon/Icon';
 
 import { Table } from './TableRT/Table';
 import { type CustomHeaderRendererProps, type TableRTProps } from './types';
+
+jest.mock('../../utils/copyToClipboard', () => ({
+  copyTextToClipboard: jest.fn().mockResolvedValue(undefined),
+}));
 
 // mock transition styles to ensure consistent behaviour in unit tests
 jest.mock('@floating-ui/react', () => ({
@@ -152,6 +157,35 @@ function getRowsData(rows: HTMLElement[]): Object[] {
 }
 
 describe('Table', () => {
+  describe('when inspecting a JSON string cell', () => {
+    it('shows and copies the raw value from the plain text tab', async () => {
+      const user = userEvent.setup();
+      const raw = '{"region":"eu","count":2}';
+      getTestContext({
+        data: getDataFrame(
+          toDataFrame({
+            name: 'A',
+            fields: [{ name: 'json', type: FieldType.string, values: [raw], config: { custom: { inspect: true } } }],
+          })
+        ),
+      });
+
+      const cell = screen.getByRole('cell', { name: raw });
+      await user.hover(cell);
+      // The cell actions are revealed on hover with CSS, which jsdom does not apply.
+      const inspectButton = document.querySelector<HTMLButtonElement>('button[aria-label="Inspect value"]');
+      expect(inspectButton).not.toBeNull();
+      await user.click(inspectButton!);
+
+      await user.click(screen.getByRole('tab', { name: 'Plain text' }));
+      expect(screen.getByRole('dialog').querySelector('pre')?.textContent).toBe(raw);
+      expect(screen.getByRole('dialog').querySelector('pre')?.textContent).not.toContain('\n');
+
+      await user.click(screen.getByText('Copy to Clipboard'));
+      expect(copyTextToClipboard).toHaveBeenCalledWith(raw, expect.anything());
+    });
+  });
+
   describe('when mounted with EMPTY data', () => {
     describe('and Standard Options `No value` value is NOT set', () => {
       it('the default `no data` message should be displayed', () => {

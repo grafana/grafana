@@ -184,6 +184,7 @@ export interface ColumnBuildConfig {
   showTypeIcons?: boolean;
   tableRefreshEnabled?: boolean;
   jsonSyntaxHighlightingEnabled?: boolean;
+  autoDetectJsonEnabled?: boolean;
   onTimeRangeSelected?: TableNGProps['onTimeRangeSelected'];
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
@@ -267,6 +268,7 @@ function buildColumnsFromFields(
     showTypeIcons,
     tableRefreshEnabled,
     jsonSyntaxHighlightingEnabled,
+    autoDetectJsonEnabled,
     onTimeRangeSelected,
     timeRange,
     timeZone,
@@ -538,6 +540,7 @@ function buildColumnsFromFields(
               displayName={displayName}
               className={cellActionClassName}
               setInspectCell={setInspectCell}
+              autoDetectJsonEnabled={autoDetectJsonEnabled}
               onCellFilterAdded={onCellFilterAdded}
             />
           )}

@@ -114,11 +114,32 @@ describe('TableCellActions', () => {
       expect(screen.queryByText('Add to Assistant')).not.toBeInTheDocument();
     });
 
+    it.each([false, true])('uses JSON detection for inspection only when enabled (%s)', async (enabled) => {
+      const value = '{"count":3}';
+      const { setInspectCell } = setup({
+        tableRefreshEnabled: true,
+        autoDetectJsonEnabled: enabled,
+        field: { name: 'value', type: FieldType.string, values: [value], config: {} },
+        value,
+      });
+      await userEvent.click(screen.getByRole('button', { name: 'Cell actions' }));
+      await userEvent.click(screen.getByRole('menuitem', { name: 'Inspect value' }));
+      expect(setInspectCell).toHaveBeenCalledWith(
+        enabled
+          ? { value: '{\n  "count": 3\n}', mode: TableCellInspectorMode.code, plainText: value }
+          : { value, mode: TableCellInspectorMode.text, plainText: value }
+      );
+    });
+
     it('opens inspection with the cell value and closes the menu', async () => {
       const { setInspectCell } = setup({ tableRefreshEnabled: true });
       await userEvent.click(screen.getByRole('button', { name: 'Cell actions' }));
       await userEvent.click(screen.getByText('Inspect value'));
-      expect(setInspectCell).toHaveBeenCalledWith({ value: 'hello', mode: TableCellInspectorMode.text });
+      expect(setInspectCell).toHaveBeenCalledWith({
+        value: 'hello',
+        mode: TableCellInspectorMode.text,
+        plainText: 'hello',
+      });
       expect(screen.getByRole('button', { name: 'Cell actions' })).toHaveAttribute('aria-expanded', 'false');
     });
 
@@ -175,7 +196,11 @@ describe('TableCellActions', () => {
       );
       await userEvent.click(screen.getByRole('button', { name: 'Cell actions' }));
       await userEvent.click(screen.getByText('Inspect value'));
-      expect(setInspectCell).toHaveBeenCalledWith({ value: 'hello', mode: TableCellInspectorMode.text });
+      expect(setInspectCell).toHaveBeenCalledWith({
+        value: 'hello',
+        mode: TableCellInspectorMode.text,
+        plainText: 'hello',
+      });
       expect(parentClick).not.toHaveBeenCalled();
     });
   });
@@ -183,6 +208,22 @@ describe('TableCellActions', () => {
   it('renders the inspect button when cellInspect is true', () => {
     setup();
     expect(screen.getByLabelText('Inspect value')).toBeInTheDocument();
+  });
+
+  it('detects JSON through the inline inspect button', async () => {
+    const value = '{"count":3}';
+    const { setInspectCell } = setup({
+      tableRefreshEnabled: false,
+      autoDetectJsonEnabled: true,
+      field: { name: 'value', type: FieldType.string, values: [value], config: {} },
+      value,
+    });
+    await userEvent.click(screen.getByRole('button', { name: 'Inspect value' }));
+    expect(setInspectCell).toHaveBeenCalledWith({
+      value: '{\n  "count": 3\n}',
+      mode: TableCellInspectorMode.code,
+      plainText: value,
+    });
   });
 
   it('does not render the inspect button when cellInspect is false', () => {
@@ -205,7 +246,11 @@ describe('TableCellActions', () => {
   it('calls setInspectCell with the built inspect value when the inspect button is clicked', async () => {
     const { setInspectCell } = setup();
     await userEvent.click(screen.getByLabelText('Inspect value'));
-    expect(setInspectCell).toHaveBeenCalledWith({ value: 'hello', mode: TableCellInspectorMode.text });
+    expect(setInspectCell).toHaveBeenCalledWith({
+      value: 'hello',
+      mode: TableCellInspectorMode.text,
+      plainText: 'hello',
+    });
   });
 
   it('calls onCellFilterAdded with the "filter for" operator', async () => {
