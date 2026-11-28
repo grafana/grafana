@@ -14,7 +14,7 @@ import {
 } from './moment_wrapper';
 
 const units: string[] = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'Q'] satisfies DurationUnit[];
-const MAX_MATH_TOKEN_DIGITS = 5;
+const MAX_MATH_TOKEN_DIGITS = 10;
 
 export const isDurationUnit = (value: string): value is DurationUnit => {
   return units.includes(value);
